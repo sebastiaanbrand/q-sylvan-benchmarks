@@ -1,0 +1,24 @@
+# MacOS file
+.DS_Store
+
+# eclipse files
+.cproject
+.project
+.settings
+
+# VS code files
+*.code-workspace
+/.vscode
+
+# Build
+/build
+*.so
+CMakeFiles/
+*.cmake
+*Makefile
+CMakeCache.txt
+qsylvan.pc
+*.swp
+
+# experiment output data
+experiments/
