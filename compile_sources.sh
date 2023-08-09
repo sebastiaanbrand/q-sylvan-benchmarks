@@ -17,3 +17,10 @@ cd build
 cmake ..
 make
 cd ../../..
+
+
+# compile MTQ DDSIM (not recompiled with -r because it takes quite long)
+cd extern/mtq-ddsim
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBINDINGS=ON -DBUILD_DDSIM_TESTS=ON
+cmake --build build --config Release
+cd ../../..
