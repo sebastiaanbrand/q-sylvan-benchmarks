@@ -1,3 +1,3 @@
-[submodule "q-sylvan"]
-	path = q-sylvan
+[submodule "extern/q-sylvan"]
+	path = extern/q-sylvan
 	url = git@github.com:sebastiaanbrand/q-sylvan.git

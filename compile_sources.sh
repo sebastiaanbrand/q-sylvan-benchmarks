@@ -10,11 +10,10 @@ while getopts "r" opt; do
 done
 
 # (re)compile Q-Sylvan
-cd q-sylvan
+cd extern/q-sylvan
 if [[ $recompile ]]; then rm -r -f build; fi
 mkdir -p build
 cd build
 cmake ..
 make
-cd ..
-cd ..
+cd ../../..

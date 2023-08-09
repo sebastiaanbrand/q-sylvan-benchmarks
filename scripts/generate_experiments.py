@@ -5,10 +5,10 @@ from datetime import datetime
 output_file = "experiments/bench_{}.sh"
 csv_output  = "experiments/bench_{}_res.csv"
 
-run_grov = "timeout {} ./q-sylvan/build/examples/alg_run grover --qubits={} --norm-strat={} --it-ref={} --tol={} --workers={} --csv-output={}\n"
-run_shor = "timeout {} ./q-sylvan/build/examples/alg_run shor --shor-N={} --norm-strat={} --it-ref={} --tol={} --workers={} --rseed={} --csv-output={}\n"
-run_sup  = "timeout {} ./q-sylvan/build/examples/alg_run supremacy --qubits={} --depth={} --norm-strat={} --it-ref={} --tol={} --workers={} --rseed={} --csv-output={}\n"
-run_qasm = "timeout {} ./q-sylvan/build/qasm/qsylvan_qasm {} --norm-strat={} --it-ref={} --workers={} --seed={} --csv-output={}\n"
+run_grov = "timeout {} ./extern/q-sylvan/build/examples/alg_run grover --qubits={} --norm-strat={} --it-ref={} --tol={} --workers={} --csv-output={}\n"
+run_shor = "timeout {} ./extern/q-sylvan/build/examples/alg_run shor --shor-N={} --norm-strat={} --it-ref={} --tol={} --workers={} --rseed={} --csv-output={}\n"
+run_sup  = "timeout {} ./extern/q-sylvan/build/examples/alg_run supremacy --qubits={} --depth={} --norm-strat={} --it-ref={} --tol={} --workers={} --rseed={} --csv-output={}\n"
+run_qasm = "timeout {} ./extern/q-sylvan/build/qasm/qsylvan_qasm {} --norm-strat={} --it-ref={} --workers={} --seed={} --csv-output={}\n"
 
 def init_output_file():
     global output_file
