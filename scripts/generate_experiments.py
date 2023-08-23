@@ -1,5 +1,6 @@
 import os
 import sys
+import argparse
 from datetime import datetime
 
 output_file = "experiments/bench_{}.sh"
@@ -8,7 +9,13 @@ csv_output  = "experiments/bench_{}_res.csv"
 run_grov = "timeout {} ./extern/q-sylvan/build/examples/alg_run grover --qubits={} --norm-strat={} --it-ref={} --tol={} --workers={} --csv-output={}\n"
 run_shor = "timeout {} ./extern/q-sylvan/build/examples/alg_run shor --shor-N={} --norm-strat={} --it-ref={} --tol={} --workers={} --rseed={} --csv-output={}\n"
 run_sup  = "timeout {} ./extern/q-sylvan/build/examples/alg_run supremacy --qubits={} --depth={} --norm-strat={} --it-ref={} --tol={} --workers={} --rseed={} --csv-output={}\n"
-run_qasm = "timeout {} ./extern/q-sylvan/build/qasm/qsylvan_qasm {} --norm-strat={} --it-ref={} --workers={} --seed={} --csv-output={}\n"
+run_qasm = "timeout {} ./extern/q-sylvan/build/qasm/sim_qasm {}\n"
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('which', choices=['qasm','grover','shor','supremacy'])
+parser.add_argument('--qasm_folder', action='store', help="Path to folder with .qasm files.")
+
 
 def init_output_file():
     global output_file
@@ -25,6 +32,7 @@ def init_output_file():
 def experiments_grover():
 
     # configs to test
+    init_output_file()
     timeout = '10m'
     qubits = [9, 10, 11, 14, 19, 24, 29, 34, 39]
     tol = [1e-14]
@@ -46,6 +54,7 @@ def experiments_grover():
 def experiments_shor():
 
     # configs to test
+    init_output_file()
     timeout = '10m'
     shor_N = [15,21,33]
     tol = [1e-14]
@@ -68,6 +77,7 @@ def experiments_shor():
 def experiments_supremacy():
 
     # configs to test
+    init_output_file()
     timeout = '10m'
     qubits = [20]
     depth = [15,16,17,18,19,20]
@@ -89,45 +99,36 @@ def experiments_supremacy():
         f.write("\n")
 
 
-def experiments_qasm():
+def experiments_qasm(args):
     
     # configs to test
     timeout = '10m'
-    norm_stat = ['largest']
-    it_ref = [0,1]
-    workers = [1,2,4,8]
-    rseed = 42
-    max_num = 50
-    num = 0
+    qasm_folder = args.qasm_folder
+    output_file = os.path.join(qasm_folder, 'bench_all.sh')
 
-    with open(output_file, 'a') as f:
-        qasm_folder = 'qasm/circuits/MQTBench/'
-        f.write("# MQTBench\n")
+    print(f"writing to {output_file}")
+    with open(output_file, 'w') as f:
+        f.write("#!/bin/bash\n\n")
+        f.write("# Q-Sylvan\n")
         for filename in os.listdir(qasm_folder):
             filepath = qasm_folder + filename
-            if (num >= max_num):
-                break
-            for ns in norm_stat:
-                for ir in it_ref:
-                    for w in workers:    
-                        f.write(run_qasm.format(timeout, filepath, ns, ir, w, rseed, csv_output))
-            num += 1
-        f.write("\n")
+            f.write(run_qasm.format(timeout, filepath))
 
+
+def main():
+    """
+    Generate bash scripts which run benchmarks.
+    """
+    args = parser.parse_args()
+
+    if args.which == 'qasm':
+        experiments_qasm(args)
+    elif args.which == 'grover':
+        experiments_grover()
+    elif args.which == 'shor':
+        experiments_shor()
+    elif args.which == 'supremacy':
+        experiments_supremacy()
 
 if __name__ == '__main__':
-    init_output_file()
-
-    if (len(sys.argv) >= 2 and sys.argv[1] == 'qasm'):
-        experiments_qasm()
-    elif (len(sys.argv) >= 2 and sys.argv[1] == 'grover'):
-        experiments_grover()
-    elif (len(sys.argv) >= 2 and sys.argv[1] == 'shor'):
-        experiments_shor()
-    elif (len(sys.argv) >= 2 and sys.argv[1] == 'supremacy'):
-        experiments_supremacy()
-    else:
-        experiments_grover()
-        experiments_shor()
-        experiments_supremacy()
-
+    main()
