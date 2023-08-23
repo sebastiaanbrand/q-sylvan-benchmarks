@@ -110,7 +110,7 @@ def experiments_qasm(args):
     with open(output_file, 'w') as f:
         f.write("#!/bin/bash\n\n")
         f.write("# Q-Sylvan\n")
-        for filename in os.listdir(qasm_folder):
+        for filename in sorted(os.listdir(qasm_folder)):
             filepath = qasm_folder + filename
             f.write(run_qasm.format(timeout, filepath))
 
