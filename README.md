@@ -21,5 +21,5 @@ $ ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_grover 20 --shot 1 --ps
 * NOTE: this is probably the way to go to make sure the same circuit is simulated in both cases.
 
 ```shell
-$ ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_file <circuit.qasm>
+$ ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_file <circuit.qasm> --shots 1 --ps
 ```

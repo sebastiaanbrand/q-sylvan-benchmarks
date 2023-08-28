@@ -22,6 +22,8 @@ qsylvan.pc
 
 # experiment output data
 experiments/
+results/
 
 # TODO: when benchmark set is final, also include qasm files in repo
-benchmarks/
+qasm/
+
