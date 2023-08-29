@@ -13,7 +13,7 @@ csv_output  = "experiments/{}/results.csv"
 run_grov = "timeout {} ./extern/q-sylvan/build/examples/alg_run grover --qubits={} --norm-strat={} --it-ref={} --tol={} --workers={} --csv-output={}\n"
 run_shor = "timeout {} ./extern/q-sylvan/build/examples/alg_run shor --shor-N={} --norm-strat={} --it-ref={} --tol={} --workers={} --rseed={} --csv-output={}\n"
 run_sup  = "timeout {} ./extern/q-sylvan/build/examples/alg_run supremacy --qubits={} --depth={} --norm-strat={} --it-ref={} --tol={} --workers={} --rseed={} --csv-output={}\n"
-qsv_qasm = "timeout {} ./extern/q-sylvan/build/qasm/sim_qasm {} --json {}\n"
+qsv_qasm = "timeout {} ./extern/q-sylvan/build/qasm/sim_qasm {} --workers {} {} --json {}\n"
 mqt_qasm = "timeout {} ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_file {} --shots 1 --ps --pm |& tee {}\n"
 
 
@@ -115,6 +115,8 @@ def experiments_qasm(args):
     bash_file = output_dir + '/run_all.sh'
 
     # TODO: test multiple workers for Q-Sylvan
+    workers = [1]
+    count_nodes = '--count-nodes'
 
     print(f"Writing to {bash_file}")
     with open(bash_file, 'w') as f:
@@ -123,12 +125,13 @@ def experiments_qasm(args):
         for filename in sorted(os.listdir(args.qasm_folder)):
             if (filename.endswith('.qasm')):
                 filepath = os.path.join(args.qasm_folder, filename)
-                # Q-Sylvan
-                json_output = f"{output_dir}/{filename[:-5]}_qsylvan.json"
-                f.write(qsv_qasm.format(args.timeout, filepath, json_output))
                 # MQT
                 json_output = f"{output_dir}/{filename[:-5]}_mqt.json"
                 f.write(mqt_qasm.format(args.timeout, filepath, json_output))
+                # Q-Sylvan
+                for w in workers:
+                    json_output = f"{output_dir}/{filename[:-5]}_qsylvan_{w}.json"
+                    f.write(qsv_qasm.format(args.timeout, filepath, w, count_nodes, json_output))
 
 
 def main():
