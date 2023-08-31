@@ -1,32 +1,41 @@
+import os
 import sys
+import json
+import argparse
 from typing import Iterable
 import pandas as pd
 import matplotlib.pyplot as plt
 
 
-def parse_arguments():
-    """
-    Parse cl args and put them into global args : str -> value
-    """
-    global args
-    args = {}
-    if len(sys.argv) < 2:
-        print("no input_file (.csv) given")
-        exit(1)
-    else:
-        args['input_file'] = sys.argv[1]
-    return args
+parser = argparse.ArgumentParser()
+parser.add_argument('folder')
 
 
-def load_data(input_file : str):
+def load_data(folder : str):
     """
     Load the data (and do some preprocessing)
     """
-    print(f"loading data from {input_file}")
-    df = pd.read_csv(input_file)
-    df = df.rename(columns=lambda x: x.strip())
+    print(f"loading data from {folder}")
+    df = pd.DataFrame()
+    for filename in sorted(os.listdir(folder)):
+        filepath = os.path.join(folder, filename)
+        if filename.endswith('.json') and os.path.getsize(filepath) > 0:
+            with open(filepath, 'r') as f:
+                data = json.load(f)['statistics']
 
-    return df
+                # TODO: remove after updating json
+                if data['benchmark'].endswith('.qasm'):
+                    data['benchmark'] = data['benchmark'][:-5]
+                # / remove
+
+                if (filename.endswith('mqt.json')):
+                    data['tool'] = 'mqt'
+                else:
+                    data['tool'] = 'q-sylvan'
+                new_df = pd.DataFrame(data, index=[0])
+                df = pd.concat([df, new_df])
+
+    return df[['benchmark', 'tool', 'simulation_time', 'max_nodes']]
 
 
 def plot_speedups(df : pd.DataFrame, alg_selection : Iterable, output_file : str,
@@ -86,6 +95,7 @@ def plot_speedups_selection(df : pd.DataFrame):
 
 
 if __name__ == '__main__':
-    args = parse_arguments()
-    df = load_data(args['input_file'])
-    plot_speedups_selection(df)
+    args = parser.parse_args()
+    df = load_data(args.folder)
+    print(df)
+    #plot_speedups_selection(df)
