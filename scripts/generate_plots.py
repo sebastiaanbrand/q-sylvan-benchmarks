@@ -29,8 +29,9 @@ def load_data(folder : str):
     """
     print(f"loading data from {folder}")
     df = pd.DataFrame()
-    for filename in sorted(os.listdir(folder)):
-        filepath = os.path.join(folder, filename)
+    json_folder = os.path.join(folder, 'json')
+    for filename in sorted(os.listdir(json_folder)):
+        filepath = os.path.join(json_folder, filename)
         if filename.endswith('.json') and os.path.getsize(filepath) > 0:
             with open(filepath, 'r') as f:
                 data = json.load(f)['statistics']

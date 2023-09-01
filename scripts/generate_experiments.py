@@ -111,7 +111,7 @@ def experiments_qasm(args):
     """
     global output_dir
     output_dir = output_dir.format(datetime.now().strftime("%Y%m%d%m_%H%M%S"))
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(output_dir,'json')).mkdir(parents=True, exist_ok=True)
     bash_file = output_dir + '/run_all.sh'
 
     # TODO: test multiple workers for Q-Sylvan
@@ -126,11 +126,11 @@ def experiments_qasm(args):
             if (filename.endswith('.qasm')):
                 filepath = os.path.join(args.qasm_folder, filename)
                 # MQT
-                json_output = f"{output_dir}/{filename[:-5]}_mqt.json"
+                json_output = f"{output_dir}/json/{filename[:-5]}_mqt.json"
                 f.write(mqt_qasm.format(args.timeout, filepath, json_output))
                 # Q-Sylvan
                 for w in workers:
-                    json_output = f"{output_dir}/{filename[:-5]}_qsylvan_{w}.json"
+                    json_output = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}.json"
                     f.write(qsv_qasm.format(args.timeout, filepath, w, count_nodes, json_output))
 
 
