@@ -36,11 +36,6 @@ def load_data(folder : str):
             with open(filepath, 'r') as f:
                 data = json.load(f)['statistics']
 
-                # TODO: remove after updating json
-                if data['benchmark'].endswith('.qasm'):
-                    data['benchmark'] = data['benchmark'][:-5]
-                # / remove
-
                 if (filename.endswith('mqt.json')):
                     data['tool'] = 'mqt'
                 else:
@@ -48,7 +43,15 @@ def load_data(folder : str):
                 new_df = pd.DataFrame(data, index=[0])
                 df = pd.concat([df, new_df])
 
-    return df[['benchmark', 'tool', 'simulation_time', 'workers', 'max_nodes']]
+    return df[['benchmark', 'tool', 'simulation_time', 'workers', 'max_nodes', 'norm']]
+
+
+def sanity_check(df : pd.DataFrame):
+    """
+    Do some basic sanity checks on the collected data.
+    """
+    print("Instances with issues:")
+    print(df.loc[(df['norm'] != 1.0) & (df['tool'] == 'q-sylvan')])
 
 
 def _plot_diagonal_lines(ax, min_val, max_val, at=[0.1, 10]):
@@ -107,7 +110,7 @@ def plot_tool_comparison(df : pd.DataFrame, args):
     right = df.loc[df['tool'] == 'q-sylvan']
 
     joined = pd.merge(left, right, on='benchmark', how='outer', suffixes=('_l','_r'))
-    print(joined)
+    #print(joined)
 
     data_l = joined['simulation_time_l'].fillna(timeout_time)
     data_r = joined['simulation_time_r'].fillna(timeout_time)
@@ -176,6 +179,8 @@ def plot_speedups_selection(df : pd.DataFrame):
 if __name__ == '__main__':
     args = parser.parse_args()
     df = load_data(args.folder)
+
+    sanity_check(df)
     
     Path(plots_folder(args)).mkdir(parents=True, exist_ok=True)
     plot_tool_comparison(df, args)
