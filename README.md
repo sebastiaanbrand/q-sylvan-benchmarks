@@ -23,3 +23,9 @@ $ ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_grover 20 --shot 1 --ps
 ```shell
 $ ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_file <circuit.qasm> --shots 1 --ps
 ```
+
+
+### Benchmark sets
+
+* https://www.cda.cit.tum.de/mqtbench/
+* https://github.com/pnnl/QASMBench

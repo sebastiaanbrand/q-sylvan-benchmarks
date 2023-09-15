@@ -13,7 +13,7 @@ csv_output  = "experiments/{}/results.csv"
 run_grov = "timeout {} ./extern/q-sylvan/build/examples/alg_run grover --qubits={} --norm-strat={} --it-ref={} --tol={} --workers={} --csv-output={}\n"
 run_shor = "timeout {} ./extern/q-sylvan/build/examples/alg_run shor --shor-N={} --norm-strat={} --it-ref={} --tol={} --workers={} --rseed={} --csv-output={}\n"
 run_sup  = "timeout {} ./extern/q-sylvan/build/examples/alg_run supremacy --qubits={} --depth={} --norm-strat={} --it-ref={} --tol={} --workers={} --rseed={} --csv-output={}\n"
-qsv_qasm = "timeout {} ./extern/q-sylvan/build/qasm/sim_qasm {} --workers {} {} --json {}\n"
+qsy_qasm = "timeout {} ./extern/q-sylvan/build/qasm/sim_qasm {} --workers {} {} --json {}\n"
 mqt_qasm = "timeout {} ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_file {} --shots 1 --ps --pm |& tee {}\n"
 
 
@@ -112,26 +112,33 @@ def experiments_qasm(args):
     global output_dir
     output_dir = output_dir.format(datetime.now().strftime("%Y%m%d%m_%H%M%S"))
     Path(os.path.join(output_dir,'json')).mkdir(parents=True, exist_ok=True)
-    bash_file = output_dir + '/run_all.sh'
+    bash_file_all = output_dir + '/run_all.sh'
+    bash_file_mqt = output_dir + '/run_mqt.sh'
+    bash_file_qsy = output_dir + '/run_qsylvan.sh'
 
     # TODO: test multiple workers for Q-Sylvan
     workers = [1]
     count_nodes = '--count-nodes'
 
-    print(f"Writing to {bash_file}")
-    with open(bash_file, 'w') as f:
-        f.write("#!/bin/bash\n\n")
-        f.write("# Q-Sylvan + MQT DDSIM benchmarks\n")
+    print(f"Writing to {bash_file_all}, {bash_file_mqt}, {bash_file_qsy}")
+    with open(bash_file_all, 'w') as f_all,\
+         open(bash_file_mqt, 'w') as f_mqt,\
+         open(bash_file_qsy, 'w') as f_qsy:
+        f_all.write("#!/bin/bash\n\n# Q-Sylvan + MQT DDSIM benchmarks\n")
+        f_mqt.write("#!/bin/bash\n\n# MQT DDSIM benchmarks\n")
+        f_qsy.write("#!/bin/bash\n\n# Q-Sylvan benchmarks\n")
         for filename in sorted(os.listdir(args.qasm_folder)):
             if (filename.endswith('.qasm')):
                 filepath = os.path.join(args.qasm_folder, filename)
                 # MQT
                 json_output = f"{output_dir}/json/{filename[:-5]}_mqt.json"
-                f.write(mqt_qasm.format(args.timeout, filepath, json_output))
+                f_all.write(mqt_qasm.format(args.timeout, filepath, json_output))
+                f_mqt.write(mqt_qasm.format(args.timeout, filepath, json_output))
                 # Q-Sylvan
                 for w in workers:
                     json_output = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}.json"
-                    f.write(qsv_qasm.format(args.timeout, filepath, w, count_nodes, json_output))
+                    f_all.write(qsy_qasm.format(args.timeout, filepath, w, count_nodes, json_output))
+                    f_qsy.write(qsy_qasm.format(args.timeout, filepath, w, count_nodes, json_output))
 
 
 def main():
