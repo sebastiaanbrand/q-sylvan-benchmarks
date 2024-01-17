@@ -19,7 +19,7 @@ mqt_qasm = "timeout {} ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_fil
 
 parser = argparse.ArgumentParser()
 parser.add_argument('which', choices=['qasm','grover','shor','supremacy'])
-parser.add_argument('--qasm_folder', action='store', help="Path to folder with .qasm files.")
+parser.add_argument('--qasm_dir', action='store', help="Path of directory with .qasm files.")
 parser.add_argument('--timeout', action='store', default='10m', help='Timeout time per benchmark')
 
 
@@ -127,9 +127,9 @@ def experiments_qasm(args):
         f_all.write("#!/bin/bash\n\n# Q-Sylvan + MQT DDSIM benchmarks\n")
         f_mqt.write("#!/bin/bash\n\n# MQT DDSIM benchmarks\n")
         f_qsy.write("#!/bin/bash\n\n# Q-Sylvan benchmarks\n")
-        for filename in sorted(os.listdir(args.qasm_folder)):
+        for filename in sorted(os.listdir(args.qasm_dir)):
             if (filename.endswith('.qasm')):
-                filepath = os.path.join(args.qasm_folder, filename)
+                filepath = os.path.join(args.qasm_dir, filename)
                 # MQT
                 json_output = f"{output_dir}/json/{filename[:-5]}_mqt.json"
                 f_all.write(mqt_qasm.format(args.timeout, filepath, json_output))
@@ -148,8 +148,8 @@ def main():
     args = parser.parse_args()
 
     if args.which == 'qasm':
-        if not args.qasm_folder:
-            print("Must set --qasm_folder <folder>")
+        if not args.qasm_dir:
+            print("Must set --qasm_dir <path>")
         else:
             experiments_qasm(args)
     elif args.which == 'grover':
@@ -158,6 +158,7 @@ def main():
         experiments_shor()
     elif args.which == 'supremacy':
         experiments_supremacy()
+
 
 if __name__ == '__main__':
     main()

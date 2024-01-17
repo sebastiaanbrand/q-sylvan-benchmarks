@@ -13,25 +13,25 @@ formats = ['png']
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('folder')
+parser.add_argument('dir', help="Experiments directory (the one which is a date+time).")
 
 
-def plots_folder(args):
+def plots_dir(args):
     """
-    Folder to put the plots.
+    Directory in which to put the plots.
     """
-    return os.path.join(args.folder, 'plots')
+    return os.path.join(args.dir, 'plots')
 
 
-def load_data(folder : str):
+def load_data(exp_dir : str):
     """
     Load the data (and do some preprocessing)
     """
-    print(f"loading data from {folder}")
+    print(f"Loading data from {exp_dir}")
     df = pd.DataFrame()
-    json_folder = os.path.join(folder, 'json')
-    for filename in sorted(os.listdir(json_folder)):
-        filepath = os.path.join(json_folder, filename)
+    json_dir = os.path.join(exp_dir, 'json')
+    for filename in sorted(os.listdir(json_dir)):
+        filepath = os.path.join(json_dir, filename)
         if filename.endswith('.json') and os.path.getsize(filepath) > 0:
             with open(filepath, 'r') as f:
                 data = json.load(f)['statistics']
@@ -50,8 +50,12 @@ def sanity_check(df : pd.DataFrame):
     """
     Do some basic sanity checks on the collected data.
     """
-    print("Instances with issues:")
-    print(df.loc[(df['norm'] != 1.0) & (df['tool'] == 'q-sylvan')])
+    issues = df.loc[(df['norm'] != 1.0) & (df['tool'] == 'q-sylvan')]
+    if len(issues) > 0:
+        print("Instances with issues:")
+        print(issues)
+    else:
+        print("All sanity checks on output data passed.")
 
 
 def _plot_diagonal_lines(ax, min_val, max_val, at=[0.1, 10]):
@@ -91,7 +95,7 @@ def plot_scatter(data_x, data_y, data_labels, label_x, label_y, filename, args):
     ax.set_ylabel(label_y)
     
     # save figure
-    outputpath = os.path.join(plots_folder(args), 'mqt_vs_qsylvan')
+    outputpath = os.path.join(plots_dir(args), 'mqt_vs_qsylvan')
     for _format in formats:
         fig.savefig(f"{outputpath}.{_format}")
     
@@ -178,9 +182,10 @@ def plot_speedups_selection(df : pd.DataFrame):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    df = load_data(args.folder)
+    df = load_data(args.dir)
 
     sanity_check(df)
     
-    Path(plots_folder(args)).mkdir(parents=True, exist_ok=True)
+    Path(plots_dir(args)).mkdir(parents=True, exist_ok=True)
+    print(f"Writing plots to {plots_dir(args)}")
     plot_tool_comparison(df, args)

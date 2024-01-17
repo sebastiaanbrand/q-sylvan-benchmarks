@@ -1,31 +1,41 @@
 # Q-Sylvan parallel benchmarks
 
 
-## Running mtq-ddsim algorithms
+## Simulating individual QASM files
 
-Adding `--ps` outputs JSON info.
+### Q-Sylvan
 
-* TODO: pipe to file and have Python script to get relevant info from all produced JSON files.
-
-### Grover
 ```shell
-$ ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_grover 20 --shot 1 --ps
+$ ./extern/q-sylvan/build/qasm/sim_qasm <circuit.qasm> [--count-nodes]
 ```
 
-* NOTE: looking at `mtq-core/src/algorithms/Grover.cpp`, their Grover implementation also implements the oracle naively/simply with an n-qubit CZ.
-* NOTE: Grover is run with a random oracle, should also do this in the Q-Sylvan benchmarks
-
-
-### Using QASM
-
-* NOTE: this is probably the way to go to make sure the same circuit is simulated in both cases.
+### MQT-DDSIM
 
 ```shell
 $ ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_file <circuit.qasm> --shots 1 --ps
 ```
 
+## Running + plotting benchmarks
 
-### Benchmark sets
+Generate bash file with:
+```shell
+$ python scripts/generate_experiments.py qasm --qasm_dir <dir_with_qasm_files>
+```
+
+Run with either:
+```shell
+$ bash experiments/<exp_id>/run_qsylvan.sh
+$ bash experiments/<exp_id>/run_mqt.sh
+$ bash experiments/<exp_id>/run_all.sh
+```
+
+Plot:
+```shell
+$ python scripgs/generate_plots.py experiments/<exp_id>/
+```
+
+
+## Benchmark sets
 
 * https://www.cda.cit.tum.de/mqtbench/
 * https://github.com/pnnl/QASMBench
