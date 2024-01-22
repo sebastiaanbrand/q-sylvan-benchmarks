@@ -34,16 +34,41 @@ def load_data(exp_dir : str):
         filepath = os.path.join(json_dir, filename)
         if filename.endswith('.json') and os.path.getsize(filepath) > 0:
             with open(filepath, 'r') as f:
-                data = json.load(f)['statistics']
-
+                data = json.load(f)
+                stats = data['statistics']
                 if (filename.endswith('mqt.json')):
-                    data['tool'] = 'mqt'
+                    stats['tool'] = 'mqt'
                 else:
-                    data['tool'] = 'q-sylvan'
-                new_df = pd.DataFrame(data, index=[0])
+                    stats['tool'] = 'q-sylvan'
+                new_df = pd.DataFrame(stats, index=[0])
                 df = pd.concat([df, new_df])
 
-    return df[['benchmark', 'tool', 'simulation_time', 'workers', 'max_nodes', 'norm']]
+    return df[['benchmark', 'tool', 'simulation_time', 'workers', 'max_nodes', 'norm']]        
+
+
+def compare_vectors(exp_dir : str):
+    """
+    Compare state vectors in json files if present
+    """
+    print("Comparing state vectors ")
+    json_dir = os.path.join(exp_dir, 'json')
+    for filename in sorted(os.listdir(json_dir)):
+        filepath = os.path.join(json_dir, filename)
+        if filename.endswith('qsylvan_1.json') and os.path.getsize(filepath) > 0:
+            vec_qsy = None
+            vec_mqt = None
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+                if 'state_vector' in data:
+                    vec_qsy = np.apply_along_axis(lambda args: [complex(*args)], 1, data['state_vector'])
+            with open(filepath.replace('qsylvan_1', 'mqt'), 'r') as f:
+                data = json.load(f)
+                if 'state_vector' in data:
+                    vec_mqt = np.apply_along_axis(lambda args: [complex(*args)], 1, data['state_vector'])
+            if not vec_qsy is None and not vec_mqt is None:
+                cos_sim = np.dot(vec_qsy.conj().T, vec_mqt)[0,0]
+                if abs(cos_sim - 1.0) > 1e-6:
+                   print(f"Warning: cos sim = {np.round(cos_sim,4)} for {filename}")
 
 
 def sanity_check(df : pd.DataFrame):
@@ -54,8 +79,6 @@ def sanity_check(df : pd.DataFrame):
     if len(issues) > 0:
         print("Instances with issues:")
         print(issues)
-    else:
-        print("All sanity checks on output data passed.")
 
 
 def _plot_diagonal_lines(ax, min_val, max_val, at=[0.1, 10]):
@@ -185,6 +208,7 @@ if __name__ == '__main__':
     df = load_data(args.dir)
 
     sanity_check(df)
+    compare_vectors(args.dir)
     
     Path(plots_dir(args)).mkdir(parents=True, exist_ok=True)
     print(f"Writing plots to {plots_dir(args)}")
