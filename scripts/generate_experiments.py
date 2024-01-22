@@ -13,13 +13,14 @@ csv_output  = "experiments/{}/results.csv"
 run_grov = "timeout {} ./extern/q-sylvan/build/examples/alg_run grover --qubits={} --norm-strat={} --it-ref={} --tol={} --workers={} --csv-output={}\n"
 run_shor = "timeout {} ./extern/q-sylvan/build/examples/alg_run shor --shor-N={} --norm-strat={} --it-ref={} --tol={} --workers={} --rseed={} --csv-output={}\n"
 run_sup  = "timeout {} ./extern/q-sylvan/build/examples/alg_run supremacy --qubits={} --depth={} --norm-strat={} --it-ref={} --tol={} --workers={} --rseed={} --csv-output={}\n"
-qsy_qasm = "timeout {} ./extern/q-sylvan/build/qasm/sim_qasm {} --workers {} {} --json {}\n"
-mqt_qasm = "timeout {} ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_file {} --shots 1 --ps --pm |& tee {}\n"
+qsy_qasm = "timeout {} ./extern/q-sylvan/build/qasm/sim_qasm {} --workers {} {} {} --json {}\n"
+mqt_qasm = "timeout {} ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_file {} --shots 1 --ps --pm {} |& tee {}\n"
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('which', choices=['qasm','grover','shor','supremacy'])
 parser.add_argument('--qasm_dir', action='store', help="Path of directory with .qasm files.")
+parser.add_argument('--log_vector', action='store_true', default=False, help="Log entire final state vector.")
 parser.add_argument('--timeout', action='store', default='10m', help='Timeout time per benchmark')
 
 
@@ -115,6 +116,8 @@ def experiments_qasm(args):
     bash_file_all = output_dir + '/run_all.sh'
     bash_file_mqt = output_dir + '/run_mqt.sh'
     bash_file_qsy = output_dir + '/run_qsylvan.sh'
+    mqt_vec = '--pv' if args.log_vector else ''
+    qsy_vec = '--state-vector' if args.log_vector else ''
 
     # TODO: test multiple workers for Q-Sylvan
     workers = [1]
@@ -132,13 +135,13 @@ def experiments_qasm(args):
                 filepath = os.path.join(args.qasm_dir, filename)
                 # MQT
                 json_output = f"{output_dir}/json/{filename[:-5]}_mqt.json"
-                f_all.write(mqt_qasm.format(args.timeout, filepath, json_output))
-                f_mqt.write(mqt_qasm.format(args.timeout, filepath, json_output))
+                f_all.write(mqt_qasm.format(args.timeout, filepath, mqt_vec, json_output))
+                f_mqt.write(mqt_qasm.format(args.timeout, filepath, mqt_vec, json_output))
                 # Q-Sylvan
                 for w in workers:
                     json_output = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}.json"
-                    f_all.write(qsy_qasm.format(args.timeout, filepath, w, count_nodes, json_output))
-                    f_qsy.write(qsy_qasm.format(args.timeout, filepath, w, count_nodes, json_output))
+                    f_all.write(qsy_qasm.format(args.timeout, filepath, w, count_nodes, qsy_vec, json_output))
+                    f_qsy.write(qsy_qasm.format(args.timeout, filepath, w, count_nodes, qsy_vec, json_output))
 
 
 def main():
