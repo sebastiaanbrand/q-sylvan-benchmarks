@@ -1,3 +1,4 @@
+import re
 import os
 import sys
 import argparse
@@ -22,6 +23,7 @@ parser.add_argument('which', choices=['qasm','grover','shor','supremacy'])
 parser.add_argument('--qasm_dir', action='store', help="Path of directory with .qasm files.")
 parser.add_argument('--log_vector', action='store_true', default=False, help="Log entire final state vector.")
 parser.add_argument('--timeout', action='store', default='10m', help='Timeout time per benchmark')
+parser.add_argument('--recursive', action='store_true', default=False, help="Recursively look for .qasm files in given dir.")
 
 
 def init_output_file():
@@ -106,6 +108,20 @@ def experiments_supremacy():
         f.write("\n")
 
 
+def atoi(text : str):
+    """
+    Get int from string if it is a digit.
+    """
+    return int(text) if text.isdigit() else text
+
+
+def natural_sorting(filename : str):
+    """
+    Used for sorting strings containing numbers in numerical way.
+    """
+    return [ atoi(c) for c in re.split(r'(\d+)', filename)]
+
+
 def experiments_qasm(args):
     """
     Write bash file to benchmark given qasm files on both Q-Sylvan and MQT DDSIM
@@ -130,18 +146,30 @@ def experiments_qasm(args):
         f_all.write("#!/bin/bash\n\n# Q-Sylvan + MQT DDSIM benchmarks\n")
         f_mqt.write("#!/bin/bash\n\n# MQT DDSIM benchmarks\n")
         f_qsy.write("#!/bin/bash\n\n# Q-Sylvan benchmarks\n")
-        for filename in sorted(os.listdir(args.qasm_dir)):
-            if (filename.endswith('.qasm')):
-                filepath = os.path.join(args.qasm_dir, filename)
-                # MQT
-                json_output = f"{output_dir}/json/{filename[:-5]}_mqt.json"
-                f_all.write(mqt_qasm.format(args.timeout, filepath, mqt_vec, json_output))
-                f_mqt.write(mqt_qasm.format(args.timeout, filepath, mqt_vec, json_output))
-                # Q-Sylvan
-                for w in workers:
-                    json_output = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}.json"
-                    f_all.write(qsy_qasm.format(args.timeout, filepath, w, count_nodes, qsy_vec, json_output))
-                    f_qsy.write(qsy_qasm.format(args.timeout, filepath, w, count_nodes, qsy_vec, json_output))
+
+        # get qasm files
+        filepaths = []
+        if args.recursive:
+            for root, _, filenames in os.walk(args.qasm_dir):
+                for filename in filenames:
+                    if filename.endswith('.qasm'):
+                        filepaths.append(os.path.join(root, filename))
+        else:
+            for filename in os.listdir(args.qasm_dir):
+                if filename.endswith('.qasm'):
+                    filepaths.append(os.path.join(args.qasm_dir, filename))
+
+        # write to bash scripts
+        for filepath in sorted(filepaths, key=natural_sorting):
+            # MQT
+            json_output = f"{output_dir}/json/{filename[:-5]}_mqt.json"
+            f_all.write(mqt_qasm.format(args.timeout, filepath, mqt_vec, json_output))
+            f_mqt.write(mqt_qasm.format(args.timeout, filepath, mqt_vec, json_output))
+            # Q-Sylvan
+            for w in workers:
+                json_output = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}.json"
+                f_all.write(qsy_qasm.format(args.timeout, filepath, w, count_nodes, qsy_vec, json_output))
+                f_qsy.write(qsy_qasm.format(args.timeout, filepath, w, count_nodes, qsy_vec, json_output))
 
 
 def main():
