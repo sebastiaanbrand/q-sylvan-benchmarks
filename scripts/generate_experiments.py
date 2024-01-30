@@ -161,6 +161,7 @@ def experiments_qasm(args):
 
         # write to bash scripts
         for filepath in sorted(filepaths, key=natural_sorting):
+            filename = os.path.basename(filepath)
             # MQT
             json_output = f"{output_dir}/json/{filename[:-5]}_mqt.json"
             f_all.write(mqt_qasm.format(args.timeout, filepath, mqt_vec, json_output))
