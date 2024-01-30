@@ -50,7 +50,7 @@ def compare_vectors(exp_dir : str):
     """
     Compare state vectors in json files if present
     """
-    print("Comparing state vectors ")
+    print("Comparing state vectors between both tools")
     json_dir = os.path.join(exp_dir, 'json')
     for filename in sorted(os.listdir(json_dir)):
         filepath = os.path.join(json_dir, filename)
@@ -66,9 +66,14 @@ def compare_vectors(exp_dir : str):
                 if 'state_vector' in data:
                     vec_mqt = np.apply_along_axis(lambda args: [complex(*args)], 1, data['state_vector'])
             if not vec_qsy is None and not vec_mqt is None:
-                cos_sim = np.dot(vec_qsy.conj().T, vec_mqt)[0,0]
-                if abs(cos_sim - 1.0) > 1e-6:
-                   print(f"Warning: cos sim = {np.round(cos_sim,4)} for {filename}")
+                # normalize global phase
+                in_prod = np.dot(vec_qsy.conj().T, vec_mqt)[0,0]
+                fidelity = (abs(in_prod))**2
+                if abs(in_prod - 1.0) > 1e-3:
+                    if fidelity < 0.999:
+                        print(f"Warning: fidelity = {np.round(fidelity,4)} for {filename[:-15]}")
+                    #else:
+                    #    print(f"Note: different global phase for {filename[:-15]}")
 
 
 def sanity_check(df : pd.DataFrame):
