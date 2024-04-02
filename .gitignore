@@ -19,6 +19,9 @@ CMakeCache.txt
 qsylvan.pc
 *.swp
 
+# Python
+.venv
+
 # experiment output data
 experiments/
 results/

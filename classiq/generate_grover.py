@@ -1,0 +1,64 @@
+"""
+https://docs.classiq.io/latest/reference-manual/python-sdk/
+"""
+from classiq import (
+    RegisterUserInput, 
+    construct_grover_model,
+    write_qmod,
+    QuantumProgram,
+    synthesize,
+    set_preferences,
+    CustomHardwareSettings,
+    Preferences
+)
+
+
+def example():
+    """
+    https://docs.classiq.io/latest/tutorials/algorithms/grover/3-sat-grover/3-sat-grover/
+    """
+    formula = """
+        ( ( x1) or ( x2) or ( x3) ) and
+        ( (not x1) or ( x2) or ( x3) ) and
+        ( (not x1) or (not x2) or (not x3) ) and
+        ( (not x1) or (not x2) or ( x3) ) and
+        ( ( x1) or ( x2) or (not x3) ) and
+        ( (not x1) or ( x2) or (not x3) )
+    """
+
+    register_size = RegisterUserInput(size=1)
+
+    qmod = construct_grover_model(
+        num_reps=1,
+        expression="(" + formula + ")",
+        definitions=[
+            ("x1", register_size),
+            ("x2", register_size),
+            ("x3", register_size),
+        ],
+    )
+
+    #custom_hardware_settings = CustomHardwareSettings(
+    #    basis_gates=["cx", "cp", "sx", "rz", "x"])
+    preferences = Preferences(
+        output_format=["qasm", "qasm_cirq_compatible"])#, custom_hardware_settings=custom_hardware_settings)
+
+    qmod = set_preferences(qmod, preferences)
+    write_qmod(qmod, "qasm/classiq/grov_test")
+    qprog = synthesize(qmod)
+    circuit = QuantumProgram.from_qprog(qprog)
+    with open("qasm/classiq/grov_test_cirq.qasm", "w") as f:
+        f.write(circuit.qasm_cirq_compatible)
+    with open("qasm/classiq/grov_test_trans.qasm", "w") as f:
+        f.write(circuit.transpiled_circuit.qasm)
+    with open("qasm/classiq/grov_test_trans_cirq.qasm", "w") as f:
+        f.write(circuit.transpiled_circuit.qasm_cirq_compatible)
+    #circuit.show()
+
+
+def main():
+    example()
+
+
+if __name__ == '__main__':
+    main()
