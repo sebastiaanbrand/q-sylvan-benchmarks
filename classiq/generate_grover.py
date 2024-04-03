@@ -1,7 +1,9 @@
 """
 https://docs.classiq.io/latest/reference-manual/python-sdk/
 """
+import random
 from pysat.formula import CNF
+from pysat.solvers import Glucose4
 from classiq import (
     RegisterUserInput, 
     construct_grover_model,
@@ -12,6 +14,30 @@ from classiq import (
     CustomHardwareSettings,
     Preferences
 )
+
+
+def generate_random_3sat(nvars : int):
+    """
+    Generate randon 3SAT CNF formula, with 4.5 times as many clauses as vars.
+    """
+    nclauses = round(4.5*nvars)
+    cnf = CNF()
+    for _ in range(nclauses):
+        clause = []
+        for _ in range(3):
+            lit = random.randint(1, nvars)
+            if random.random() > 0.5:
+                lit = -lit
+            clause.append(lit)
+        cnf.append(clause)
+
+    # check if satisfiable
+    solver = Glucose4()
+    for clause in cnf:
+        solver.add_clause(clause)
+    sat = solver.solve()
+
+    return cnf, sat
 
 
 def to_classiq_formula(dimacs_file : str):
@@ -114,6 +140,9 @@ def main():
     expr, var_names = to_classiq_formula('classiq/dimacs/test.cnf')
     print(expr)
     print(var_names)
+    for nvars in range(3, 7):
+        print(f"nvars = {nvars}")
+        cnf, sat = generate_random_3sat(nvars)
     #example()
 
 
