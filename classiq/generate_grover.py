@@ -1,6 +1,7 @@
 """
 https://docs.classiq.io/latest/reference-manual/python-sdk/
 """
+from pysat.formula import CNF
 from classiq import (
     RegisterUserInput, 
     construct_grover_model,
@@ -11,6 +12,59 @@ from classiq import (
     CustomHardwareSettings,
     Preferences
 )
+
+
+def to_classiq_formula(dimacs_file : str):
+    """
+    Convert a DIMACS CNF file to the input format classiq's Grover oracle uses.
+    """
+    cnf = CNF()
+    cnf.from_file(dimacs_file)
+
+    variables = set()
+    formula = ""
+
+    for clause in cnf.clauses[:-1]:
+        formula += '( '
+        for lit in clause[:-1]:
+            variables.add(abs(lit))
+            formula += '('
+            if lit < 0:
+                formula += 'not'
+            formula += f' x{abs(lit)}) or '
+        # last literal
+        lit = clause[-1]
+        variables.add(abs(lit))
+        formula += '('
+        if lit < 0:
+            formula += 'not'
+        formula += f' x{abs(lit)})'
+        formula += ' ) and \n'
+
+    # last clause
+    clause = cnf.clauses[-1]
+    formula += '( '
+    for lit in clause[:-1]:
+        variables.add(abs(lit))
+        formula += '('
+        if lit < 0:
+            formula += 'not'
+        formula += f' x{abs(lit)}) or '
+    # last literal
+    lit = clause[-1]
+    variables.add(abs(lit))
+    formula += '('
+    if lit < 0:
+        formula += 'not'
+    formula += f' x{abs(lit)})'
+    formula += ' )'
+
+    # convert e.g. var '2' to 'x2'
+    var_names = []
+    for v in sorted(variables):
+        var_names.append(f'x{v}')
+
+    return formula, var_names
 
 
 def example():
@@ -57,7 +111,10 @@ def example():
 
 
 def main():
-    example()
+    expr, var_names = to_classiq_formula('classiq/dimacs/test.cnf')
+    print(expr)
+    print(var_names)
+    #example()
 
 
 if __name__ == '__main__':
