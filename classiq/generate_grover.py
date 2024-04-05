@@ -2,6 +2,7 @@
 https://docs.classiq.io/latest/reference-manual/python-sdk/
 """
 import random
+from math import pi, sqrt
 from pysat.formula import CNF
 from pysat.solvers import Glucose4
 from classiq import (
@@ -40,13 +41,10 @@ def generate_random_3sat(nvars : int):
     return cnf, sat
 
 
-def to_classiq_formula(dimacs_file : str):
+def cnf2classiq(cnf : CNF):
     """
-    Convert a DIMACS CNF file to the input format classiq's Grover oracle uses.
+    Convert CNF to format classiq's Grover oracle uses.
     """
-    cnf = CNF()
-    cnf.from_file(dimacs_file)
-
     variables = set()
     formula = ""
 
@@ -65,7 +63,7 @@ def to_classiq_formula(dimacs_file : str):
         if lit < 0:
             formula += 'not'
         formula += f' x{abs(lit)})'
-        formula += ' ) and \n'
+        formula += ' ) and '
 
     # last clause
     clause = cnf.clauses[-1]
@@ -93,6 +91,45 @@ def to_classiq_formula(dimacs_file : str):
     return formula, var_names
 
 
+def generate_grover(cnf : CNF):
+    """
+    Generate Grover circuit for given SAT formula.
+
+    See https://docs.classiq.io/latest/tutorials/algorithms/grover/3-sat-grover/3-sat-grover/
+    for example.
+    """
+    formula, variables = cnf2classiq(cnf)
+
+    register_size = RegisterUserInput(size=1)
+    definitions = [(var, register_size) for var in variables]
+
+    qmod = construct_grover_model(
+        num_reps=int(pi/4 * sqrt(2**len(variables))),
+        expression=formula,
+        definitions=definitions
+    )
+
+    #custom_hardware_settings = CustomHardwareSettings(
+    #    basis_gates=["cx", "cp", "sx", "rz", "x"])
+    preferences = Preferences(
+        output_format=["qasm", "qasm_cirq_compatible"])#, custom_hardware_settings=custom_hardware_settings)
+
+    qmod = set_preferences(qmod, preferences)
+
+    # synthesize circuit
+    qprog = synthesize(qmod)
+    circuit = QuantumProgram.from_qprog(qprog)
+
+    # write to QASM file
+    with open("qasm/classiq/grov_test_cirq.qasm", "w") as f:
+        f.write(circuit.qasm_cirq_compatible)
+    with open("qasm/classiq/grov_test_trans.qasm", "w") as f:
+        f.write(circuit.transpiled_circuit.qasm)
+    with open("qasm/classiq/grov_test_trans_cirq.qasm", "w") as f:
+        f.write(circuit.transpiled_circuit.qasm_cirq_compatible)
+    circuit.show()
+
+
 def example():
     """
     https://docs.classiq.io/latest/tutorials/algorithms/grover/3-sat-grover/3-sat-grover/
@@ -109,7 +146,7 @@ def example():
     register_size = RegisterUserInput(size=1)
 
     qmod = construct_grover_model(
-        num_reps=1,
+        num_reps=3,
         expression="(" + formula + ")",
         definitions=[
             ("x1", register_size),
@@ -133,17 +170,18 @@ def example():
         f.write(circuit.transpiled_circuit.qasm)
     with open("qasm/classiq/grov_test_trans_cirq.qasm", "w") as f:
         f.write(circuit.transpiled_circuit.qasm_cirq_compatible)
-    #circuit.show()
+    circuit.show()
 
 
 def main():
-    expr, var_names = to_classiq_formula('classiq/dimacs/test.cnf')
-    print(expr)
-    print(var_names)
-    for nvars in range(3, 7):
-        print(f"nvars = {nvars}")
-        cnf, sat = generate_random_3sat(nvars)
-    #example()
+    #expr, var_names = to_classiq_formula('classiq/dimacs/test.cnf')
+    #print(expr)
+    #print(var_names)
+    #for nvars in range(3, 7):
+    #    print(f"nvars = {nvars}")
+    #    cnf, var_names = generate_random_3sat(nvars)
+    cnf, sat = generate_random_3sat(3)
+    generate_grover(cnf)
 
 
 if __name__ == '__main__':
