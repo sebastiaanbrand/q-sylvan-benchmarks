@@ -2,7 +2,10 @@
 https://docs.classiq.io/latest/reference-manual/python-sdk/
 """
 import random
+import pathlib
 from math import pi, sqrt
+from datetime import datetime
+import numpy as np
 from pysat.formula import CNF
 from pysat.solvers import Glucose4
 from classiq import (
@@ -17,11 +20,10 @@ from classiq import (
 )
 
 
-def generate_random_3sat(nvars : int):
+def random_3sat(nvars : int, nclauses : int):
     """
-    Generate randon 3SAT CNF formula, with 4.5 times as many clauses as vars.
+    Generate randon 3SAT CNF formula with given number of vars and clauses.
     """
-    nclauses = round(4.5*nvars)
     cnf = CNF()
     for _ in range(nclauses):
         clause = []
@@ -39,6 +41,7 @@ def generate_random_3sat(nvars : int):
     sat = solver.solve()
 
     return cnf, sat
+
 
 
 def cnf2classiq(cnf : CNF):
@@ -91,6 +94,7 @@ def cnf2classiq(cnf : CNF):
     return formula, var_names
 
 
+
 def generate_grover(cnf : CNF):
     """
     Generate Grover circuit for given SAT formula.
@@ -116,72 +120,50 @@ def generate_grover(cnf : CNF):
 
     qmod = set_preferences(qmod, preferences)
 
+    # TODO: add constraints (gate set, connectivity)
+
     # synthesize circuit
     qprog = synthesize(qmod)
     circuit = QuantumProgram.from_qprog(qprog)
 
-    # write to QASM file
-    with open("qasm/classiq/grov_test_cirq.qasm", "w") as f:
-        f.write(circuit.qasm_cirq_compatible)
-    with open("qasm/classiq/grov_test_trans.qasm", "w") as f:
-        f.write(circuit.transpiled_circuit.qasm)
-    with open("qasm/classiq/grov_test_trans_cirq.qasm", "w") as f:
-        f.write(circuit.transpiled_circuit.qasm_cirq_compatible)
-    circuit.show()
+    return circuit
 
 
-def example():
+
+def generate_benchmarks():
     """
-    https://docs.classiq.io/latest/tutorials/algorithms/grover/3-sat-grover/3-sat-grover/
+    Generate Grover SAT benchmarks of varying sizes.
     """
-    formula = """
-        ( ( x1) or ( x2) or ( x3) ) and
-        ( (not x1) or ( x2) or ( x3) ) and
-        ( (not x1) or (not x2) or (not x3) ) and
-        ( (not x1) or (not x2) or ( x3) ) and
-        ( ( x1) or ( x2) or (not x3) ) and
-        ( (not x1) or ( x2) or (not x3) )
-    """
+    cnf_dir  = "qasm/classiq/cnf"
+    qasm_dir = "qasm/classiq"
+    pathlib.Path(cnf_dir).mkdir(parents=True, exist_ok=True)
 
-    register_size = RegisterUserInput(size=1)
+    for nvars in range(3, 11):
+        for nclauses in np.linspace(nvars*2, nvars*5, num=5, dtype=int):
 
-    qmod = construct_grover_model(
-        num_reps=3,
-        expression="(" + formula + ")",
-        definitions=[
-            ("x1", register_size),
-            ("x2", register_size),
-            ("x3", register_size),
-        ],
-    )
+            # Generate (satisfiable) 3SAT formula
+            sat = False
+            while not sat:
+                cnf, sat = random_3sat(nvars, nclauses)
 
-    #custom_hardware_settings = CustomHardwareSettings(
-    #    basis_gates=["cx", "cp", "sx", "rz", "x"])
-    preferences = Preferences(
-        output_format=["qasm", "qasm_cirq_compatible"])#, custom_hardware_settings=custom_hardware_settings)
+            # Give unique ID
+            _id = datetime.now().strftime("%Y%m%d%H%M%S")
 
-    qmod = set_preferences(qmod, preferences)
-    write_qmod(qmod, "qasm/classiq/grov_test")
-    qprog = synthesize(qmod)
-    circuit = QuantumProgram.from_qprog(qprog)
-    with open("qasm/classiq/grov_test_cirq.qasm", "w") as f:
-        f.write(circuit.qasm_cirq_compatible)
-    with open("qasm/classiq/grov_test_trans.qasm", "w") as f:
-        f.write(circuit.transpiled_circuit.qasm)
-    with open("qasm/classiq/grov_test_trans_cirq.qasm", "w") as f:
-        f.write(circuit.transpiled_circuit.qasm_cirq_compatible)
-    circuit.show()
+            # Write CNF to file
+            cnf_file = f"{cnf_dir}/cnf_{nvars}_{nclauses}_{_id}.cnf"
+            cnf.to_file(cnf_file)
+
+            # TODO: Generate + write Grover circuit
+            circuit = generate_grover(cnf)
+            qasm_file = f"{output_dir}/grover_cnf_{nvars}_{nclauses}_{_id}.qasm"
+            with open(qasm_file, 'w') as f:
+                f.write(circuit.transpiled_circuit.qasm)
+
 
 
 def main():
-    #expr, var_names = to_classiq_formula('classiq/dimacs/test.cnf')
-    #print(expr)
-    #print(var_names)
-    #for nvars in range(3, 7):
-    #    print(f"nvars = {nvars}")
-    #    cnf, var_names = generate_random_3sat(nvars)
-    cnf, sat = generate_random_3sat(3)
-    generate_grover(cnf)
+    generate_benchmarks()
+
 
 
 if __name__ == '__main__':
