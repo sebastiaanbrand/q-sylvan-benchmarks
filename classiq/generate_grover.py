@@ -130,39 +130,40 @@ def generate_grover(cnf : CNF):
 
 
 
-def generate_benchmarks():
+def generate_benchmarks(rseed : int = None):
     """
     Generate Grover SAT benchmarks of varying sizes.
     """
+    if rseed is None:
+        rseed = int(datetime.now().timestamp() * 1e6)
+    random.seed(rseed)
+
     cnf_dir  = "qasm/classiq/cnf"
     qasm_dir = "qasm/classiq"
     pathlib.Path(cnf_dir).mkdir(parents=True, exist_ok=True)
 
-    for nvars in range(3, 11):
-        for nclauses in np.linspace(nvars*2, nvars*5, num=5, dtype=int):
+    for nvars in range(3, 8):
+        for nclauses in np.linspace(nvars*1, nvars*5, num=5, dtype=int):
 
             # Generate (satisfiable) 3SAT formula
             sat = False
             while not sat:
                 cnf, sat = random_3sat(nvars, nclauses)
 
-            # Give unique ID
-            _id = datetime.now().strftime("%Y%m%d%H%M%S")
-
             # Write CNF to file
-            cnf_file = f"{cnf_dir}/cnf_{nvars}_{nclauses}_{_id}.cnf"
+            cnf_file = f"{cnf_dir}/cnf_{nvars}_{nclauses}_rseed{rseed}.cnf"
             cnf.to_file(cnf_file)
 
-            # TODO: Generate + write Grover circuit
+            # Generate + write Grover circuit
             circuit = generate_grover(cnf)
-            qasm_file = f"{output_dir}/grover_cnf_{nvars}_{nclauses}_{_id}.qasm"
+            qasm_file = f"{qasm_dir}/grover_cnf_{nvars}_{nclauses}_rseed{rseed}.qasm"
             with open(qasm_file, 'w') as f:
                 f.write(circuit.transpiled_circuit.qasm)
 
 
 
 def main():
-    generate_benchmarks()
+    generate_benchmarks(rseed=42)
 
 
 
