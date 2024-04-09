@@ -43,7 +43,6 @@ def random_3sat(nvars : int, nclauses : int):
     return cnf, sat
 
 
-
 def cnf2classiq(cnf : CNF):
     """
     Convert CNF to format classiq's Grover oracle uses.
@@ -94,7 +93,6 @@ def cnf2classiq(cnf : CNF):
     return formula, var_names
 
 
-
 def generate_grover(cnf : CNF):
     """
     Generate Grover circuit for given SAT formula.
@@ -129,7 +127,6 @@ def generate_grover(cnf : CNF):
     return circuit
 
 
-
 def generate_benchmarks(rseed : int = None):
     """
     Generate Grover SAT benchmarks of varying sizes.
@@ -161,10 +158,8 @@ def generate_benchmarks(rseed : int = None):
                 f.write(circuit.transpiled_circuit.qasm)
 
 
-
 def main():
     generate_benchmarks(rseed=42)
-
 
 
 if __name__ == '__main__':

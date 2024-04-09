@@ -136,7 +136,7 @@ def experiments_qasm(args):
     qsy_vec = '--state-vector' if args.log_vector else ''
 
     # TODO: test multiple workers for Q-Sylvan
-    workers = [1]
+    workers = [1,2,4,8]
     count_nodes = '--count-nodes'
 
     print(f"Writing to {bash_file_all}, {bash_file_mqt}, {bash_file_qsy}")
