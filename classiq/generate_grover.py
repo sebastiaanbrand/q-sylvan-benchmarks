@@ -139,8 +139,8 @@ def generate_benchmarks(rseed : int = None):
     qasm_dir = "qasm/classiq"
     pathlib.Path(cnf_dir).mkdir(parents=True, exist_ok=True)
 
-    for nvars in range(3, 8):
-        for nclauses in np.linspace(nvars*1, nvars*5, num=5, dtype=int):
+    for nvars in range(4, 7):
+        for nclauses in np.linspace(nvars*2, nvars*5, num=10, dtype=int):
 
             # Generate (satisfiable) 3SAT formula
             sat = False

@@ -25,3 +25,6 @@ qsylvan.pc
 # experiment output data
 experiments/
 results/
+
+# ignore qasm files until final version
+qasm/
