@@ -14,7 +14,7 @@ formats = ['png']
 
 parser = argparse.ArgumentParser()
 parser.add_argument('dir', help="Experiments directory (the one which is a date+time).")
-
+parser.add_argument('--compare_vecs', action='store_true', default=False, help="Sanity check by comparing full state vectors (if present).")
 
 def plots_dir(args):
     """
@@ -61,10 +61,17 @@ def compare_vectors(exp_dir : str):
                 data = json.load(f)
                 if 'state_vector' in data:
                     vec_qsy = np.apply_along_axis(lambda args: [complex(*args)], 1, data['state_vector'])
-            with open(filepath.replace('qsylvan_1', 'mqt'), 'r') as f:
-                data = json.load(f)
-                if 'state_vector' in data:
-                    vec_mqt = np.apply_along_axis(lambda args: [complex(*args)], 1, data['state_vector'])
+                else:
+                    print(f"No state vector in {filepath}, skipping")
+                    continue
+            mqt_file = filepath.replace('qsylvan_1', 'mqt')
+            try:
+                with open(mqt_file, 'r') as f:
+                    data = json.load(f)
+                    if 'state_vector' in data:
+                        vec_mqt = np.apply_along_axis(lambda args: [complex(*args)], 1, data['state_vector'])
+            except:
+                print(f"Could not get json data from {mqt_file}, skipping")
             if not vec_qsy is None and not vec_mqt is None:
                 # normalize global phase
                 in_prod = np.dot(vec_qsy.conj().T, vec_mqt)[0,0]
@@ -136,10 +143,11 @@ def plot_scatter(data_x, data_y, data_labels, label_x, label_y, filename, args):
 
 def plot_tool_comparison(df : pd.DataFrame, args):
     """
-    Plot Q-Sylvan vs MQT-DDSIM
+    Plot Q-Sylvan (single worker) vs MQT-DDSIM
     """
     left = df.loc[df['tool'] == 'mqt']
     right = df.loc[df['tool'] == 'q-sylvan']
+    right = right.loc[right['workers'] == 1]
 
     joined = pd.merge(left, right, on='benchmark', how='outer', suffixes=('_l','_r'))
     #print(joined)
@@ -149,7 +157,7 @@ def plot_tool_comparison(df : pd.DataFrame, args):
     data_labels = joined['benchmark']
 
     plot_scatter(data_l, data_r, data_labels, 
-                'MQT-DDSIM time', 'Q-Sylvan time (s)',
+                'MQT-DDSIM time', 'Q-Sylvan (1 worker) time (s)',
                 'mqt_vs_qsylvan', args)
 
 
@@ -213,7 +221,8 @@ if __name__ == '__main__':
     df = load_data(args.dir)
 
     sanity_check(df)
-    compare_vectors(args.dir)
+    if args.compare_vecs:
+        compare_vectors(args.dir)
     
     Path(plots_dir(args)).mkdir(parents=True, exist_ok=True)
     print(f"Writing plots to {plots_dir(args)}")
