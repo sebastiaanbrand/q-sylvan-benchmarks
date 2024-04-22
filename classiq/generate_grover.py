@@ -93,9 +93,9 @@ def cnf2classiq(cnf : CNF):
     return formula, var_names
 
 
-def generate_grover(cnf : CNF):
+def generate_grover_classiq(cnf : CNF):
     """
-    Generate Grover circuit for given SAT formula.
+    Generate Grover circuit for given SAT formula, ussing Classiq.
 
     See https://docs.classiq.io/latest/tutorials/algorithms/grover/3-sat-grover/3-sat-grover/
     for example.
@@ -137,10 +137,11 @@ def generate_benchmarks(rseed : int = None):
 
     cnf_dir  = "qasm/classiq/cnf"
     qasm_dir = "qasm/classiq"
-    pathlib.Path(cnf_dir).mkdir(parents=True, exist_ok=True)
+    for path in [cnf_dir, qasm_dir+"/trans", qasm_dir+"/cirq" ]:
+        pathlib.Path(path).mkdir(parents=True, exist_ok=True)
 
     for nvars in range(4, 7):
-        for nclauses in np.linspace(nvars*2, nvars*5, num=10, dtype=int):
+        for nclauses in np.linspace(nvars*2, nvars*5, num=20, dtype=int):
 
             # Generate (satisfiable) 3SAT formula
             sat = False
@@ -152,10 +153,13 @@ def generate_benchmarks(rseed : int = None):
             cnf.to_file(cnf_file)
 
             # Generate + write Grover circuit
-            circuit = generate_grover(cnf)
-            qasm_file = f"{qasm_dir}/grover_cnf_{nvars}_{nclauses}_rseed{rseed}.qasm"
+            circuit = generate_grover_classiq(cnf)
+            qasm_file = f"{qasm_dir}/trans/grover_cnf_{nvars}_{nclauses}_rseed{rseed}_trans.qasm"
             with open(qasm_file, 'w') as f:
                 f.write(circuit.transpiled_circuit.qasm)
+            qasm_file = f"{qasm_dir}/cirq/grover_cnf_{nvars}_{nclauses}_rseed{rseed}_cirq.qasm"
+            with open(qasm_file, 'w') as f:
+                f.write(circuit.qasm_cirq_compatible)
 
 
 def main():
