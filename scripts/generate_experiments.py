@@ -11,7 +11,7 @@ output_file = "experiments/{}/run.sh"
 csv_output  = "experiments/{}/results.csv"
 
 qsy_qasm = "timeout {} ./extern/q-sylvan/build/qasm/sim_qasm {} --workers {} {} {} --json {}\n"
-mqt_qasm = "timeout {} ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_file {} --shots 1 --ps --pm {} |& tee {}\n"
+mqt_qasm = "timeout {} ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_file {} --shots 1 --ps --pm {} 2> {} 1> {}\n"
 
 
 parser = argparse.ArgumentParser()
@@ -52,7 +52,7 @@ def experiments_qasm(args):
     Write bash file to benchmark given qasm files on both Q-Sylvan and MQT DDSIM
     """
     global output_dir
-    output_dir = output_dir.format(datetime.now().strftime("%Y%m%d%m_%H%M%S"))
+    output_dir = output_dir.format(datetime.now().strftime("%Y%m%d_%H%M%S"))
     Path(os.path.join(output_dir,'json')).mkdir(parents=True, exist_ok=True)
     bash_file_all = output_dir + '/run_all.sh'
     bash_file_mqt = output_dir + '/run_mqt.sh'
@@ -89,8 +89,9 @@ def experiments_qasm(args):
             filename = os.path.basename(filepath)
             # MQT
             json_output = f"{output_dir}/json/{filename[:-5]}_mqt.json"
-            f_all.write(mqt_qasm.format(args.timeout, filepath, mqt_vec, json_output))
-            f_mqt.write(mqt_qasm.format(args.timeout, filepath, mqt_vec, json_output))
+            err_log     = f"{output_dir}/json/{filename[:-5]}_mqt.log"
+            f_all.write(mqt_qasm.format(args.timeout, filepath, mqt_vec, err_log, json_output))
+            f_mqt.write(mqt_qasm.format(args.timeout, filepath, mqt_vec, err_log, json_output))
             # Q-Sylvan
             for w in workers:
                 json_output = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}.json"
