@@ -110,33 +110,47 @@ def _plot_diagonal_lines(ax, min_val, max_val, at=[0.1, 10]):
     return ax
 
 
-def plot_scatter(data_x, data_y, data_labels, label_x, label_y, filename, args):
+def plot_scatter(datas_x, datas_y, datas_labels, colors, legend_labels, 
+                 label_x, label_y, outputname, args):
     """
-    Produce scatter plot of data_x vs data_y
+    Produce scatter plot.
+
+    datas_x, datas_y, datas_labels should all have shape (i, j), where the first
+    index is used to give different datapoints different colors.
+    colors should have length i
+    legend_labels should have length i or be None
     """
+    assert len(datas_x) == len(datas_y)
+    assert len(datas_x) == len(datas_labels)
+    assert len(datas_x) == len(colors)
+
     fig, ax = plt.subplots()
 
-    col = 'royalblue'
-    fc_cols = np.array([col for _ in range(len(data_x))])
-    fc_cols[data_x == timeout_time] = 'none'
-    fc_cols[data_y == timeout_time] = 'none'
+    # plot the x and y data
+    for data_x, data_y, col in zip(datas_x, datas_y, colors):
+        fc_cols = np.array([col for _ in range(len(data_x))])
+        fc_cols[data_x == timeout_time] = 'none'
+        fc_cols[data_y == timeout_time] = 'none'
+        ax.scatter(data_x, data_y, facecolors=fc_cols, edgecolors=col)
 
-    # plot the data + diagonal line
-    ax = _plot_diagonal_lines(ax, 0, timeout_time, at=[])
-    ax.scatter(data_x, data_y, facecolors=fc_cols, edgecolors=col)
-
-    # axis labels, etc.
+    # axis labels, legend, etc.
     ax.set_xlabel(label_x)
     ax.set_ylabel(label_y)
+    if legend_labels is not None:
+        ax.legend(legend_labels)
+    
+    # plot diagonal line
+    ax = _plot_diagonal_lines(ax, 0, timeout_time, at=[])
     
     # save figure
-    outputpath = os.path.join(plots_dir(args), 'mqt_vs_qsylvan')
+    outputpath = os.path.join(plots_dir(args), outputname)
     for _format in formats:
         fig.savefig(f"{outputpath}.{_format}")
     
     # save version of the figure with labeled data points
-    for i, bench_name in enumerate(data_labels):
-        ax.annotate(bench_name, (data_x[i], data_y[i]), fontsize=1.0, rotation=60)
+    for data_x, data_y, data_labels in zip(datas_x, datas_y, datas_labels):
+        for i, bench_name in enumerate(data_labels):
+            ax.annotate(bench_name, (data_x[i], data_y[i]), fontsize=1.0, rotation=60)
     fig.savefig(f"{outputpath}_annotated.pdf")
     fig.clf()
 
@@ -146,22 +160,55 @@ def plot_tool_comparison(df : pd.DataFrame, args):
     Plot Q-Sylvan (single worker) vs MQT-DDSIM
     """
     left = df.loc[df['tool'] == 'mqt']
-    right = df.loc[df['tool'] == 'q-sylvan']
-    right = right.loc[right['workers'] == 1]
+    right = df.loc[(df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
 
     joined = pd.merge(left, right, on='benchmark', how='outer', suffixes=('_l','_r'))
-    #print(joined)
 
     data_l = joined['simulation_time_l'].fillna(timeout_time)
     data_r = joined['simulation_time_r'].fillna(timeout_time)
     data_labels = joined['benchmark']
 
-    plot_scatter(data_l, data_r, data_labels, 
+    plot_scatter([data_l], [data_r], [data_labels], ['royalblue'], None,
                 'MQT-DDSIM time', 'Q-Sylvan (1 worker) time (s)',
                 'mqt_vs_qsylvan', args)
 
 
-if __name__ == '__main__':
+def plot_relative_speedups(df : pd.DataFrame, args):
+    """
+    For each benchmark, plot multicore time / 1 core time.
+    """
+    # Get only q-sylvan data
+    data = df.loc[(df['tool'] == 'q-sylvan')]
+
+    # Get unique numbers of workers
+    workers = sorted(data['workers'].unique())
+    assert workers[0] == 1
+
+    # Get single worker data
+    data_1 = data.loc[data['workers'] == 1]
+
+    # For each other number of workers, match with single worker
+    datas_x = []
+    datas_y = []
+    datas_labels = []
+    for w in workers:
+        data_w = data.loc[data['workers'] == w]
+        joined = pd.merge(data_1, data_w, on='benchmark', how='outer', suffixes=('_1','_w'))
+
+        datas_x.append(joined['simulation_time_1'].fillna(timeout_time))
+        datas_y.append(joined['simulation_time_w'].fillna(timeout_time))
+        datas_labels.append(joined['benchmark'])
+
+    # Pass to plot scatter
+    colors = ['grey', 'royalblue', 'darkorange', 'forestgreen', 'orchid'] # add more if needed
+    legend_labels = [f"1v{int(w)} workers" for w in workers]
+    plot_scatter(datas_x, datas_y, datas_labels, colors[:len(workers)],
+                 legend_labels,
+                 '1 worker time (s)', 'w workers time (s)',
+                 'multicore_scatter', args)
+
+
+def main():
     args = parser.parse_args()
     df = load_data(args.dir)
 
@@ -171,4 +218,9 @@ if __name__ == '__main__':
     
     Path(plots_dir(args)).mkdir(parents=True, exist_ok=True)
     print(f"Writing plots to {plots_dir(args)}")
-    plot_tool_comparison(df, args)
+    #plot_tool_comparison(df, args)
+    plot_relative_speedups(df, args)
+
+
+if __name__ == '__main__':
+    main()
