@@ -10,7 +10,7 @@ output_dir  = "experiments/{}"
 output_file = "experiments/{}/run.sh"
 csv_output  = "experiments/{}/results.csv"
 
-qsy_qasm = "timeout {} ./extern/q-sylvan/build/qasm/sim_qasm {} --workers {} {} {} --json {}\n"
+qsy_qasm = "timeout {} ./extern/q-sylvan/build/qasm/sim_qasm {} --workers {} {} {} --json {} &> {}\n"
 mqt_qasm = "timeout {} ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_file {} --shots 1 --ps --pm {} 2> {} 1> {}\n"
 
 
@@ -89,14 +89,15 @@ def experiments_qasm(args):
             filename = os.path.basename(filepath)
             # MQT
             json_output = f"{output_dir}/json/{filename[:-5]}_mqt.json"
-            err_log     = f"{output_dir}/json/{filename[:-5]}_mqt.log"
-            f_all.write(mqt_qasm.format(args.timeout, filepath, mqt_vec, err_log, json_output))
-            f_mqt.write(mqt_qasm.format(args.timeout, filepath, mqt_vec, err_log, json_output))
+            log         = f"{output_dir}/json/{filename[:-5]}_mqt.log"
+            f_all.write(mqt_qasm.format(args.timeout, filepath, mqt_vec, log, json_output))
+            f_mqt.write(mqt_qasm.format(args.timeout, filepath, mqt_vec, log, json_output))
             # Q-Sylvan
             for w in workers:
                 json_output = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}.json"
-                f_all.write(qsy_qasm.format(args.timeout, filepath, w, count_nodes, qsy_vec, json_output))
-                f_qsy.write(qsy_qasm.format(args.timeout, filepath, w, count_nodes, qsy_vec, json_output))
+                log         = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}.log"
+                f_all.write(qsy_qasm.format(args.timeout, filepath, w, count_nodes, qsy_vec, json_output, log))
+                f_qsy.write(qsy_qasm.format(args.timeout, filepath, w, count_nodes, qsy_vec, json_output, log))
 
 
 def main():
