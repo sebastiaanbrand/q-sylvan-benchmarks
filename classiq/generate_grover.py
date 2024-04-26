@@ -149,15 +149,16 @@ def generate_benchmarks(rseed : int = None):
                 cnf, sat = random_3sat(nvars, nclauses)
 
             # Write CNF to file
-            cnf_file = f"{cnf_dir}/cnf_{nvars}_{nclauses}_rseed{rseed}.cnf"
+            _id = int(datetime.now().timestamp())
+            cnf_file = f"{cnf_dir}/cnf_{nvars}_{nclauses}_id{_id}.cnf"
             cnf.to_file(cnf_file)
 
             # Generate + write Grover circuit
             circuit = generate_grover_classiq(cnf)
-            qasm_file = f"{qasm_dir}/trans/grover_cnf_{nvars}_{nclauses}_rseed{rseed}_trans.qasm"
+            qasm_file = f"{qasm_dir}/trans/grover_cnf_{nvars}_{nclauses}_id{_id}_trans.qasm"
             with open(qasm_file, 'w') as f:
                 f.write(circuit.transpiled_circuit.qasm)
-            qasm_file = f"{qasm_dir}/cirq/grover_cnf_{nvars}_{nclauses}_rseed{rseed}_cirq.qasm"
+            qasm_file = f"{qasm_dir}/cirq/grover_cnf_{nvars}_{nclauses}_id{_id}_cirq.qasm"
             with open(qasm_file, 'w') as f:
                 f.write(circuit.qasm_cirq_compatible)
 
