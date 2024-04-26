@@ -218,7 +218,7 @@ def main():
     
     Path(plots_dir(args)).mkdir(parents=True, exist_ok=True)
     print(f"Writing plots to {plots_dir(args)}")
-    #plot_tool_comparison(df, args)
+    plot_tool_comparison(df, args)
     plot_relative_speedups(df, args)
 
 
