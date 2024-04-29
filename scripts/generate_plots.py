@@ -180,28 +180,35 @@ def _plot_diagonal_lines(ax, min_val, max_val, at=[0.1, 10]):
     return ax
 
 
-def plot_scatter(datas_x, datas_y, datas_labels, colors, legend_labels, 
-                 label_x, label_y, outputname, args):
+def plot_scatter(data_x_3d, data_y_3d, data_labels_3d,
+                 colors, markers,
+                 legend_labels, label_x, label_y,
+                 outputname, args):
     """
     Produce scatter plot.
 
-    datas_x, datas_y, datas_labels should all have shape (i, j), where the first
-    index is used to give different datapoints different colors.
-    colors should have length i
-    legend_labels should have length i or be None
+    - datas_x, datas_y, statuses, and data datas_labels should all
+    have shape (i, j, k), where
+        - the first index is used gives different markers.
+        - the second index is used to gives different colors.
+    - colors should be a 1d list of length j
+    - markers should be a 1d list of length i
+    - legend_labels should be a 1d list or be None
     """
-    assert len(datas_x) == len(datas_y)
-    assert len(datas_x) == len(datas_labels)
-    assert len(datas_x) == len(colors)
+    #assert len(datas_x) == len(datas_y)
+    #assert len(datas_x) == len(datas_labels)
+    #assert len(datas_x) == len(colors)
 
     fig, ax = plt.subplots()
 
     # plot the x and y data
-    for data_x, data_y, col in zip(datas_x, datas_y, colors):
-        fc_cols = np.array([col for _ in range(len(data_x))])
-        fc_cols[data_x == timeout_time] = 'none'
-        fc_cols[data_y == timeout_time] = 'none'
-        ax.scatter(data_x, data_y, facecolors=fc_cols, edgecolors=col)
+    for data_x_2d, data_y_2d, marker in zip(data_x_3d, data_y_3d, markers):
+        # TODO: base the shape of the points on the status
+        for data_x, data_y, col in zip(data_x_2d, data_y_2d, colors):
+            fc_cols = np.array([col for _ in range(len(data_x))])
+            fc_cols[data_x == timeout_time] = 'none'
+            fc_cols[data_y == timeout_time] = 'none'
+            ax.scatter(data_x, data_y, marker=marker, facecolors=fc_cols, edgecolors=col)
 
     # axis labels, legend, etc.
     ax.set_xlabel(label_x)
@@ -218,9 +225,10 @@ def plot_scatter(datas_x, datas_y, datas_labels, colors, legend_labels,
         fig.savefig(f"{outputpath}.{_format}")
     
     # save version of the figure with labeled data points
-    for data_x, data_y, data_labels in zip(datas_x, datas_y, datas_labels):
-        for i, bench_name in enumerate(data_labels):
-            ax.annotate(bench_name, (data_x[i], data_y[i]), fontsize=1.0, rotation=60)
+    for data_x_2d, data_y_2d, data_labels_2d in zip(data_x_3d, data_y_3d, data_labels_3d):
+        for data_x, data_y, data_labels in zip(data_x_2d, data_y_2d, data_labels_2d):
+            for i, bench_name in data_labels.items():
+                ax.annotate(bench_name, (data_x[i], data_y[i]), fontsize=1.0, rotation=60)
     fig.savefig(f"{outputpath}_annotated.pdf")
     fig.clf()
 
@@ -234,13 +242,23 @@ def plot_tool_comparison(df : pd.DataFrame, args):
 
     joined = pd.merge(left, right, on='benchmark', how='outer', suffixes=('_l','_r'))
 
-    data_l = joined['simulation_time_l'].fillna(timeout_time)
-    data_r = joined['simulation_time_r'].fillna(timeout_time)
-    data_labels = joined['benchmark']
+    # group by q-sylvan termination status
+    finished = joined.loc[(joined['status_r'] == 'FINISHED') | 
+                          (joined['status_r'] == 'TIMEOUT')]
+    tab_full = joined.loc[(joined['status_r'] == 'WEIGHT_TABLE_FULL') | 
+                          (joined['status_r'] == 'NODE_TABLE_FULL')] # TODO: separate?
+    data_l = []
+    data_r = []
+    data_labels = []
+    for group in [finished, tab_full]:
+        data_l.append([group['simulation_time_l'].fillna(timeout_time)])
+        data_r.append([group['simulation_time_r'].fillna(timeout_time)])
+        data_labels.append([group['benchmark']])
 
-    plot_scatter([data_l], [data_r], [data_labels], ['royalblue'], None,
-                'MQT-DDSIM time', 'Q-Sylvan (1 worker) time (s)',
-                'mqt_vs_qsylvan', args)
+    plot_scatter(data_l, data_r, data_labels,
+                 ['royalblue'], ['o', 's'], None,
+                 'MQT-DDSIM time', 'Q-Sylvan (1 worker) time (s)',
+                 'mqt_vs_qsylvan', args)
 
 
 def plot_relative_speedups(df : pd.DataFrame, args):
@@ -258,22 +276,25 @@ def plot_relative_speedups(df : pd.DataFrame, args):
     data_1 = data.loc[data['workers'] == 1]
 
     # For each other number of workers, match with single worker
-    datas_x = []
-    datas_y = []
-    datas_labels = []
+    data_x = []
+    data_y = []
+    data_labels = []
     for w in workers:
         data_w = data.loc[data['workers'] == w]
         joined = pd.merge(data_1, data_w, on='benchmark', how='outer', suffixes=('_1','_w'))
 
-        datas_x.append(joined['simulation_time_1'].fillna(timeout_time))
-        datas_y.append(joined['simulation_time_w'].fillna(timeout_time))
-        datas_labels.append(joined['benchmark'])
+        print(joined)
+        exit()
+
+        data_x.append(joined['simulation_time_1'].fillna(timeout_time))
+        data_y.append(joined['simulation_time_w'].fillna(timeout_time))
+        data_labels.append(joined['benchmark'])
 
     # Pass to plot scatter
     colors = ['grey', 'royalblue', 'darkorange', 'forestgreen', 'orchid'] # add more if needed
-    legend_labels = [f"1v{int(w)} workers" for w in workers]
-    plot_scatter(datas_x, datas_y, datas_labels, colors[:len(workers)],
-                 legend_labels,
+    legend_labels = [f"w = {int(w)} workers" for w in workers]
+    plot_scatter([data_x], [data_y], [data_labels],
+                 colors[:len(workers)], ['o'], legend_labels,
                  '1 worker time (s)', 'w workers time (s)',
                  'multicore_scatter', args)
 
