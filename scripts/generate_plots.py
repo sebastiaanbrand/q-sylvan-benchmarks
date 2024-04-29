@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import json
 import argparse
@@ -23,11 +24,48 @@ def plots_dir(args):
     return os.path.join(args.dir, 'plots')
 
 
-def load_data(exp_dir : str):
+def _get_termination_status(log_filepath : str):
     """
-    Load the data (and do some preprocessing)
+    Get the termination status of benchmark based on log.
     """
-    print(f"Loading data from {exp_dir}")
+    with open(log_filepath) as f:
+        text = f.read()
+        if 'qsylvan' in log_filepath:
+            if "Amplitude table full" in text:
+                return 'WEIGHT_TABLE_FULL'
+            elif "Unique table full" in text:
+                return 'NODE_TABLE_FULL'
+            elif "statistics" in text:
+                return 'FINISHED'
+            elif "timeout" in text:
+                return 'TIMEOUT'
+            else:
+                return 'TODO'
+        else:
+            return 'TODO'
+
+
+def _get_log_info(log_filepath : str, log_filename : str):
+    """
+    Get info from the log file.
+    """
+    stats = {}
+    if 'qsylvan' in log_filename:
+        stats['tool'] = 'q-sylvan'
+        info = re.split('_qsylvan_|.log', log_filename)
+        stats['benchmark'] = info[0]
+        stats['workers'] = int(info[1])
+    elif 'mqt' in log_filename:
+        stats['tool'] = 'mqt'
+        stats['benchmark'] = log_filename.split('_mqt')[0]
+    stats['status'] = _get_termination_status(log_filepath)
+    return stats
+
+
+def load_json(exp_dir : str):
+    """
+    Load the data (and do some preprocessing).
+    """
     df = pd.DataFrame()
     json_dir = os.path.join(exp_dir, 'json')
     for filename in sorted(os.listdir(json_dir)):
@@ -40,15 +78,45 @@ def load_data(exp_dir : str):
                     stats['tool'] = 'mqt'
                 else:
                     stats['tool'] = 'q-sylvan'
-                new_df = pd.DataFrame(stats, index=[0])
-                df = pd.concat([df, new_df])
+                stats['status'] = 'FINISHED'
+                entry = pd.DataFrame(stats, index=[0])
+                df = pd.concat([df, entry])
 
-    return df[['benchmark', 'tool', 'simulation_time', 'workers', 'max_nodes', 'norm']]        
+    return df[['benchmark', 'tool', 'status', 'simulation_time', 'workers', 'max_nodes', 'norm']]        
+
+
+def load_logs(exp_dir : str, df : pd.DataFrame):
+    """
+    Add information from logs to dataframe.
+    """
+    log_dir = os.path.join(exp_dir, 'json') # output logs to separate dir?
+    for filename in sorted(os.listdir(log_dir)):
+        filepath = os.path.join(log_dir, filename)
+        if filename.endswith('.log') and os.path.getsize(filepath) > 0:
+            stats = _get_log_info(filepath, filename)
+            if stats['status'] == 'TODO':
+                continue
+            elif stats['status'] == 'FINISHED':
+                assert stats['benchmark'] in df['benchmark'].values
+            else:
+                entry = pd.DataFrame(stats, index=[0])
+                df = pd.concat([df, entry])
+    return df
+
+
+def load_data(exp_dir : str):
+    """
+    Load the data (and do some preprocessing).
+    """
+    print(f"Loading data from {exp_dir}")
+    df = load_json(exp_dir)
+    df = load_logs(exp_dir, df)
+    return df
 
 
 def compare_vectors(exp_dir : str):
     """
-    Compare state vectors in json files if present
+    Compare state vectors in json files if present.
     """
     print("Comparing state vectors between both tools")
     json_dir = os.path.join(exp_dir, 'json')
@@ -87,7 +155,9 @@ def sanity_check(df : pd.DataFrame):
     """
     Do some basic sanity checks on the collected data.
     """
-    issues = df.loc[(df['norm'] != 1.0) & (df['tool'] == 'q-sylvan')]
+    issues = df.loc[(df['norm'] != 1.0) &
+                    (df['tool'] == 'q-sylvan') &
+                    (df['status'] == 'FINISHED')]
     if len(issues) > 0:
         print("Instances with issues:")
         print(issues)
