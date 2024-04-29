@@ -236,7 +236,7 @@ def plot_tool_comparison(df : pd.DataFrame, args):
 
     data_l = joined['simulation_time_l'].fillna(timeout_time)
     data_r = joined['simulation_time_r'].fillna(timeout_time)
-    data_labels = joined['benchmark']
+    data_labels = [f"{n} ({s})" for n, s in zip(joined['benchmark'],joined['status_r'])]
 
     plot_scatter([data_l], [data_r], [data_labels], ['royalblue'], None,
                 'MQT-DDSIM time', 'Q-Sylvan (1 worker) time (s)',
@@ -264,11 +264,12 @@ def plot_relative_speedups(df : pd.DataFrame, args):
     for w in workers:
         data_w = data.loc[data['workers'] == w]
         joined = pd.merge(data_1, data_w, on='benchmark', how='outer', suffixes=('_1','_w'))
+        joined[['status_1','status_w']] = joined[['status_1', 'status_w']].fillna('TIMEOUT')
 
         datas_x.append(joined['simulation_time_1'].fillna(timeout_time))
         datas_y.append(joined['simulation_time_w'].fillna(timeout_time))
-        datas_labels.append(joined['benchmark'])
-
+        datas_labels.append([f"{n} ({s1},{sw})" for n, s1, sw in\
+                       zip(joined['benchmark'], joined['status_1'], joined['status_w'])])
     # Pass to plot scatter
     colors = ['grey', 'royalblue', 'darkorange', 'forestgreen', 'orchid'] # add more if needed
     legend_labels = [f"1v{int(w)} workers" for w in workers]
