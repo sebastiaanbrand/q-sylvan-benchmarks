@@ -67,40 +67,44 @@ def load_json(exp_dir : str):
     Load the data (and do some preprocessing).
     """
     df = pd.DataFrame()
+    rows = []
     json_dir = os.path.join(exp_dir, 'json')
     for filename in sorted(os.listdir(json_dir)):
         filepath = os.path.join(json_dir, filename)
         if filename.endswith('.json') and os.path.getsize(filepath) > 0:
             with open(filepath, 'r') as f:
                 data = json.load(f)
-                stats = data['statistics']
+                row = data['statistics']
                 if (filename.endswith('mqt.json')):
-                    stats['tool'] = 'mqt'
+                    row['tool'] = 'mqt'
+                    row['workers'] = 1
                 else:
-                    stats['tool'] = 'q-sylvan'
-                stats['status'] = 'FINISHED'
-                entry = pd.DataFrame(stats, index=[0])
-                df = pd.concat([df, entry])
+                    row['tool'] = 'q-sylvan'
+                row['status'] = 'FINISHED'
+                rows.append(row)
 
-    return df[['benchmark', 'tool', 'status', 'simulation_time', 'workers', 'max_nodes', 'norm']]        
+    df = pd.DataFrame(rows)
+    return df[['benchmark', 'n_qubits', 'tool', 'status', 'simulation_time', 
+               'workers', 'max_nodes', 'norm']]        
 
 
 def load_logs(exp_dir : str, df : pd.DataFrame):
     """
     Add information from logs to dataframe.
     """
+    new_rows = []
     log_dir = os.path.join(exp_dir, 'json') # output logs to separate dir?
     for filename in sorted(os.listdir(log_dir)):
         filepath = os.path.join(log_dir, filename)
         if filename.endswith('.log') and os.path.getsize(filepath) > 0:
-            stats = _get_log_info(filepath, filename)
-            if stats['status'] == 'TODO':
+            row = _get_log_info(filepath, filename)
+            if row['status'] == 'TODO':
                 continue
-            elif stats['status'] == 'FINISHED':
-                assert stats['benchmark'] in df['benchmark'].values
+            elif row['status'] == 'FINISHED':
+                assert row['benchmark'] in df['benchmark'].values
             else:
-                entry = pd.DataFrame(stats, index=[0])
-                df = pd.concat([df, entry])
+                new_rows.append(row)
+    df = pd.concat([df, pd.DataFrame(new_rows)], ignore_index=True)
     return df
 
 
@@ -180,7 +184,9 @@ def _plot_diagonal_lines(ax, min_val, max_val, at=[0.1, 10]):
     return ax
 
 
-def plot_scatter(datas_x, datas_y, datas_labels, colors, legend_labels, 
+def plot_scatter(datas_x, datas_y, datas_labels, 
+                 plot_diagonal, x_scale, y_scale,
+                 colors, legend_labels, 
                  label_x, label_y, outputname, args):
     """
     Produce scatter plot.
@@ -206,11 +212,14 @@ def plot_scatter(datas_x, datas_y, datas_labels, colors, legend_labels,
     # axis labels, legend, etc.
     ax.set_xlabel(label_x)
     ax.set_ylabel(label_y)
+    ax.set_xscale(x_scale)
+    ax.set_yscale(y_scale)
     if legend_labels is not None:
         ax.legend(legend_labels)
     
     # plot diagonal line
-    ax = _plot_diagonal_lines(ax, 0, timeout_time, at=[])
+    if plot_diagonal:
+        ax = _plot_diagonal_lines(ax, 0, timeout_time, at=[])
     
     # save figure
     outputpath = os.path.join(plots_dir(args), outputname)
@@ -227,10 +236,10 @@ def plot_scatter(datas_x, datas_y, datas_labels, colors, legend_labels,
 
 def plot_tool_comparison(df : pd.DataFrame, args):
     """
-    Plot Q-Sylvan (single worker) vs MQT-DDSIM
+    Plot Q-Sylvan (single worker) vs MQT-DDSIM.
     """
-    left = df.loc[df['tool'] == 'mqt']
-    right = df.loc[(df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
+    left   = df.loc[df['tool'] == 'mqt']
+    right  = df.loc[(df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
 
     joined = pd.merge(left, right, on='benchmark', how='outer', suffixes=('_l','_r'))
 
@@ -238,9 +247,37 @@ def plot_tool_comparison(df : pd.DataFrame, args):
     data_r = joined['simulation_time_r'].fillna(timeout_time)
     data_labels = [f"{n} ({s})" for n, s in zip(joined['benchmark'],joined['status_r'])]
 
-    plot_scatter([data_l], [data_r], [data_labels], ['royalblue'], None,
-                'MQT-DDSIM time', 'Q-Sylvan (1 worker) time (s)',
-                'mqt_vs_qsylvan', args)
+    plot_scatter([data_l], [data_r], [data_labels],
+                 True, 'linear', 'linear',
+                 ['royalblue'], None,
+                 'MQT-DDSIM time', 'Q-Sylvan (1 worker) time (s)',
+                 'mqt_vs_qsylvan', args)
+
+
+def plot_dd_size_vs_qubits(df : pd.DataFrame, args):
+    """
+    Plot (log) DD-size vs the number of qubits.
+    """
+    df = df.loc[df['status'] == 'FINISHED']
+
+    mqt      = df.loc[df['tool'] == 'mqt']
+    qsylvan  = df.loc[(df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
+    mqt      = mqt.reset_index()
+    qsylvan  = qsylvan.reset_index()
+
+    datas_x = []
+    datas_y = []
+    datas_labels = []
+    for tool in [qsylvan, mqt]:
+        datas_x.append(tool['n_qubits'])
+        datas_y.append(tool['max_nodes'])
+        datas_labels.append(tool['benchmark'])
+    
+    legend_labels = ['q-sylvan', 'mqt']
+    plot_scatter(datas_x, datas_y, datas_labels, 
+                 False, 'linear', 'log',
+                 ['royalblue', 'darkorange'], legend_labels,
+                 '# qubits', 'max nodes', 'qubits_vs_nodes', args)
 
 
 def plot_relative_speedups(df : pd.DataFrame, args):
@@ -273,8 +310,9 @@ def plot_relative_speedups(df : pd.DataFrame, args):
     # Pass to plot scatter
     colors = ['grey', 'royalblue', 'darkorange', 'forestgreen', 'orchid'] # add more if needed
     legend_labels = [f"1v{int(w)} workers" for w in workers]
-    plot_scatter(datas_x, datas_y, datas_labels, colors[:len(workers)],
-                 legend_labels,
+    plot_scatter(datas_x, datas_y, datas_labels,
+                 True, 'linear', 'linear',
+                 colors[:len(workers)], legend_labels,
                  '1 worker time (s)', 'w workers time (s)',
                  'multicore_scatter', args)
 
@@ -290,6 +328,7 @@ def main():
     Path(plots_dir(args)).mkdir(parents=True, exist_ok=True)
     print(f"Writing plots to {plots_dir(args)}")
     plot_tool_comparison(df, args)
+    plot_dd_size_vs_qubits(df, args)
     plot_relative_speedups(df, args)
 
 
