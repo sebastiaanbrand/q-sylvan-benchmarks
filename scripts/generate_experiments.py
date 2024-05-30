@@ -10,13 +10,15 @@ output_dir  = "experiments/{}"
 output_file = "experiments/{}/run.sh"
 csv_output  = "experiments/{}/results.csv"
 
-qsy_qasm = "timeout {} ./extern/q-sylvan/build/qasm/sim_qasm {} --workers {} {} {} --json {} &> {}\n"
+qsy_qasm = "timeout {} ./extern/q-sylvan/build/qasm/sim_qasm {} --workers {} {} --json {} &> {}\n"
 mqt_qasm = "timeout {} ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_file {} --shots 1 --ps --pm {} 2> {} 1> {}\n"
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('qasm_dir', help="Path of directory with .qasm files.")
 parser.add_argument('--log_vector', action='store_true', default=False, help="Log entire final state vector.")
+parser.add_argument('--multicore', action='store_true', default=False, help="Run multicore benchmarks.")
+parser.add_argument('--inv_caching', action='store_true', default=False ,help="Run Q-Sylvan with both INV-CACHING on and off.")
 parser.add_argument('--timeout', action='store', default='10m', help='Timeout time per benchmark')
 parser.add_argument('--recursive', action='store_true', default=False, help="Recursively look for .qasm files in given dir.")
 
@@ -57,12 +59,15 @@ def experiments_qasm(args):
     bash_file_all = output_dir + '/run_all.sh'
     bash_file_mqt = output_dir + '/run_mqt.sh'
     bash_file_qsy = output_dir + '/run_qsylvan.sh'
-    mqt_vec = '--pv' if args.log_vector else ''
-    qsy_vec = '--state-vector' if args.log_vector else ''
+    mqt_args = ''
+    qsy_args = ''
+    if args.log_vector:
+        mqt_args += '--pv'
+        qsy_args += '--state-vector'
 
-    # TODO: test multiple workers for Q-Sylvan
-    workers = [1,2,4,8]
-    count_nodes = '--count-nodes'
+    qsy_args += ' --count-nodes'
+    workers = [1,2,4,8] if args.multicore else [1]
+    inv_caching = ['', ' --disable-inv-caching'] if args.inv_caching else ['']
 
     print(f"Writing to {bash_file_all}, {bash_file_mqt}, {bash_file_qsy}")
     with open(bash_file_all, 'w') as f_all,\
@@ -85,19 +90,22 @@ def experiments_qasm(args):
                     filepaths.append(os.path.join(args.qasm_dir, filename))
 
         # write to bash scripts
+        exp_counter = 0
         for filepath in sorted(filepaths, key=natural_sorting):
             filename = os.path.basename(filepath)
             # MQT
             json_output = f"{output_dir}/json/{filename[:-5]}_mqt.json"
             log         = f"{output_dir}/json/{filename[:-5]}_mqt.log"
-            f_all.write(mqt_qasm.format(args.timeout, filepath, mqt_vec, log, json_output))
-            f_mqt.write(mqt_qasm.format(args.timeout, filepath, mqt_vec, log, json_output))
+            f_all.write(mqt_qasm.format(args.timeout, filepath, mqt_args, log, json_output))
+            f_mqt.write(mqt_qasm.format(args.timeout, filepath, mqt_args, log, json_output))
             # Q-Sylvan
             for w in workers:
-                json_output = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}.json"
-                log         = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}.log"
-                f_all.write(qsy_qasm.format(args.timeout, filepath, w, count_nodes, qsy_vec, json_output, log))
-                f_qsy.write(qsy_qasm.format(args.timeout, filepath, w, count_nodes, qsy_vec, json_output, log))
+                for inv in inv_caching:
+                    exp_counter += 1
+                    json_output = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}_{exp_counter}.json"
+                    log         = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}_{exp_counter}.log"
+                    f_all.write(qsy_qasm.format(args.timeout, filepath, w, qsy_args+inv, json_output, log))
+                    f_qsy.write(qsy_qasm.format(args.timeout, filepath, w, qsy_args+inv, json_output, log))
 
 
 def main():
