@@ -52,9 +52,9 @@ def _get_log_info(log_filepath : str, log_filename : str):
     stats = {}
     if 'qsylvan' in log_filename:
         stats['tool'] = 'q-sylvan'
-        info = re.split('_qsylvan_|.log', log_filename)
-        stats['benchmark'] = info[0]
-        stats['workers'] = int(info[1])
+        parts = re.split('_|.log', log_filename)
+        stats['benchmark'] = '_'.join(parts[:parts.index('qsylvan')])
+        stats['workers'] = int(parts[parts.index('qsylvan')+1])
     elif 'mqt' in log_filename:
         stats['tool'] = 'mqt'
         stats['benchmark'] = log_filename.split('_mqt')[0]
@@ -85,7 +85,7 @@ def load_json(exp_dir : str):
 
     df = pd.DataFrame(rows)
     return df[['benchmark', 'n_qubits', 'tool', 'status', 'simulation_time', 
-               'workers', 'max_nodes', 'norm']]        
+               'workers', 'wgt_inv_caching', 'max_nodes', 'norm']]        
 
 
 def load_logs(exp_dir : str, df : pd.DataFrame):
@@ -198,12 +198,14 @@ def plot_scatter(datas_x, datas_y, datas_labels,
     """
     assert len(datas_x) == len(datas_y)
     assert len(datas_x) == len(datas_labels)
-    assert len(datas_x) == len(colors)
+    assert len(datas_x) <= len(colors)
 
     fig, ax = plt.subplots()
 
     # plot the x and y data
+    max_val = 0
     for data_x, data_y, col in zip(datas_x, datas_y, colors):
+        max_val = max(max_val, np.amax([data_x, data_y]))
         fc_cols = np.array([col for _ in range(len(data_x))])
         fc_cols[data_x == timeout_time] = 'none'
         fc_cols[data_y == timeout_time] = 'none'
@@ -219,7 +221,7 @@ def plot_scatter(datas_x, datas_y, datas_labels,
     
     # plot diagonal line
     if plot_diagonal:
-        ax = _plot_diagonal_lines(ax, 0, timeout_time, at=[])
+        ax = _plot_diagonal_lines(ax, 0, max_val, at=[])
     
     # save figure
     outputpath = os.path.join(plots_dir(args), outputname)
@@ -238,8 +240,11 @@ def plot_tool_comparison(df : pd.DataFrame, args):
     """
     Plot Q-Sylvan (single worker) vs MQT-DDSIM.
     """
-    left   = df.loc[df['tool'] == 'mqt']
-    right  = df.loc[(df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
+    left  = df.loc[df['tool'] == 'mqt']
+    right = df.loc[(df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
+    if left.empty:
+        print("No MQT data, skipping plot")
+        return
 
     joined = pd.merge(left, right, on='benchmark', how='outer', suffixes=('_l','_r'))
 
@@ -250,8 +255,35 @@ def plot_tool_comparison(df : pd.DataFrame, args):
     plot_scatter([data_l], [data_r], [data_labels],
                  True, 'linear', 'linear',
                  ['royalblue'], None,
-                 'MQT-DDSIM time', 'Q-Sylvan (1 worker) time (s)',
+                 'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
                  'mqt_vs_qsylvan', args)
+
+
+def plot_inv_cache_comparison(df : pd.DataFrame, args):
+    """
+    Plot nodecounts of inverse cache ON vs OFF.
+    """
+    # TODO: include non-terminated benchmarks
+    # (maybe have experiment generation write JSON files with settings)
+    df = df.loc[(df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
+
+    left  = df.loc[df['wgt_inv_caching'] == 0]
+    right = df.loc[df['wgt_inv_caching'] == 1]
+    if left.empty or right.empty:
+        print("No inv caching data, skipping plot")
+        return
+
+    joined = pd.merge(left, right, on='benchmark', how='inner', suffixes=('_l', '_r'))
+
+    data_l = joined['max_nodes_l']
+    data_r = joined['max_nodes_r']
+    data_labels = joined['benchmark']
+
+    plot_scatter([data_l], [data_r], [data_labels],
+                 True, 'linear', 'linear',
+                 ['royalblue'], None,
+                 'Max nodecount inverse cache OFF', 'Max nodecount inverse cache ON',
+                 'inv_caching_nodecount', args)
 
 
 def plot_dd_size_vs_qubits(df : pd.DataFrame, args):
@@ -269,6 +301,8 @@ def plot_dd_size_vs_qubits(df : pd.DataFrame, args):
     datas_y = []
     datas_labels = []
     for tool in [qsylvan, mqt]:
+        if tool.empty:
+            continue
         datas_x.append(tool['n_qubits'])
         datas_y.append(tool['max_nodes'])
         datas_labels.append(tool['benchmark'])
@@ -290,6 +324,9 @@ def plot_relative_speedups(df : pd.DataFrame, args):
     # Get unique numbers of workers
     workers = sorted(data['workers'].unique())
     assert workers[0] == 1
+    if len(workers) == 1:
+        print("No concurrent data, skipping plot")
+        return
 
     # Get single worker data
     data_1 = data.loc[data['workers'] == 1]
@@ -330,6 +367,7 @@ def main():
     plot_tool_comparison(df, args)
     plot_dd_size_vs_qubits(df, args)
     plot_relative_speedups(df, args)
+    plot_inv_cache_comparison(df, args)
 
 
 if __name__ == '__main__':
