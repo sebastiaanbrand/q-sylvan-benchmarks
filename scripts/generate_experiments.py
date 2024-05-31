@@ -16,6 +16,7 @@ mqt_qasm = "timeout {} ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_fil
 
 parser = argparse.ArgumentParser()
 parser.add_argument('qasm_dir', help="Path of directory with .qasm files.")
+parser.add_argument('--name', help="Name for experiments dir.")
 parser.add_argument('--log_vector', action='store_true', default=False, help="Log entire final state vector.")
 parser.add_argument('--test_multicore', action='store_true', default=False, help="Run multicore benchmarks.")
 parser.add_argument('--test_norm_strats', action='store_true', default=False, help="Run with different norm strats.")
@@ -56,7 +57,10 @@ def experiments_qasm(args):
     Write bash file to benchmark given qasm files on both Q-Sylvan and MQT DDSIM
     """
     global output_dir
-    output_dir = output_dir.format(datetime.now().strftime("%Y%m%d_%H%M%S"))
+    if args.name is not None:
+        output_dir = output_dir.format(args.name)
+    else:
+        output_dir = output_dir.format(datetime.now().strftime("%Y%m%d_%H%M%S"))
     Path(os.path.join(output_dir,'json')).mkdir(parents=True, exist_ok=True)
     bash_file_all = output_dir + '/run_all.sh'
     bash_file_mqt = output_dir + '/run_mqt.sh'
