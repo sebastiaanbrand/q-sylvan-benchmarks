@@ -18,6 +18,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('qasm_dir', help="Path of directory with .qasm files.")
 parser.add_argument('--log_vector', action='store_true', default=False, help="Log entire final state vector.")
 parser.add_argument('--test_multicore', action='store_true', default=False, help="Run multicore benchmarks.")
+parser.add_argument('--test_norm_strats', action='store_true', default=False, help="Run with different norm strats.")
 parser.add_argument('--test_inv_caching', action='store_true', default=False ,help="Run with both INV-CACHING on/off.")
 parser.add_argument('--test_reorder', action='store_true', default=False, help="Run with reorder qubits on/off.")
 parser.add_argument('--timeout', action='store', default='10m', help='Timeout time per benchmark')
@@ -70,6 +71,7 @@ def experiments_qasm(args):
     workers = [1,2,4,8] if args.test_multicore else [1]
     inv_caching = ['', ' --disable-inv-caching'] if args.test_inv_caching else ['']
     reorder = ['', ' --allow-reorder', ' --allow-reorder-swaps'] if args.test_reorder else ['']
+    norm_strats = [' -s low', ' -s largest', ' -s l2'] if args.test_norm_strats else ['']
 
     print(f"Writing to {bash_file_all}, {bash_file_mqt}, {bash_file_qsy}")
     with open(bash_file_all, 'w') as f_all,\
@@ -102,13 +104,14 @@ def experiments_qasm(args):
             f_mqt.write(mqt_qasm.format(args.timeout, filepath, mqt_args, log, json_output))
             # Q-Sylvan
             for w in workers:
-                for inv in inv_caching:
-                    for r in reorder:
-                        exp_counter += 1
-                        json_output = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}_{exp_counter}.json"
-                        log         = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}_{exp_counter}.log"
-                        f_all.write(qsy_qasm.format(args.timeout, filepath, w, qsy_args+inv+r, json_output, log))
-                        f_qsy.write(qsy_qasm.format(args.timeout, filepath, w, qsy_args+inv+r, json_output, log))
+                for s in norm_strats:
+                    for inv in inv_caching:
+                        for r in reorder:
+                            exp_counter += 1
+                            json_output = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}_{exp_counter}.json"
+                            log         = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}_{exp_counter}.log"
+                            f_all.write(qsy_qasm.format(args.timeout, filepath, w, qsy_args+s+inv+r, json_output, log))
+                            f_qsy.write(qsy_qasm.format(args.timeout, filepath, w, qsy_args+s+inv+r, json_output, log))
 
 
 def main():
