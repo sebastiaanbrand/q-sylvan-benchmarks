@@ -3,6 +3,7 @@ import re
 import sys
 import json
 import argparse
+import itertools
 from typing import Iterable
 import numpy as np
 import pandas as pd
@@ -85,7 +86,7 @@ def load_json(exp_dir : str):
 
     df = pd.DataFrame(rows)
     return df[['benchmark', 'n_qubits', 'tool', 'status', 'simulation_time', 
-               'workers', 'wgt_inv_caching', 'max_nodes', 'norm']]        
+               'workers', 'wgt_norm_strat', 'wgt_inv_caching', 'max_nodes', 'norm']]        
 
 
 def load_logs(exp_dir : str, df : pd.DataFrame):
@@ -275,15 +276,66 @@ def plot_inv_cache_comparison(df : pd.DataFrame, args):
 
     joined = pd.merge(left, right, on='benchmark', how='inner', suffixes=('_l', '_r'))
 
+    # plot max nodes
     data_l = joined['max_nodes_l']
     data_r = joined['max_nodes_r']
     data_labels = joined['benchmark']
-
     plot_scatter([data_l], [data_r], [data_labels],
                  True, 'linear', 'linear',
                  ['royalblue'], None,
-                 'Max nodecount inverse cache OFF', 'Max nodecount inverse cache ON',
+                 'max nodes inverse cache OFF', 'max nodes inverse cache ON',
                  'inv_caching_nodecount', args)
+    
+    # plot runtime
+    data_l = joined['simulation_time_l']
+    data_r = joined['simulation_time_r']
+    data_labels = joined['benchmark']
+    plot_scatter([data_l], [data_r], [data_labels],
+                 True, 'linear', 'linear',
+                 ['royalblue'], None,
+                 'runtime (s) inverse cache OFF', 'runtime (s) inverse cache ON',
+                 'inv_caching_runtime', args)
+
+
+def plot_norm_strat_comparison(df : pd.DataFrame, args):
+    """
+    Plot max nodes for different norm strats.
+    """
+    df = df.loc[(df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
+
+    norm_strats = sorted(df['wgt_norm_strat'].unique())
+    norm_strats = [int(s) for s in norm_strats if not np.isnan(s)]
+    if len(norm_strats) == 1:
+        print("No norm strat data, skipping plot")
+        return
+
+    ns_names = ['LOW', 'LARGEST', 'L2']
+    for s1, s2 in itertools.combinations(norm_strats, 2):
+        left  = df.loc[df['wgt_norm_strat'] == s1]
+        right = df.loc[df['wgt_norm_strat'] == s2]
+
+        joined = pd.merge(left, right, on='benchmark', how='inner', suffixes=('_l', '_r'))
+
+        # plot max nodes
+        data_l = joined['max_nodes_l']
+        data_r = joined['max_nodes_r']
+        data_labels = joined['benchmark']
+        plot_scatter([data_l], [data_r], [data_labels],
+                     True, 'linear', 'linear',
+                     ['royalblue'], None,
+                     f'max nodes norm strat {ns_names[s1]}',
+                     f'max nodes norm strat {ns_names[s2]}',
+                     f'norm_strat_nodecount_{s1}vs{s2}', args)
+
+        # plot runtime
+        data_l = joined['simulation_time_l']
+        data_r = joined['simulation_time_r']
+        plot_scatter([data_l], [data_r], [data_labels],
+                     True, 'linear', 'linear',
+                     ['royalblue'], None,
+                     f'runtime (s) norm strat {ns_names[s1]}',
+                     f'runtime (s) norm strat {ns_names[s2]}',
+                     f'norm_strat_runtime_{s1}vs{s2}', args)
 
 
 def plot_dd_size_vs_qubits(df : pd.DataFrame, args):
@@ -367,6 +419,7 @@ def main():
     plot_tool_comparison(df, args)
     plot_dd_size_vs_qubits(df, args)
     plot_relative_speedups(df, args)
+    plot_norm_strat_comparison(df, args)
     plot_inv_cache_comparison(df, args)
 
 
