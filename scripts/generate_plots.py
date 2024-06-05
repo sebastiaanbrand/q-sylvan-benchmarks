@@ -125,9 +125,11 @@ def compare_vectors(exp_dir : str):
     """
     print("Comparing state vectors between both tools")
     json_dir = os.path.join(exp_dir, 'json')
+    regexp = re.compile(r'(.*)qsylvan(.*)json')
+    fidelities = {}
     for filename in sorted(os.listdir(json_dir)):
         filepath = os.path.join(json_dir, filename)
-        if filename.endswith('qsylvan_1.json') and os.path.getsize(filepath) > 0:
+        if regexp.search(filepath) and os.path.getsize(filepath) > 0:
             vec_qsy = None
             vec_mqt = None
             with open(filepath, 'r') as f:
@@ -137,7 +139,7 @@ def compare_vectors(exp_dir : str):
                 else:
                     print(f"No state vector in {filepath}, skipping")
                     continue
-            mqt_file = filepath.replace('qsylvan_1', 'mqt')
+            mqt_file = filepath.split('qsylvan')[0] + 'mqt.json'
             try:
                 with open(mqt_file, 'r') as f:
                     data = json.load(f)
@@ -149,11 +151,14 @@ def compare_vectors(exp_dir : str):
                 # normalize global phase
                 in_prod = np.dot(vec_qsy.conj().T, vec_mqt)[0,0]
                 fidelity = (abs(in_prod))**2
+                bench_name = filename.split('_qsylvan')[0]
+                fidelities[bench_name] = fidelity
                 if abs(in_prod - 1.0) > 1e-3:
-                    if fidelity < 0.999:
-                        print(f"Warning: fidelity = {np.round(fidelity,4)} for {filename[:-15]}")
+                    if abs(fidelity - 1.0) > 1e-3:
+                        print(f"Warning: fidelity = {np.round(fidelity,4)} for {bench_name}")
                     #else:
                     #    print(f"Note: different global phase for {filename[:-15]}")
+    return pd.DataFrame(fidelities.items(), columns=['benchmark', 'fidelity'])
 
 
 def sanity_check(df : pd.DataFrame):
@@ -237,7 +242,7 @@ def plot_scatter(datas_x, datas_y, datas_labels,
     fig.clf()
 
 
-def plot_tool_comparison(df : pd.DataFrame, args):
+def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args):
     """
     Plot Q-Sylvan (single worker) vs MQT-DDSIM.
     """
@@ -249,15 +254,39 @@ def plot_tool_comparison(df : pd.DataFrame, args):
 
     joined = pd.merge(left, right, on='benchmark', how='outer', suffixes=('_l','_r'))
 
-    data_l = joined['simulation_time_l'].fillna(timeout_time)
-    data_r = joined['simulation_time_r'].fillna(timeout_time)
-    data_labels = [f"{n} ({s})" for n, s in zip(joined['benchmark'],joined['status_r'])]
+    if fid_df is None:
+        data_l = joined['simulation_time_l'].fillna(timeout_time)
+        data_r = joined['simulation_time_r'].fillna(timeout_time)
+        data_labels = [f"{n} ({s})" for n, s in zip(joined['benchmark'],joined['status_r'])]
 
-    plot_scatter([data_l], [data_r], [data_labels],
-                 True, 'linear', 'linear',
-                 ['royalblue'], None,
-                 'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
-                 'mqt_vs_qsylvan', args)
+        plot_scatter([data_l], [data_r], [data_labels],
+                    True, 'linear', 'linear',
+                    ['royalblue'], None,
+                    'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
+                    'mqt_vs_qsylvan', args)
+    else:
+        joined = pd.merge(joined, fid_df, on='benchmark', how='left')
+        joined['fidelity'] = joined['fidelity'].fillna(-1)
+        fid_1    = joined.loc[(joined['fidelity'] > .999) & (joined['fidelity'] < 1.001)]
+        fid_not1 = joined.loc[((joined['fidelity'] < .999) | (joined['fidelity'] > 1.001)) 
+                                                          & (joined['fidelity'] >= 0.0)]
+        fid_na   = joined.loc[(joined['fidelity'] < 0.0)]
+
+        datas_l = []
+        datas_r = []
+        datas_labels = []
+        for fid in [fid_1, fid_not1, fid_na]:
+            fid = fid.reset_index()
+            datas_l.append(fid['simulation_time_l'].fillna(timeout_time))
+            datas_r.append(fid['simulation_time_r'].fillna(timeout_time))
+            datas_labels.append(fid['benchmark'])
+
+        plot_scatter(datas_l, datas_r, datas_labels,
+                    True, 'linear', 'linear',
+                    ['royalblue', 'darkorange', 'orchid'], 
+                    ['fidelity $=$ 1', 'fidelity $\\neq$ 1', 'fidelity N/A'],
+                    'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
+                    'mqt_vs_qsylvan_fid', args)
 
 
 def plot_inv_cache_comparison(df : pd.DataFrame, args):
@@ -411,12 +440,13 @@ def main():
     df = load_data(args.dir)
 
     sanity_check(df)
+    fid_df = None
     if args.compare_vecs:
-        compare_vectors(args.dir)
+        fid_df = compare_vectors(args.dir)
     
     Path(plots_dir(args)).mkdir(parents=True, exist_ok=True)
     print(f"Writing plots to {plots_dir(args)}")
-    plot_tool_comparison(df, args)
+    plot_tool_comparison(df, fid_df, args)
     plot_dd_size_vs_qubits(df, args)
     plot_relative_speedups(df, args)
     plot_norm_strat_comparison(df, args)
