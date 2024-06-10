@@ -1,10 +1,8 @@
 import os
 import re
-import sys
 import json
 import argparse
 import itertools
-from typing import Iterable
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -29,7 +27,7 @@ def _get_termination_status(log_filepath : str):
     """
     Get the termination status of benchmark based on log.
     """
-    with open(log_filepath) as f:
+    with open(log_filepath, 'r', encoding='utf-8') as f:
         text = f.read()
         if 'qsylvan' in log_filepath:
             if "Amplitude table full" in text:
@@ -73,10 +71,10 @@ def load_json(exp_dir : str):
     for filename in sorted(os.listdir(json_dir)):
         filepath = os.path.join(json_dir, filename)
         if filename.endswith('.json') and os.path.getsize(filepath) > 0:
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 row = data['statistics']
-                if (filename.endswith('mqt.json')):
+                if filename.endswith('mqt.json'):
                     row['tool'] = 'mqt'
                     row['workers'] = 1
                 else:
@@ -132,7 +130,7 @@ def compare_vectors(exp_dir : str):
         if regexp.search(filepath) and os.path.getsize(filepath) > 0:
             vec_qsy = None
             vec_mqt = None
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 if 'state_vector' in data:
                     vec_qsy = np.apply_along_axis(lambda args: [complex(*args)], 1, data['state_vector'])
@@ -141,7 +139,7 @@ def compare_vectors(exp_dir : str):
                     continue
             mqt_file = filepath.split('qsylvan')[0] + 'mqt.json'
             try:
-                with open(mqt_file, 'r') as f:
+                with open(mqt_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     if 'state_vector' in data:
                         vec_mqt = np.apply_along_axis(lambda args: [complex(*args)], 1, data['state_vector'])
@@ -177,7 +175,7 @@ def _plot_diagonal_lines(ax, min_val, max_val, at=[0.1, 10]):
     """
     Add diagonal lines to ax
     """
-    
+
     # bit of margin for vizualization
     #ax.set_xlim([min_val-0.15*min_val, max_val+0.15*max_val])
     #ax.set_ylim([min_val-0.15*min_val, max_val+0.15*max_val])
@@ -224,16 +222,16 @@ def plot_scatter(datas_x, datas_y, datas_labels,
     ax.set_yscale(y_scale)
     if legend_labels is not None:
         ax.legend(legend_labels)
-    
+
     # plot diagonal line
     if plot_diagonal:
         ax = _plot_diagonal_lines(ax, 0, max_val, at=[])
-    
+
     # save figure
     outputpath = os.path.join(plots_dir(args), outputname)
     for _format in formats:
         fig.savefig(f"{outputpath}.{_format}")
-    
+
     # save version of the figure with labeled data points
     for data_x, data_y, data_labels in zip(datas_x, datas_y, datas_labels):
         for i, bench_name in enumerate(data_labels):
@@ -314,7 +312,7 @@ def plot_inv_cache_comparison(df : pd.DataFrame, args):
                  ['royalblue'], None,
                  'max nodes inverse cache OFF', 'max nodes inverse cache ON',
                  'inv_caching_nodecount', args)
-    
+
     # plot runtime
     data_l = joined['simulation_time_l']
     data_r = joined['simulation_time_r']
@@ -387,7 +385,7 @@ def plot_dd_size_vs_qubits(df : pd.DataFrame, args):
         datas_x.append(tool['n_qubits'])
         datas_y.append(tool['max_nodes'])
         datas_labels.append(tool['benchmark'])
-    
+
     legend_labels = ['q-sylvan', 'mqt']
     plot_scatter(datas_x, datas_y, datas_labels, 
                  False, 'linear', 'log',
@@ -443,7 +441,7 @@ def main():
     fid_df = None
     if args.compare_vecs:
         fid_df = compare_vectors(args.dir)
-    
+
     Path(plots_dir(args)).mkdir(parents=True, exist_ok=True)
     print(f"Writing plots to {plots_dir(args)}")
     plot_tool_comparison(df, fid_df, args)
