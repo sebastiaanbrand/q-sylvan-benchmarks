@@ -60,11 +60,11 @@ def natural_sorting(filename : str):
 
 def get_num_qubits(filename : str):
     """
-    Assumes first number in the filename is the number of qubits.
+    Assumes last number in the filename is the number of qubits.
     """
     nums = re.findall(r'\d+', filename)
     if len(nums) >= 1:
-        return int(nums[0])
+        return int(nums[-1])
     return None
 
 
