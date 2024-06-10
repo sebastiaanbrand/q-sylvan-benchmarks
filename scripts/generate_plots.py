@@ -338,7 +338,7 @@ def plot_norm_strat_comparison(df : pd.DataFrame, args):
         print("No norm strat data, skipping plot")
         return
 
-    ns_names = ['LOW', 'LARGEST', 'L2']
+    ns_names = ['LOW', 'MAX', 'MIN', 'L2']
     for s1, s2 in itertools.combinations(norm_strats, 2):
         left  = df.loc[df['wgt_norm_strat'] == s1]
         right = df.loc[df['wgt_norm_strat'] == s2]

@@ -102,7 +102,7 @@ def experiments_qasm(args):
     workers = [1,2,4,8] if args.test_multicore else [1]
     inv_caching = ['', ' --disable-inv-caching'] if args.test_inv_caching else ['']
     reorder = ['', ' --allow-reorder', ' --allow-reorder-swaps'] if args.test_reorder else ['']
-    norm_strats = [' -s low', ' -s largest', ' -s l2'] if args.test_norm_strats else ['']
+    norm_strats = [' -s low', ' -s max', ' -s min',  ' -s l2'] if args.test_norm_strats else ['']
 
     print(f"Writing to {bash_file_all}, {bash_file_mqt}, {bash_file_qsy}")
     with open(bash_file_all, 'w', encoding='utf-8') as f_all,\
