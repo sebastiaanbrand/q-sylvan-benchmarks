@@ -10,6 +10,7 @@ from pathlib import Path
 
 timeout_time = 600 # replaces NaN from timeout with this time in the plots
 formats = ['png']
+NS_NAMES = { 0 : 'LOW', 1 : 'MAX', 2 : 'MIN', 3 : 'L2'}
 
 
 parser = argparse.ArgumentParser()
@@ -159,16 +160,22 @@ def compare_vectors(exp_dir : str):
     return pd.DataFrame(fidelities.items(), columns=['benchmark', 'fidelity'])
 
 
-def sanity_check(df : pd.DataFrame):
+def sanity_check(df : pd.DataFrame, args):
     """
-    Do some basic sanity checks on the collected data.
+    Do some basic sanity checks on the collected data and write to file.
     """
     issues = df.loc[(df['norm'] != 1.0) &
                     (df['tool'] == 'q-sylvan') &
                     (df['status'] == 'FINISHED')]
     if len(issues) > 0:
-        print("Instances with issues:")
-        print(issues)
+        print(f"{len(issues)} instances where norm != 1.0")
+        counts = issues.groupby(issues['wgt_norm_strat']).size()
+        for norm_strat, count in counts.items():
+            print(f"    normalize {NS_NAMES[norm_strat]}: {count} instances of norm != 1.0")
+        issue_file = os.path.join(args.dir, 'issues.txt')
+        print(f"    Writing details to {issue_file}")
+        with open(issue_file, 'w', encoding='utf-8') as f:
+            f.write(issues.to_string())
 
 
 def _plot_diagonal_lines(ax, min_val, max_val, at=[0.1, 10]):
@@ -336,7 +343,6 @@ def plot_norm_strat_comparison(df : pd.DataFrame, args):
         print("No norm strat data, skipping plot")
         return
 
-    ns_names = ['LOW', 'MAX', 'MIN', 'L2']
     for s1, s2 in itertools.combinations(norm_strats, 2):
         left  = df.loc[df['wgt_norm_strat'] == s1]
         right = df.loc[df['wgt_norm_strat'] == s2]
@@ -350,9 +356,9 @@ def plot_norm_strat_comparison(df : pd.DataFrame, args):
         plot_scatter([data_l], [data_r], [data_labels],
                      True, 'linear', 'linear',
                      ['royalblue'], None,
-                     f'max nodes norm strat {ns_names[s1]}',
-                     f'max nodes norm strat {ns_names[s2]}',
-                     f'norm_strat_nodecount_{s1}vs{s2}', args)
+                     f'max nodes norm strat {NS_NAMES[s1]}',
+                     f'max nodes norm strat {NS_NAMES[s2]}',
+                     f'norm_strat_nodecount_{NS_NAMES[s1]}_vs_{NS_NAMES[s2]}', args)
 
         # plot runtime
         data_l = joined['simulation_time_l']
@@ -360,9 +366,9 @@ def plot_norm_strat_comparison(df : pd.DataFrame, args):
         plot_scatter([data_l], [data_r], [data_labels],
                      True, 'linear', 'linear',
                      ['royalblue'], None,
-                     f'runtime (s) norm strat {ns_names[s1]}',
-                     f'runtime (s) norm strat {ns_names[s2]}',
-                     f'norm_strat_runtime_{s1}vs{s2}', args)
+                     f'runtime (s) norm strat {NS_NAMES[s1]}',
+                     f'runtime (s) norm strat {NS_NAMES[s2]}',
+                     f'norm_strat_runtime_{NS_NAMES[s1]}_vs_{NS_NAMES[s2]}', args)
 
 
 def plot_dd_size_vs_qubits(df : pd.DataFrame, args):
@@ -437,7 +443,7 @@ def main():
     args = parser.parse_args()
     df = load_data(args.dir)
 
-    sanity_check(df)
+    sanity_check(df, args)
     fid_df = None
     if args.compare_vecs:
         fid_df = compare_vectors(args.dir)
