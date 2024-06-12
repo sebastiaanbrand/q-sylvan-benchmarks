@@ -10,7 +10,8 @@ from pathlib import Path
 
 timeout_time = 600 # replaces NaN from timeout with this time in the plots
 formats = ['png']
-NS_NAMES = { 0 : 'LOW', 1 : 'MAX', 2 : 'MIN', 3 : 'L2'}
+COLORS = ['royalblue', 'darkorange', 'forestgreen', 'orchid']
+NS_NAMES = { 0 : 'low', 1 : 'max', 2 : 'min', 3 : 'l2'}
 
 
 parser = argparse.ArgumentParser()
@@ -349,23 +350,46 @@ def plot_norm_strat_comparison(df : pd.DataFrame, args):
 
         joined = pd.merge(left, right, on='benchmark', how='inner', suffixes=('_l', '_r'))
 
-        # plot max nodes
-        data_l = joined['max_nodes_l']
-        data_r = joined['max_nodes_r']
-        data_labels = joined['benchmark']
-        plot_scatter([data_l], [data_r], [data_labels],
+        # split into groups depending on if norm is 1
+        joined_ok2 = joined.loc[(joined['norm_l'] == 1) & (joined['norm_r'] == 1)]
+        joined_okl = joined.loc[(joined['norm_l'] == 1) & (joined['norm_r'] != 1)]
+        joined_okr = joined.loc[(joined['norm_l'] != 1) & (joined['norm_r'] == 1)]
+        joined_ok0 = joined.loc[(joined['norm_l'] != 1) & (joined['norm_r'] != 1)]
+        norm_split = [joined_ok2, joined_okl, joined_okr, joined_ok0]
+        norm_split_names = ['norm $=$ 1 (both)', f'norm $\\neq$ 1 ({NS_NAMES[s2]})', 
+                            f'norm $\\neq$ 1 ({NS_NAMES[s1]})', 'norm $\\neq$ 1 (both)']
+
+        # plot max nodes (separate for each norm subset)
+        datas_l = []
+        datas_r = []
+        datas_labels = []
+        legend_names = []
+        for subset, name in zip(norm_split, norm_split_names):
+            if len(subset) > 0:
+                subset = subset.reset_index()
+                datas_l.append(subset['max_nodes_l'])
+                datas_r.append(subset['max_nodes_r'])
+                datas_labels.append(subset['benchmark'])
+                legend_names.append(name)
+        plot_scatter(datas_l, datas_r, datas_labels,
                      True, 'linear', 'linear',
-                     ['royalblue'], None,
+                     COLORS, legend_names,
                      f'max nodes norm strat {NS_NAMES[s1]}',
                      f'max nodes norm strat {NS_NAMES[s2]}',
                      f'norm_strat_nodecount_{NS_NAMES[s1]}_vs_{NS_NAMES[s2]}', args)
 
-        # plot runtime
-        data_l = joined['simulation_time_l']
-        data_r = joined['simulation_time_r']
-        plot_scatter([data_l], [data_r], [data_labels],
+        # plot runtime (separate for each norm subset)
+        # (labels and legend can be is already sset in previous loop)
+        datas_l = []
+        datas_r = []
+        for subset, name in zip(norm_split, norm_split_names):
+            if len(subset) > 0:
+                subset = subset.reset_index()
+                datas_l.append(subset['simulation_time_l'])
+                datas_r.append(subset['simulation_time_r'])
+        plot_scatter(datas_l, datas_r, datas_labels,
                      True, 'linear', 'linear',
-                     ['royalblue'], None,
+                     COLORS, legend_names,
                      f'runtime (s) norm strat {NS_NAMES[s1]}',
                      f'runtime (s) norm strat {NS_NAMES[s2]}',
                      f'norm_strat_runtime_{NS_NAMES[s1]}_vs_{NS_NAMES[s2]}', args)
