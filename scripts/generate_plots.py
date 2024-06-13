@@ -94,7 +94,7 @@ def load_logs(exp_dir : str, df : pd.DataFrame):
     Add information from logs to dataframe.
     """
     new_rows = []
-    log_dir = os.path.join(exp_dir, 'json') # output logs to separate dir?
+    log_dir = os.path.join(exp_dir, 'logs')
     for filename in sorted(os.listdir(log_dir)):
         filepath = os.path.join(log_dir, filename)
         if filename.endswith('.log') and os.path.getsize(filepath) > 0:

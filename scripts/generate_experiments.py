@@ -89,6 +89,7 @@ def experiments_qasm(args):
     else:
         output_dir = output_dir.format(datetime.now().strftime("%Y%m%d_%H%M%S"))
     Path(os.path.join(output_dir,'json')).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(output_dir,'logs')).mkdir(parents=True, exist_ok=True)
     bash_file_all = output_dir + '/run_all.sh'
     bash_file_mqt = output_dir + '/run_mqt.sh'
     bash_file_qsy = output_dir + '/run_qsylvan.sh'
@@ -132,7 +133,7 @@ def experiments_qasm(args):
                 continue
             # MQT
             json_output = f"{output_dir}/json/{filename[:-5]}_mqt.json"
-            log         = f"{output_dir}/json/{filename[:-5]}_mqt.log"
+            log         = f"{output_dir}/logs/{filename[:-5]}_mqt.log"
             f_all.write(mqt_qasm.format(args.timeout, filepath, mqt_args, log, json_output))
             f_mqt.write(mqt_qasm.format(args.timeout, filepath, mqt_args, log, json_output))
             # Q-Sylvan
@@ -142,7 +143,7 @@ def experiments_qasm(args):
                         for r in reorder:
                             exp_counter += 1
                             json_output = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}_{exp_counter}.json"
-                            log         = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}_{exp_counter}.log"
+                            log         = f"{output_dir}/logs/{filename[:-5]}_qsylvan_{w}_{exp_counter}.log"
                             f_all.write(qsy_qasm.format(args.timeout, filepath, w, qsy_args+s+inv+r, json_output, log))
                             f_qsy.write(qsy_qasm.format(args.timeout, filepath, w, qsy_args+s+inv+r, json_output, log))
 
