@@ -99,10 +99,10 @@ def experiments_qasm(args):
         mqt_args += '--pv'
         qsy_args += '--state-vector'
 
-    qsy_args += ' --count-nodes --allow-reorder-swaps'
+    qsy_args += ' --count-nodes'
     workers = [1,2,4,8] if args.test_multicore else [1]
     inv_caching = ['', ' --disable-inv-caching'] if args.test_inv_caching else ['']
-    reorder = ['', ' --allow-reorder', ' --allow-reorder-swaps'] if args.test_reorder else ['']
+    reorder = ['', ' --reorder', ' --reorder-swaps'] if args.test_reorder else [' --reorder-swaps']
     norm_strats = [' -s low', ' -s max', ' -s min',  ' -s l2'] if args.test_norm_strats else ['']
 
     print(f"Writing to {bash_file_all}, {bash_file_mqt}, {bash_file_qsy}")
