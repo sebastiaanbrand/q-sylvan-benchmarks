@@ -10,7 +10,7 @@ from pathlib import Path
 
 timeout_time = 600 # replaces NaN from timeout with this time in the plots
 formats = ['png']
-COLORS = ['royalblue', 'darkorange', 'forestgreen', 'orchid']
+COLORS = ['royalblue', 'darkorange', 'forestgreen', 'crimson']
 NS_NAMES = { 0 : 'low', 1 : 'max', 2 : 'min', 3 : 'l2'}
 
 parser = argparse.ArgumentParser()
@@ -133,15 +133,16 @@ def add_circuit_categories(df : pd.DataFrame):
     """
     Add column to the df in which every benchmark labeled with a category.
     """
-    circuit_categories = {}
+    cat_info = {}
     with open(os.path.join(os.path.dirname(__file__), 'circuit_categories.json')) as f:
-        circuit_categories = json.load(f)
+        cat_info = json.load(f)
+    circuit_types = cat_info['circuit_types']
+    use_cat = cat_info['use_category']
     df.insert(loc=1, column='category', value = 'N/A')
     for i, row in df.iterrows():
-        found = False
         circ_type = row['benchmark'].split('_')[0]
-        if circ_type in circuit_categories:
-            df.at[i,'category'] = circuit_categories[circ_type]
+        if circ_type in circuit_types:
+            df.at[i,'category'] = circuit_types[circ_type][use_cat]
         else:
             print(f"uncategorized benchmark: {row['benchmark']}")
     return df
@@ -468,7 +469,7 @@ def plot_dd_size_vs_qubits(df : pd.DataFrame, args):
             continue
 
         # Group circuits by category for visualization
-        categories = data['category'].unique()
+        categories = sorted(data['category'].unique(), key=lambda x:(x!='other', x))
         datas_x = []
         datas_y = []
         datas_labels = []
