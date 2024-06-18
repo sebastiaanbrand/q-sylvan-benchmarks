@@ -25,6 +25,13 @@ def plots_dir(args):
     return os.path.join(args.dir, 'plots')
 
 
+def issues_file(args):
+    """
+    File to write instances with issues to.
+    """
+    return os.path.join(args.dir, 'issues.txt')
+
+
 def _get_termination_status(log_filepath : str):
     """
     Get the termination status of benchmark based on log.
@@ -119,19 +126,21 @@ def load_data(exp_dir : str):
     return df
 
 
-def compare_vectors(exp_dir : str):
+def compare_vectors(args):
     """
     Compare state vectors in json files if present.
     """
     print("Comparing state vectors between both tools")
-    json_dir = os.path.join(exp_dir, 'json')
+    json_dir = os.path.join(args.dir, 'json')
     regexp = re.compile(r'(.*)qsylvan(.*)json')
-    fidelities = {}
+    fidelities = []
+    fidelity_issues = []
     for filename in sorted(os.listdir(json_dir)):
         filepath = os.path.join(json_dir, filename)
         if regexp.search(filepath) and os.path.getsize(filepath) > 0:
             vec_qsy = None
             vec_mqt = None
+            row = None
             with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 if 'state_vector' in data:
@@ -139,6 +148,7 @@ def compare_vectors(exp_dir : str):
                 else:
                     print(f"No state vector in {filepath}, skipping")
                     continue
+                row = data['statistics']
             mqt_file = filepath.split('qsylvan')[0] + 'mqt.json'
             try:
                 with open(mqt_file, 'r', encoding='utf-8') as f:
@@ -146,37 +156,52 @@ def compare_vectors(exp_dir : str):
                     if 'state_vector' in data:
                         vec_mqt = np.apply_along_axis(lambda args: [complex(*args)], 1, data['state_vector'])
             except:
-                print(f"Could not get json data from {mqt_file}, skipping")
+                print(f"    Could not get json data from {mqt_file}, skipping")
+            
             if not vec_qsy is None and not vec_mqt is None:
                 # normalize global phase
                 in_prod = np.dot(vec_qsy.conj().T, vec_mqt)[0,0]
                 fidelity = (abs(in_prod))**2
-                bench_name = filename.split('_qsylvan')[0]
-                fidelities[bench_name] = fidelity
+                row['fidelity'] = fidelity
+                fidelities.append(row)
                 if abs(in_prod - 1.0) > 1e-3:
                     if abs(fidelity - 1.0) > 1e-3:
-                        print(f"Warning: fidelity = {np.round(fidelity,4)} for {bench_name}")
+                        fidelity_issues.append(row)
                     #else:
                     #    print(f"Note: different global phase for {filename[:-15]}")
-    return pd.DataFrame(fidelities.items(), columns=['benchmark', 'fidelity'])
+    fid_df = pd.DataFrame(fidelities)
+    if len(fidelity_issues) > 0:
+        print(f"    {len(fidelity_issues)} instances where fidelity !~= 1.000")
+        print(f"    Writing details to {issues_file(args)}")
+        issues_df = pd.DataFrame(fidelity_issues)[['benchmark', 'n_qubits', 
+                    'simulation_time', 'workers', 'wgt_norm_strat',
+                    'wgt_inv_caching', 'max_nodes', 'norm', 'fidelity']]
+        with open(issues_file(args), 'a', encoding='utf-8') as f:
+            f.write("Issues with fidelity:\n")
+            f.write(issues_df.to_string())
+            f.write("\n\n")
+    return fid_df
 
 
 def sanity_check(df : pd.DataFrame, args):
     """
     Do some basic sanity checks on the collected data and write to file.
     """
+    print("Checking norms")
     issues = df.loc[(df['norm'] != 1.0) &
                     (df['tool'] == 'q-sylvan') &
                     (df['status'] == 'FINISHED')]
     if len(issues) > 0:
-        print(f"{len(issues)} instances where norm != 1.0")
-        counts = issues.groupby(issues['wgt_norm_strat']).size()
-        for norm_strat, count in counts.items():
-            print(f"    normalize {NS_NAMES[norm_strat]}: {count} instances of norm != 1.0")
-        issue_file = os.path.join(args.dir, 'issues.txt')
-        print(f"    Writing details to {issue_file}")
-        with open(issue_file, 'w', encoding='utf-8') as f:
+        print(f"    {len(issues)} instances where norm != 1.0")
+        if len([x for x in df['wgt_norm_strat'].unique() if ~np.isnan(x)]) > 1:
+            counts = issues.groupby(issues['wgt_norm_strat']).size()
+            for norm_strat, count in counts.items():
+                print(f"    normalize {NS_NAMES[norm_strat]}: {count} instances of norm != 1.0")
+        print(f"    Writing details to {issues_file(args)}")
+        with open(issues_file(args), 'a', encoding='utf-8') as f:
+            f.write("Issues with norm:\n")
             f.write(issues.to_string())
+            f.write("\n\n\n")
 
 
 def _plot_diagonal_lines(ax, min_val, max_val, at=[0.1, 10]):
@@ -467,10 +492,14 @@ def main():
     args = parser.parse_args()
     df = load_data(args.dir)
 
+
+    # sanity check norms + vectors (if given)
+    open(issues_file(args), 'w', encoding='utf-8')
     sanity_check(df, args)
     fid_df = None
     if args.compare_vecs:
-        fid_df = compare_vectors(args.dir)
+        fid_df = compare_vectors(args)
+    exit()
 
     Path(plots_dir(args)).mkdir(parents=True, exist_ok=True)
     print(f"Writing plots to {plots_dir(args)}")
