@@ -13,7 +13,6 @@ formats = ['png']
 COLORS = ['royalblue', 'darkorange', 'forestgreen', 'orchid']
 NS_NAMES = { 0 : 'low', 1 : 'max', 2 : 'min', 3 : 'l2'}
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument('dir', help="Experiments directory (the one which is a date+time).")
 parser.add_argument('--compare_vecs', action='store_true', default=False, help="Sanity check by comparing full state vectors (if present).")
@@ -70,6 +69,18 @@ def _get_log_info(log_filepath : str, log_filename : str):
     return stats
 
 
+def _add_missing_fields(row : dict):
+    """
+    Add missing data fields (i.e. information which was added to later version
+    of the code) to allow the plotting code to re-plot older data.
+    """
+    if 'reorder' not in row.keys():
+        row['reorder'] = 2
+    if 'wgt_inv_caching' not in row.keys():
+        row['wgt_inv_caching'] = 1
+    return row
+
+
 def load_json(exp_dir : str):
     """
     Load the data (and do some preprocessing).
@@ -89,6 +100,7 @@ def load_json(exp_dir : str):
                 else:
                     row['tool'] = 'q-sylvan'
                 row['status'] = 'FINISHED'
+                row = _add_missing_fields(row)
                 rows.append(row)
 
     df = pd.DataFrame(rows)
@@ -117,6 +129,24 @@ def load_logs(exp_dir : str, df : pd.DataFrame):
     return df
 
 
+def add_circuit_categories(df : pd.DataFrame):
+    """
+    Add column to the df in which every benchmark labeled with a category.
+    """
+    circuit_categories = {}
+    with open(os.path.join(os.path.dirname(__file__), 'circuit_categories.json')) as f:
+        circuit_categories = json.load(f)
+    df.insert(loc=1, column='category', value = 'N/A')
+    for i, row in df.iterrows():
+        found = False
+        circ_type = row['benchmark'].split('_')[0]
+        if circ_type in circuit_categories:
+            df.at[i,'category'] = circuit_categories[circ_type]
+        else:
+            print(f"uncategorized benchmark: {row['benchmark']}")
+    return df
+
+
 def load_data(exp_dir : str):
     """
     Load the data (and do some preprocessing).
@@ -124,6 +154,7 @@ def load_data(exp_dir : str):
     print(f"Loading data from {exp_dir}")
     df = load_json(exp_dir)
     df = load_logs(exp_dir, df)
+    df = add_circuit_categories(df)
     return df
 
 
@@ -432,21 +463,24 @@ def plot_dd_size_vs_qubits(df : pd.DataFrame, args):
     mqt      = mqt.reset_index()
     qsylvan  = qsylvan.reset_index()
 
-    datas_x = []
-    datas_y = []
-    datas_labels = []
-    for tool in [qsylvan, mqt]:
-        if tool.empty:
+    for data, name in zip([qsylvan, mqt], ['qsylvan', 'mqt']):
+        if data.empty:
             continue
-        datas_x.append(tool['n_qubits'])
-        datas_y.append(tool['max_nodes'])
-        datas_labels.append(tool['benchmark'])
 
-    legend_labels = ['q-sylvan', 'mqt']
-    plot_scatter(datas_x, datas_y, datas_labels, 
-                 False, 'linear', 'log',
-                 ['royalblue', 'darkorange'], legend_labels,
-                 '# qubits', 'max nodes', 'qubits_vs_nodes', args)
+        # Group circuits by category for visualization
+        categories = data['category'].unique()
+        datas_x = []
+        datas_y = []
+        datas_labels = []
+        for cat in categories:
+            cat_data = data.loc[data['category'] == cat].reset_index()
+            datas_x.append(cat_data['n_qubits'])
+            datas_y.append(cat_data['max_nodes'])
+            datas_labels.append(cat_data['benchmark'])
+        plot_scatter(datas_x, datas_y, datas_labels, 
+                    False, 'linear', 'log',
+                    COLORS, categories,
+                    '# qubits', 'max nodes', f'qubits_vs_nodes_{name}', args)
 
 
 def plot_relative_speedups(df : pd.DataFrame, args):
@@ -500,7 +534,6 @@ def main():
     fid_df = None
     if args.compare_vecs:
         fid_df = compare_vectors(args)
-    exit()
 
     Path(plots_dir(args)).mkdir(parents=True, exist_ok=True)
     print(f"Writing plots to {plots_dir(args)}")
