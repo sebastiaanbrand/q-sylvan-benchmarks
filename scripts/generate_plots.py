@@ -93,7 +93,8 @@ def load_json(exp_dir : str):
 
     df = pd.DataFrame(rows)
     return df[['benchmark', 'n_qubits', 'tool', 'status', 'simulation_time', 
-               'workers', 'wgt_norm_strat', 'wgt_inv_caching', 'max_nodes', 'norm']]        
+               'workers', 'reorder', 'wgt_norm_strat', 'wgt_inv_caching', 
+               'max_nodes', 'norm']]        
 
 
 def load_logs(exp_dir : str, df : pd.DataFrame):
@@ -174,7 +175,7 @@ def compare_vectors(args):
         print(f"    {len(fidelity_issues)} instances where fidelity !~= 1.000")
         print(f"    Writing details to {issues_file(args)}")
         issues_df = pd.DataFrame(fidelity_issues)[['benchmark', 'n_qubits', 
-                    'simulation_time', 'workers', 'wgt_norm_strat',
+                    'simulation_time', 'workers', 'reorder', 'wgt_norm_strat',
                     'wgt_inv_caching', 'max_nodes', 'norm', 'fidelity']]
         with open(issues_file(args), 'a', encoding='utf-8') as f:
             f.write("Issues with fidelity:\n")
