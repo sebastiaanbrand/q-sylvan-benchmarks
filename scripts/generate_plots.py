@@ -1,17 +1,21 @@
+"""
+Python script to generate plots given a directory with benchmark results.
+"""
 import os
 import re
 import json
 import argparse
 import itertools
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from pathlib import Path
 
-timeout_time = 600 # replaces NaN from timeout with this time in the plots
-formats = ['png']
+TIMEOUT_TIME = 600 # replaces NaN from timeout with this time in the plots
+FORMATS = ['png']
 COLORS = ['royalblue', 'darkorange', 'forestgreen', 'crimson']
 NS_NAMES = { 0 : 'low', 1 : 'max', 2 : 'min', 3 : 'l2'}
+CIRCUIT_CATEGORY_FILE = os.path.join(os.path.dirname(__file__), 'circuit_categories.json')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('dir', help="Experiments directory (the one which is a date+time).")
@@ -104,7 +108,7 @@ def load_json(exp_dir : str):
                 rows.append(row)
 
     df = pd.DataFrame(rows)
-    return df[['benchmark', 'n_qubits', 'tool', 'status', 'simulation_time', 
+    return df[['benchmark', 'n_qubits', 'tool', 'status', 'simulation_time',
                'workers', 'reorder', 'wgt_norm_strat', 'wgt_inv_caching', 
                'max_nodes', 'norm']]        
 
@@ -134,7 +138,7 @@ def add_circuit_categories(df : pd.DataFrame):
     Add column to the df in which every benchmark labeled with a category.
     """
     cat_info = {}
-    with open(os.path.join(os.path.dirname(__file__), 'circuit_categories.json')) as f:
+    with open(CIRCUIT_CATEGORY_FILE, 'r', encoding='utf-8') as f:
         cat_info = json.load(f)
     circuit_types = cat_info['circuit_types']
     use_cat = cat_info['use_category']
@@ -159,6 +163,13 @@ def load_data(exp_dir : str):
     return df
 
 
+def _to_complex_vector(state_vector_json):
+    """
+    Obtain a 2^n x 1 complex vector from the 2^n x 2 data structure.
+    """
+    return np.apply_along_axis(lambda args: [complex(*args)], 1, state_vector_json)
+
+
 def compare_vectors(args):
     """
     Compare state vectors in json files if present.
@@ -177,7 +188,7 @@ def compare_vectors(args):
             with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 if 'state_vector' in data:
-                    vec_qsy = np.apply_along_axis(lambda args: [complex(*args)], 1, data['state_vector'])
+                    vec_qsy = _to_complex_vector(data['state_vector'])
                 else:
                     print(f"No state vector in {filepath}, skipping")
                     continue
@@ -187,10 +198,10 @@ def compare_vectors(args):
                 with open(mqt_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     if 'state_vector' in data:
-                        vec_mqt = np.apply_along_axis(lambda args: [complex(*args)], 1, data['state_vector'])
+                        vec_mqt = _to_complex_vector(data['state_vector'])
             except:
                 print(f"    Could not get json data from {mqt_file}, skipping")
-            
+
             if not vec_qsy is None and not vec_mqt is None:
                 # normalize global phase
                 in_prod = np.dot(vec_qsy.conj().T, vec_mqt)[0,0]
@@ -206,7 +217,7 @@ def compare_vectors(args):
     if len(fidelity_issues) > 0:
         print(f"    {len(fidelity_issues)} instances where fidelity !~= 1.000")
         print(f"    Writing details to {issues_file(args)}")
-        issues_df = pd.DataFrame(fidelity_issues)[['benchmark', 'n_qubits', 
+        issues_df = pd.DataFrame(fidelity_issues)[['benchmark', 'n_qubits',
                     'simulation_time', 'workers', 'reorder', 'wgt_norm_strat',
                     'wgt_inv_caching', 'max_nodes', 'norm', 'fidelity']]
         with open(issues_file(args), 'a', encoding='utf-8') as f:
@@ -237,9 +248,10 @@ def sanity_check(df : pd.DataFrame, args):
             f.write("\n\n\n")
 
 
-def _plot_diagonal_lines(ax, min_val, max_val, at=[0.1, 10]):
+def _plot_diagonal_lines(ax, min_val, max_val, at):
     """
-    Add diagonal lines to ax
+    Adds a diagonal line x = y. Additionally, if e.g. at = [0.1, 10] plots
+    diagonal lines at y = 0.1x and y = 10.
     """
 
     # bit of margin for vizualization
@@ -254,9 +266,9 @@ def _plot_diagonal_lines(ax, min_val, max_val, at=[0.1, 10]):
     return ax
 
 
-def plot_scatter(datas_x, datas_y, datas_labels, 
+def plot_scatter(datas_x, datas_y, datas_labels,
                  plot_diagonal, x_scale, y_scale,
-                 colors, legend_labels, 
+                 colors, legend_labels,
                  label_x, label_y, outputname, args):
     """
     Produce scatter plot.
@@ -277,8 +289,8 @@ def plot_scatter(datas_x, datas_y, datas_labels,
     for data_x, data_y, col in zip(datas_x, datas_y, colors):
         max_val = max(max_val, np.amax([data_x, data_y]))
         fc_cols = np.array([col for _ in range(len(data_x))])
-        fc_cols[data_x == timeout_time] = 'none'
-        fc_cols[data_y == timeout_time] = 'none'
+        fc_cols[data_x == TIMEOUT_TIME] = 'none'
+        fc_cols[data_y == TIMEOUT_TIME] = 'none'
         ax.scatter(data_x, data_y, facecolors=fc_cols, edgecolors=col)
 
     # axis labels, legend, etc.
@@ -295,7 +307,7 @@ def plot_scatter(datas_x, datas_y, datas_labels,
 
     # save figure
     outputpath = os.path.join(plots_dir(args), outputname)
-    for _format in formats:
+    for _format in FORMATS:
         fig.savefig(f"{outputpath}.{_format}")
 
     # save version of the figure with labeled data points
@@ -319,8 +331,8 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args):
     joined = pd.merge(left, right, on='benchmark', how='outer', suffixes=('_l','_r'))
 
     if fid_df is None:
-        data_l = joined['simulation_time_l'].fillna(timeout_time)
-        data_r = joined['simulation_time_r'].fillna(timeout_time)
+        data_l = joined['simulation_time_l'].fillna(TIMEOUT_TIME)
+        data_r = joined['simulation_time_r'].fillna(TIMEOUT_TIME)
         data_labels = [f"{n} ({s})" for n, s in zip(joined['benchmark'],joined['status_r'])]
 
         plot_scatter([data_l], [data_r], [data_labels],
@@ -332,7 +344,7 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args):
         joined = pd.merge(joined, fid_df, on='benchmark', how='left')
         joined['fidelity'] = joined['fidelity'].fillna(-1)
         fid_1    = joined.loc[(joined['fidelity'] > .999) & (joined['fidelity'] < 1.001)]
-        fid_not1 = joined.loc[((joined['fidelity'] < .999) | (joined['fidelity'] > 1.001)) 
+        fid_not1 = joined.loc[((joined['fidelity'] < .999) | (joined['fidelity'] > 1.001))
                                                           & (joined['fidelity'] >= 0.0)]
         fid_na   = joined.loc[(joined['fidelity'] < 0.0)]
 
@@ -341,13 +353,13 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args):
         datas_labels = []
         for fid in [fid_1, fid_not1, fid_na]:
             fid = fid.reset_index()
-            datas_l.append(fid['simulation_time_l'].fillna(timeout_time))
-            datas_r.append(fid['simulation_time_r'].fillna(timeout_time))
+            datas_l.append(fid['simulation_time_l'].fillna(TIMEOUT_TIME))
+            datas_r.append(fid['simulation_time_r'].fillna(TIMEOUT_TIME))
             datas_labels.append(fid['benchmark'])
 
         plot_scatter(datas_l, datas_r, datas_labels,
                     True, 'linear', 'linear',
-                    ['royalblue', 'darkorange', 'orchid'], 
+                    ['royalblue', 'darkorange', 'orchid'],
                     ['fidelity $=$ 1', 'fidelity $\\neq$ 1', 'fidelity N/A'],
                     'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
                     'mqt_vs_qsylvan_fid', args)
@@ -414,7 +426,7 @@ def plot_norm_strat_comparison(df : pd.DataFrame, args):
         joined_okr = joined.loc[(joined['norm_l'] != 1) & (joined['norm_r'] == 1)]
         joined_ok0 = joined.loc[(joined['norm_l'] != 1) & (joined['norm_r'] != 1)]
         norm_split = [joined_ok2, joined_okl, joined_okr, joined_ok0]
-        norm_split_names = ['norm $=$ 1 (both)', f'norm $\\neq$ 1 ({NS_NAMES[s2]})', 
+        norm_split_names = ['norm $=$ 1 (both)', f'norm $\\neq$ 1 ({NS_NAMES[s2]})',
                             f'norm $\\neq$ 1 ({NS_NAMES[s1]})', 'norm $\\neq$ 1 (both)']
 
         # plot max nodes (separate for each norm subset)
@@ -485,7 +497,7 @@ def plot_dd_size_vs_qubits(df : pd.DataFrame, args):
             datas_x.append(cat_data['n_qubits'])
             datas_y.append(cat_data['max_nodes'])
             datas_labels.append(cat_data['benchmark'])
-        plot_scatter(datas_x, datas_y, datas_labels, 
+        plot_scatter(datas_x, datas_y, datas_labels,
                     False, 'linear', 'log',
                     COLORS, categories,
                     '# qubits', 'max nodes', f'qubits_vs_nodes_{name}', args)
@@ -517,8 +529,8 @@ def plot_relative_speedups(df : pd.DataFrame, args):
         joined = pd.merge(data_1, data_w, on='benchmark', how='outer', suffixes=('_1','_w'))
         joined[['status_1','status_w']] = joined[['status_1', 'status_w']].fillna('TIMEOUT')
 
-        datas_x.append(joined['simulation_time_1'].fillna(timeout_time))
-        datas_y.append(joined['simulation_time_w'].fillna(timeout_time))
+        datas_x.append(joined['simulation_time_1'].fillna(TIMEOUT_TIME))
+        datas_y.append(joined['simulation_time_w'].fillna(TIMEOUT_TIME))
         datas_labels.append([f"{n} ({s1},{sw})" for n, s1, sw in\
                        zip(joined['benchmark'], joined['status_1'], joined['status_w'])])
     # Pass to plot scatter
@@ -532,9 +544,11 @@ def plot_relative_speedups(df : pd.DataFrame, args):
 
 
 def main():
+    """
+    Load data + sanity checks + generate plots.
+    """
     args = parser.parse_args()
     df = load_data(args.dir)
-
 
     # sanity check norms + vectors (if given)
     open(issues_file(args), 'w', encoding='utf-8')

@@ -7,13 +7,10 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 
+EXPERIMENTS_DIR = "experiments/"
 
-output_dir  = "experiments/{}"
-output_file = "experiments/{}/run.sh"
-csv_output  = "experiments/{}/results.csv"
-
-qsy_qasm = "timeout {} ./extern/q-sylvan/build/qasm/sim_qasm {} --workers {} {} --json {} &> {}\n"
-mqt_qasm = "timeout {} ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_file {} --shots 1 --ps --pm {} 2> {} 1> {}\n"
+QSY_QASM = "timeout {} ./extern/q-sylvan/build/qasm/sim_qasm {} --workers {} {} --json {} &> {}\n"
+MQT_QASM = "timeout {} ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_file {} --shots 1 --ps --pm {} 2> {} 1> {}\n"
 
 
 parser = argparse.ArgumentParser()
@@ -28,21 +25,6 @@ parser.add_argument('--test_inv_caching', action='store_true', default=False ,he
 parser.add_argument('--test_reorder', action='store_true', default=False, help="Run with reorder qubits on/off.")
 parser.add_argument('--timeout', action='store', default='10m', help='Timeout time per benchmark')
 parser.add_argument('--recursive', action='store_true', default=False, help="Recursively look for .qasm files in given dir.")
-
-
-def init_output_file():
-    """
-    Initialize the output bash file.
-    """
-    global output_file
-    global csv_output
-    dt_string = datetime.now().strftime("%Y%m%d%m_%H%M%S")
-    output_file = output_file.format(dt_string)
-    csv_output  = csv_output.format(dt_string)
-    print(f"writing to {output_file}")
-
-    with open(output_file, 'w', encoding='utf-8') as f:
-        f.write("#!/bin/bash\n\n")
 
 
 def atoi(text : str):
@@ -84,11 +66,10 @@ def experiments_qasm(args):
     """
     Write bash file to benchmark given qasm files on both Q-Sylvan and MQT DDSIM
     """
-    global output_dir
     if args.name is not None:
-        output_dir = output_dir.format(args.name)
+        output_dir = os.path.join(EXPERIMENTS_DIR, args.name)
     else:
-        output_dir = output_dir.format(datetime.now().strftime("%Y%m%d_%H%M%S"))
+        output_dir = os.path.join(EXPERIMENTS_DIR, datetime.now().strftime("%Y%m%d_%H%M%S"))
     Path(os.path.join(output_dir,'json')).mkdir(parents=True, exist_ok=True)
     Path(os.path.join(output_dir,'logs')).mkdir(parents=True, exist_ok=True)
     bash_file_all = output_dir + '/run_all.sh'
@@ -135,8 +116,8 @@ def experiments_qasm(args):
             # MQT
             json_output = f"{output_dir}/json/{filename[:-5]}_mqt.json"
             log         = f"{output_dir}/logs/{filename[:-5]}_mqt.log"
-            f_all.write(mqt_qasm.format(args.timeout, filepath, mqt_args, log, json_output))
-            f_mqt.write(mqt_qasm.format(args.timeout, filepath, mqt_args, log, json_output))
+            f_all.write(MQT_QASM.format(args.timeout, filepath, mqt_args, log, json_output))
+            f_mqt.write(MQT_QASM.format(args.timeout, filepath, mqt_args, log, json_output))
             # Q-Sylvan
             for w in workers:
                 for s in norm_strats:
@@ -145,8 +126,8 @@ def experiments_qasm(args):
                             exp_counter += 1
                             json_output = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}_{exp_counter}.json"
                             log         = f"{output_dir}/logs/{filename[:-5]}_qsylvan_{w}_{exp_counter}.log"
-                            f_all.write(qsy_qasm.format(args.timeout, filepath, w, qsy_args+s+inv+r, json_output, log))
-                            f_qsy.write(qsy_qasm.format(args.timeout, filepath, w, qsy_args+s+inv+r, json_output, log))
+                            f_all.write(QSY_QASM.format(args.timeout, filepath, w, qsy_args+s+inv+r, json_output, log))
+                            f_qsy.write(QSY_QASM.format(args.timeout, filepath, w, qsy_args+s+inv+r, json_output, log))
 
 
 def main():
