@@ -21,6 +21,7 @@ parser.add_argument('qasm_dir', help="Path of directory with .qasm files.")
 parser.add_argument('--name', help="Name for experiments dir.")
 parser.add_argument('--log_vector', action='store_true', default=False, help="Log entire final state vector.")
 parser.add_argument('--max_qubits', type=int, help="Get all qasm files from qasm_dir, up to max_qubits.")
+parser.add_argument('--norm_strat', choices=['low','max','min','l2'], default='max', help="Norm strat to use for all q-sylvan runs.")
 parser.add_argument('--test_multicore', action='store_true', default=False, help="Run multicore benchmarks.")
 parser.add_argument('--test_norm_strats', action='store_true', default=False, help="Run with different norm strats.")
 parser.add_argument('--test_inv_caching', action='store_true', default=False ,help="Run with both INV-CACHING on/off.")
@@ -103,7 +104,7 @@ def experiments_qasm(args):
     workers = [1,2,4,8] if args.test_multicore else [1]
     inv_caching = ['', ' --disable-inv-caching'] if args.test_inv_caching else ['']
     reorder = ['', ' --reorder', ' --reorder-swaps'] if args.test_reorder else [' --reorder-swaps']
-    norm_strats = [' -s low', ' -s max', ' -s min',  ' -s l2'] if args.test_norm_strats else ['']
+    norm_strats = [' -s low', ' -s max', ' -s min',  ' -s l2'] if args.test_norm_strats else [f' -s {args.norm_strat}']
 
     print(f"Writing to {bash_file_all}, {bash_file_mqt}, {bash_file_qsy}")
     with open(bash_file_all, 'w', encoding='utf-8') as f_all,\
