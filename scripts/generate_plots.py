@@ -457,14 +457,21 @@ def plot_dd_size_vs_qubits(df : pd.DataFrame, args):
     """
     Plot (log) DD-size vs the number of qubits.
     """
-    df = df.loc[df['status'] == 'FINISHED']
-
+    df       = df.loc[df['status'] == 'FINISHED']
     mqt      = df.loc[df['tool'] == 'mqt']
     qsylvan  = df.loc[(df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
-    mqt      = mqt.reset_index()
-    qsylvan  = qsylvan.reset_index()
 
-    for data, name in zip([qsylvan, mqt], ['qsylvan', 'mqt']):
+    data_selections = []
+    data_selections.append((mqt, 'mqt'))
+
+    # split qsylvan data on hyperparameters
+    norm_strats = qsylvan['wgt_norm_strat'].unique()
+    for ns in norm_strats:
+        subset = df.loc[df['wgt_norm_strat'] == ns]
+        data_selections.append((subset, f'qsylvan_{NS_NAMES[ns]}'))
+
+    # generate plot for each set of data selection
+    for data, name in data_selections:
         if data.empty:
             continue
 
