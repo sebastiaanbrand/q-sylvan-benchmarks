@@ -142,9 +142,9 @@ def add_circuit_categories(df : pd.DataFrame):
     for i, row in df.iterrows():
         circ_type = row['benchmark'].split('_')[0]
         if circ_type in circuit_types:
-            df.at[i,'category'] = circuit_types[circ_type][use_cat]
+            df.at[i, 'category'] = circuit_types[circ_type][use_cat]
         else:
-            print(f"uncategorized benchmark: {row['benchmark']}")
+            df.at[i, 'category'] = circ_type
     return df
 
 
