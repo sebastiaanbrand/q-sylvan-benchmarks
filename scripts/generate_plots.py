@@ -231,11 +231,11 @@ def sanity_check(df : pd.DataFrame, args):
     """
     Do some basic sanity checks on the collected data and write to file.
     """
-    print("Checking norms")
-    issues = df.loc[(df['norm'] != 1.0) &
-                    (df['tool'] == 'q-sylvan') &
-                    (df['status'] == 'FINISHED')]
+    print("Checking norms...", end='')
+    df = df.loc[(df['tool'] == 'q-sylvan') & (df['status'] == 'FINISHED')]
+    issues = df.loc[(df['norm'] != 1.0)]
     if len(issues) > 0:
+        print(f"\n    out of {len(df)} finished q-sylvan runs:")
         print(f"    {len(issues)} instances where norm != 1.0")
         if len([x for x in df['wgt_norm_strat'].unique() if ~np.isnan(x)]) > 1:
             counts = issues.groupby(issues['wgt_norm_strat']).size()
@@ -246,6 +246,8 @@ def sanity_check(df : pd.DataFrame, args):
             f.write("Issues with norm:\n")
             f.write(issues.to_string())
             f.write("\n\n\n")
+    else:
+        print(" all OK")
 
 
 def _plot_diagonal_lines(ax, min_val, max_val, at):
