@@ -351,16 +351,21 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args):
         datas_l = []
         datas_r = []
         datas_labels = []
-        for fid in [fid_1, fid_not1, fid_na]:
+        leg_names = []
+        for fid, leg_name in zip([fid_1, fid_not1, fid_na],
+                                 ['fidelity $=$ 1', 'fidelity $\\neq$ 1', 'fidelity N/A']):
+            if len(fid) == 0:
+                continue
             fid = fid.reset_index()
             datas_l.append(fid['simulation_time_l'].fillna(TIMEOUT_TIME))
             datas_r.append(fid['simulation_time_r'].fillna(TIMEOUT_TIME))
             datas_labels.append(fid['benchmark'])
+            leg_names.append(leg_name)
 
         plot_scatter(datas_l, datas_r, datas_labels,
                     True, 'linear', 'linear',
                     ['royalblue', 'darkorange', 'orchid'],
-                    ['fidelity $=$ 1', 'fidelity $\\neq$ 1', 'fidelity N/A'],
+                    leg_names,
                     'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
                     'mqt_vs_qsylvan_fid', args)
 
