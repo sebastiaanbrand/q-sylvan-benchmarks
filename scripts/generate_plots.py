@@ -95,17 +95,20 @@ def load_json(exp_dir : str):
     for filename in sorted(os.listdir(json_dir)):
         filepath = os.path.join(json_dir, filename)
         if filename.endswith('.json') and os.path.getsize(filepath) > 0:
-            with open(filepath, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                row = data['statistics']
-                if filename.endswith('mqt.json'):
-                    row['tool'] = 'mqt'
-                    row['workers'] = 1
-                else:
-                    row['tool'] = 'q-sylvan'
-                row['status'] = 'FINISHED'
-                row = _add_missing_fields(row)
-                rows.append(row)
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    row = data['statistics']
+                    if filename.endswith('mqt.json'):
+                        row['tool'] = 'mqt'
+                        row['workers'] = 1
+                    else:
+                        row['tool'] = 'q-sylvan'
+                    row['status'] = 'FINISHED'
+                    row = _add_missing_fields(row)
+                    rows.append(row)
+            except:
+                print(f"    Could not get json data from {filepath}, skipping")
 
     df = pd.DataFrame(rows)
     return df[['benchmark', 'n_qubits', 'tool', 'status', 'simulation_time',
@@ -185,22 +188,25 @@ def compare_vectors(args):
             vec_qsy = None
             vec_mqt = None
             row = None
-            with open(filepath, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                if 'state_vector' in data:
-                    vec_qsy = _to_complex_vector(data['state_vector'])
-                else:
-                    print(f"No state vector in {filepath}, skipping")
-                    continue
-                row = data['statistics']
-            mqt_file = filepath.split('qsylvan')[0] + 'mqt.json'
             try:
-                with open(mqt_file, 'r', encoding='utf-8') as f:
+                with open(filepath, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     if 'state_vector' in data:
-                        vec_mqt = _to_complex_vector(data['state_vector'])
+                        vec_qsy = _to_complex_vector(data['state_vector'])
+                    else:
+                        print(f"No state vector in {filepath}, skipping")
+                        continue
+                    row = data['statistics']
+                mqt_file = filepath.split('qsylvan')[0] + 'mqt.json'
+                try:
+                    with open(mqt_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        if 'state_vector' in data:
+                            vec_mqt = _to_complex_vector(data['state_vector'])
+                except:
+                    print(f"    Could not get json data from {mqt_file}, skipping")
             except:
-                print(f"    Could not get json data from {mqt_file}, skipping")
+                print(f"    Could not get json data from {filepath}, skipping")
 
             if not vec_qsy is None and not vec_mqt is None:
                 # normalize global phase
