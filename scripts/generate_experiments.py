@@ -80,8 +80,9 @@ def experiments_qasm(args):
     if args.log_vector:
         mqt_args += '--pv'
         qsy_args += '--state-vector'
+    if not args.test_multicore:
+        qsy_args += ' --count-nodes'
 
-    qsy_args += ' --count-nodes'
     workers = [1,2,4,8] if args.test_multicore else [1]
     inv_caching = ['', ' --disable-inv-caching'] if args.test_inv_caching else ['']
     reorder = ['', ' --reorder', ' --reorder-swaps'] if args.test_reorder else [' --reorder-swaps']
