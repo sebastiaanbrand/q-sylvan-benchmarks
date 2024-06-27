@@ -492,7 +492,7 @@ def plot_dd_size_vs_qubits(df : pd.DataFrame, args):
     # split qsylvan data on hyperparameters
     norm_strats = qsylvan['wgt_norm_strat'].unique()
     for ns in norm_strats:
-        subset = df.loc[df['wgt_norm_strat'] == ns]
+        subset = qsylvan.loc[qsylvan['wgt_norm_strat'] == ns]
         data_selections.append((subset, f'qsylvan_{NS_NAMES[ns]}'))
 
     # generate plot for each set of data selection
