@@ -275,7 +275,7 @@ def _plot_diagonal_lines(ax, min_val, max_val, at):
 
 
 def plot_scatter(datas_x, datas_y, datas_labels,
-                 plot_diagonal, x_scale, y_scale,
+                 diagonals, x_scale, y_scale,
                  colors, legend_labels,
                  label_x, label_y, outputname, args):
     """
@@ -310,8 +310,8 @@ def plot_scatter(datas_x, datas_y, datas_labels,
         ax.legend(legend_labels)
 
     # plot diagonal line
-    if plot_diagonal:
-        ax = _plot_diagonal_lines(ax, 0, max_val, at=[])
+    if diagonals is not None:
+        ax = _plot_diagonal_lines(ax, 0, max_val, at=diagonals)
 
     # save figure
     outputpath = os.path.join(plots_dir(args), outputname)
@@ -344,7 +344,7 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args):
         data_labels = [f"{n} ({s})" for n, s in zip(joined['benchmark'],joined['status_r'])]
 
         plot_scatter([data_l], [data_r], [data_labels],
-                    True, 'linear', 'linear',
+                    [], 'linear', 'linear',
                     ['royalblue'], None,
                     'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
                     'mqt_vs_qsylvan', args)
@@ -371,7 +371,7 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args):
             leg_names.append(leg_name)
 
         plot_scatter(datas_l, datas_r, datas_labels,
-                    True, 'linear', 'linear',
+                    [], 'linear', 'linear',
                     ['royalblue', 'darkorange', 'orchid'],
                     leg_names,
                     'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
@@ -399,7 +399,7 @@ def plot_inv_cache_comparison(df : pd.DataFrame, args):
     data_r = joined['max_nodes_r']
     data_labels = joined['benchmark']
     plot_scatter([data_l], [data_r], [data_labels],
-                 True, 'linear', 'linear',
+                 [], 'linear', 'linear',
                  ['royalblue'], None,
                  'max nodes inverse cache OFF', 'max nodes inverse cache ON',
                  'inv_caching_nodecount', args)
@@ -409,7 +409,7 @@ def plot_inv_cache_comparison(df : pd.DataFrame, args):
     data_r = joined['simulation_time_r']
     data_labels = joined['benchmark']
     plot_scatter([data_l], [data_r], [data_labels],
-                 True, 'linear', 'linear',
+                 [], 'linear', 'linear',
                  ['royalblue'], None,
                  'runtime (s) inverse cache OFF', 'runtime (s) inverse cache ON',
                  'inv_caching_runtime', args)
@@ -455,7 +455,7 @@ def plot_norm_strat_comparison(df : pd.DataFrame, args):
                 datas_labels.append(subset['benchmark'])
                 legend_names.append(name)
         plot_scatter(datas_l, datas_r, datas_labels,
-                     True, 'linear', 'linear',
+                     [], 'linear', 'linear',
                      COLORS, legend_names,
                      f'max nodes norm strat {NS_NAMES[s1]}',
                      f'max nodes norm strat {NS_NAMES[s2]}',
@@ -471,7 +471,7 @@ def plot_norm_strat_comparison(df : pd.DataFrame, args):
                 datas_l.append(subset['simulation_time_l'])
                 datas_r.append(subset['simulation_time_r'])
         plot_scatter(datas_l, datas_r, datas_labels,
-                     True, 'linear', 'linear',
+                     [], 'linear', 'linear',
                      COLORS, legend_names,
                      f'runtime (s) norm strat {NS_NAMES[s1]}',
                      f'runtime (s) norm strat {NS_NAMES[s2]}',
@@ -511,7 +511,7 @@ def plot_dd_size_vs_qubits(df : pd.DataFrame, args):
             datas_y.append(cat_data['max_nodes'])
             datas_labels.append(cat_data['benchmark'])
         plot_scatter(datas_x, datas_y, datas_labels,
-                    False, 'linear', 'log',
+                    None, 'linear', 'log',
                     COLORS, categories,
                     '# qubits', 'max nodes', f'qubits_vs_nodes_{name}', args)
 
@@ -549,11 +549,13 @@ def plot_relative_speedups(df : pd.DataFrame, args):
     # Pass to plot scatter
     colors = ['grey', 'royalblue', 'darkorange', 'forestgreen', 'orchid'] # add more if needed
     legend_labels = [f"1v{int(w)} workers" for w in workers]
-    plot_scatter(datas_x, datas_y, datas_labels,
-                 True, 'linear', 'linear',
-                 colors[:len(workers)], legend_labels,
-                 '1 worker time (s)', 'w workers time (s)',
-                 'multicore_scatter', args)
+    diagonal_lines = [1/x for x in workers[1:]]
+    for scaling in ['linear', 'log']:
+        plot_scatter(datas_x, datas_y, datas_labels,
+                    diagonal_lines, scaling, scaling,
+                    colors[:len(workers)], legend_labels,
+                    '1 worker time (s)', 'w workers time (s)',
+                    f'multicore_scatter_{scaling}', args)
 
 
 def main():
