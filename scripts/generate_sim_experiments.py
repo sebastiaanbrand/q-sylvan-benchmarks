@@ -1,5 +1,5 @@
 """
-Python script to generate bash scipts which run benchmarks.
+Python script to generate bash scipts for QC simulation benchmarks.
 """
 import re
 import os
@@ -62,9 +62,9 @@ def skip(filename : str, args):
     return False
 
 
-def experiments_qasm(args):
+def experiments_sim_qasm(args):
     """
-    Write bash file to benchmark given qasm files on both Q-Sylvan and MQT DDSIM
+    Write bash file to simulate given qasm files on both Q-Sylvan and MQT DDSIM.
     """
     if args.name is not None:
         output_dir = os.path.join(EXPERIMENTS_DIR, args.name)
@@ -75,6 +75,7 @@ def experiments_qasm(args):
     bash_file_all = output_dir + '/run_all.sh'
     bash_file_mqt = output_dir + '/run_mqt.sh'
     bash_file_qsy = output_dir + '/run_qsylvan.sh'
+
     mqt_args = ''
     qsy_args = ''
     if args.log_vector:
@@ -82,7 +83,6 @@ def experiments_qasm(args):
         qsy_args += '--state-vector'
     if not args.test_multicore:
         qsy_args += ' --count-nodes'
-
     workers = [1,2,4,8] if args.test_multicore else [1]
     inv_caching = ['', ' --disable-inv-caching'] if args.test_inv_caching else ['']
     reorder = ['', ' --reorder', ' --reorder-swaps'] if args.test_reorder else [' --reorder-swaps']
@@ -136,7 +136,7 @@ def main():
     Generate bash scripts which run benchmarks.
     """
     args = parser.parse_args()
-    experiments_qasm(args)
+    experiments_sim_qasm(args)
 
 
 if __name__ == '__main__':
