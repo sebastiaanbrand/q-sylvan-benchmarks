@@ -6,6 +6,7 @@ import re
 import json
 import argparse
 import itertools
+from abc import abstractmethod
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -20,6 +21,7 @@ CIRCUIT_CATEGORY_FILE = os.path.join(os.path.dirname(__file__), 'circuit_categor
 parser = argparse.ArgumentParser()
 parser.add_argument('dir', help="Experiments directory (the one which is a date+time).")
 parser.add_argument('--compare_vecs', action='store_true', default=False, help="Sanity check by comparing full state vectors (if present).")
+parser.add_argument('--type', choices=['sim','eqcheck'], default='sim', help="Which type of experiments to generate plots for.")
 
 def plots_dir(args):
     """
@@ -111,9 +113,7 @@ def load_json(exp_dir : str):
                 print(f"    Could not get json data from {filepath}, skipping")
 
     df = pd.DataFrame(rows)
-    return df[['benchmark', 'n_qubits', 'tool', 'status', 'simulation_time',
-               'workers', 'reorder', 'wgt_norm_strat', 'wgt_inv_caching', 
-               'max_nodes', 'norm']]        
+    return df
 
 
 def load_logs(exp_dir : str, df : pd.DataFrame):
@@ -155,17 +155,6 @@ def add_circuit_categories(df : pd.DataFrame):
     return df
 
 
-def load_data(exp_dir : str):
-    """
-    Load the data (and do some preprocessing).
-    """
-    print(f"Loading data from {exp_dir}")
-    df = load_json(exp_dir)
-    df = load_logs(exp_dir, df)
-    df = add_circuit_categories(df)
-    return df
-
-
 def _to_complex_vector(state_vector_json):
     """
     Obtain a 2^n x 1 complex vector from the 2^n x 2 data structure.
@@ -175,7 +164,7 @@ def _to_complex_vector(state_vector_json):
 
 def compare_vectors(args):
     """
-    Compare state vectors in json files if present.
+    Compare state vectors in json files, and write all issue cases to file.
     """
     print("Comparing state vectors between both tools")
     json_dir = os.path.join(args.dir, 'json')
@@ -233,9 +222,9 @@ def compare_vectors(args):
     return fid_df
 
 
-def sanity_check(df : pd.DataFrame, args):
+def check_norms(df : pd.DataFrame, args):
     """
-    Do some basic sanity checks on the collected data and write to file.
+    Check all (self reported) norms and write all cases where norm != 1.0.
     """
     print("Checking norms...", end='')
     df = df.loc[(df['tool'] == 'q-sylvan') & (df['status'] == 'FINISHED')]
@@ -246,7 +235,7 @@ def sanity_check(df : pd.DataFrame, args):
         if len([x for x in df['wgt_norm_strat'].unique() if ~np.isnan(x)]) > 1:
             counts = issues.groupby(issues['wgt_norm_strat']).size()
             for norm_strat, count in counts.items():
-                print(f"    normalize {NS_NAMES[norm_strat]}: {count} instances of norm != 1.0")
+                print(f"    of which {count} using norm-{NS_NAMES[norm_strat]}")
         print(f"    Writing details to {issues_file(args)}")
         with open(issues_file(args), 'a', encoding='utf-8') as f:
             f.write("Issues with norm:\n")
@@ -558,27 +547,94 @@ def plot_relative_speedups(df : pd.DataFrame, args):
                     f'multicore_scatter_{scaling}', args)
 
 
+class PlotPipeline:
+
+    def __init__(self, args):
+        self.args = args
+    
+    @abstractmethod
+    def load_data():
+        pass
+
+    @abstractmethod
+    def sanity_checks():
+        pass
+
+    @abstractmethod
+    def plot_all():
+        pass
+
+    @staticmethod
+    def get(args):
+        if args.type == 'sim':
+            return SimPlotPipeline(args)
+        elif args.type == 'eqcheck':
+            return EqCheckPlotPipeline(args)
+        else:
+            raise ValueError(f"Uknown experiments type '{args.type}'")
+
+
+class SimPlotPipeline(PlotPipeline):
+
+    def __init__(self, args):
+        super().__init__(args)
+
+    def load_data(self):
+        """
+        Load the data (and do some preprocessing).
+        """
+        print(f"Loading data from {self.args.dir}")
+        self.df = load_json(self.args.dir)
+        self.df = load_logs(self.args.dir, self.df)
+        self.df = add_circuit_categories(self.df)
+
+    def sanity_checks(self):
+        """
+        Check norms (+ fidelity of vectors if given) and write to file.
+        """
+        open(issues_file(self.args), 'w', encoding='utf-8')
+        check_norms(self.df, self.args)
+        self.fid_df = None
+        if self.args.compare_vecs:
+            self.fid_df = compare_vectors(args)
+
+    def plot_all(self):
+        """
+        Renerate all relevant simulation plots.
+        """
+        Path(plots_dir(self.args)).mkdir(parents=True, exist_ok=True)
+        print(f"Writing plots to {plots_dir(self.args)}")
+        plot_tool_comparison(self.df, self.fid_df, self.args)
+        plot_dd_size_vs_qubits(self.df, self.args)
+        plot_relative_speedups(self.df, self.args)
+        plot_norm_strat_comparison(self.df, self.args)
+        plot_inv_cache_comparison(self.df, self.args)
+
+
+class EqCheckPlotPipeline(PlotPipeline):
+
+    def load_data(self):
+        # TODO
+        pass
+
+    def sanity_checks(self):
+        # TODO
+        pass
+    
+    def plot_all(self):
+        # TODO
+        pass
+
+
 def main():
     """
     Load data + sanity checks + generate plots.
     """
     args = parser.parse_args()
-    df = load_data(args.dir)
-
-    # sanity check norms + vectors (if given)
-    open(issues_file(args), 'w', encoding='utf-8')
-    sanity_check(df, args)
-    fid_df = None
-    if args.compare_vecs:
-        fid_df = compare_vectors(args)
-
-    Path(plots_dir(args)).mkdir(parents=True, exist_ok=True)
-    print(f"Writing plots to {plots_dir(args)}")
-    plot_tool_comparison(df, fid_df, args)
-    plot_dd_size_vs_qubits(df, args)
-    plot_relative_speedups(df, args)
-    plot_norm_strat_comparison(df, args)
-    plot_inv_cache_comparison(df, args)
+    pipeline = PlotPipeline.get(args)
+    pipeline.load_data()  
+    pipeline.sanity_checks()
+    pipeline.plot_all()
 
 
 if __name__ == '__main__':
