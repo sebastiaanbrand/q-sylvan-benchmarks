@@ -60,7 +60,7 @@ def _add_missing_fields(row : dict):
     return row
 
 
-def load_json(exp_dir : str):
+def load_json(exp_dir : str, add_missing = False):
     """
     Load the data (and do some preprocessing).
     """
@@ -70,20 +70,21 @@ def load_json(exp_dir : str):
     for filename in sorted(os.listdir(json_dir)):
         filepath = os.path.join(json_dir, filename)
         if filename.endswith('.json') and os.path.getsize(filepath) > 0:
-            #try:
-            with open(filepath, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                row = data['statistics']
-                if filename.endswith('mqt.json'):
-                    row['tool'] = 'mqt'
-                    row['workers'] = 1
-                else:
-                    row['tool'] = 'q-sylvan'
-                row['status'] = 'FINISHED'
-                row = _add_missing_fields(row)
-                rows.append(row)
-            #except:
-            #    print(f"    Could not get json data from {filepath}, skipping")
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    row = data['statistics']
+                    if filename.endswith('mqt.json'):
+                        row['tool'] = 'mqt'
+                        row['workers'] = 1
+                    else:
+                        row['tool'] = 'q-sylvan'
+                    row['status'] = 'FINISHED'
+                    if add_missing:
+                        row = _add_missing_fields(row)
+                    rows.append(row)
+            except json.decoder.JSONDecodeError:
+                print(f"    Error getting json data from {filepath}, skipping")
 
     df = pd.DataFrame(rows)
     return df

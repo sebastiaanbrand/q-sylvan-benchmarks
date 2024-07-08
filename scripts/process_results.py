@@ -1,6 +1,7 @@
 """
 Python script to generate plots given a directory with benchmark results.
 """
+import os
 import argparse
 from abc import abstractmethod
 from pathlib import Path
@@ -37,12 +38,13 @@ class PlotPipeline:
 
     @staticmethod
     def get(args):
-        if args.type == 'sim':
-            return SimPlotPipeline(args)
-        elif args.type == 'eqcheck':
-            return EqCheckPlotPipeline(args)
-        else:
-            raise ValueError(f"Uknown experiments type '{args.type}'")
+        run_script = os.path.join(args.dir, 'run_all.sh')
+        with open(run_script, 'r', encoding='utf-8') as f:
+            text = f.read()
+            if "Circuit equivalence checking benchmarks" in text:
+                return EqCheckPlotPipeline(args)
+            else:
+                return SimPlotPipeline(args)
 
 
 class SimPlotPipeline(PlotPipeline):
@@ -55,7 +57,7 @@ class SimPlotPipeline(PlotPipeline):
         Load the data (and do some preprocessing).
         """
         print(f"Loading data from {self.args.dir}")
-        self.df = pl_load.load_json(self.args.dir)
+        self.df = pl_load.load_json(self.args.dir, True)
         self.df = pl_load.load_logs(self.args.dir, self.df)
         self.df = pl_load.add_circuit_categories(self.df)
 
@@ -85,15 +87,19 @@ class SimPlotPipeline(PlotPipeline):
 class EqCheckPlotPipeline(PlotPipeline):
 
     def load_data(self):
-        # TODO
-        pass
+        """
+        Load the data (and do some preprocessing).
+        """
+        print(f"Loading data from {self.args.dir}")
+        self.df = pl_load.load_json(self.args.dir)
+        print("TODO: add data from logs?")
 
     def sanity_checks(self):
-        # TODO
+        print("TODO: sanity checks")
         pass
     
     def plot_all(self):
-        # TODO
+        print("TODO: plots")
         pass
 
 
