@@ -21,6 +21,7 @@ qsylvan.pc
 
 # Python
 .venv
+__pycache__/
 
 # experiment output data
 experiments/
