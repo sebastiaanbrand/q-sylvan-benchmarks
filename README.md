@@ -8,7 +8,7 @@
 `--state-vector` adds the complete state vector to the JSON output.
 
 ```shell
-$ ./extern/q-sylvan/build/qasm/sim_qasm <circuit.qasm> [--count-nodes]
+$ ./extern/q-sylvan/build/qasm/run_qasm_on_qmdd <circuit.qasm> [--count-nodes]
 ```
 
 ### MQT-DDSIM

@@ -9,7 +9,7 @@ from pathlib import Path
 
 EXPERIMENTS_DIR = "experiments/"
 
-QSY_QASM = "timeout {} ./extern/q-sylvan/build/qasm/sim_qasm {} --workers {} {} --json {} &> {}\n"
+QSY_QASM = "timeout {} ./extern/q-sylvan/build/qasm/run_qasm_on_qmdd {} --workers {} {} --json {} &> {}\n"
 MQT_QASM = "timeout {} ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_file {} --shots 1 --ps --pm {} 2> {} 1> {}\n"
 
 
