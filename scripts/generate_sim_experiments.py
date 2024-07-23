@@ -115,8 +115,9 @@ def experiments_sim_qasm(args):
             if skip(filename, args):
                 continue
             # MQT
-            json_output = f"{output_dir}/json/{filename[:-5]}_mqt.json"
-            log         = f"{output_dir}/logs/{filename[:-5]}_mqt.log"
+            exp_counter += 1
+            json_output = f"{output_dir}/json/{filename[:-5]}_mqt_{exp_counter}.json"
+            log         = f"{output_dir}/logs/{filename[:-5]}_mqt_{exp_counter}.log"
             f_all.write(MQT_QASM.format(args.timeout, filepath, mqt_args, log, json_output))
             f_mqt.write(MQT_QASM.format(args.timeout, filepath, mqt_args, log, json_output))
             # Q-Sylvan

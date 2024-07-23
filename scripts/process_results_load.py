@@ -44,6 +44,8 @@ def _get_log_info(log_filepath : str, log_filename : str):
     elif 'mqt' in log_filename:
         stats['tool'] = 'mqt'
         stats['benchmark'] = log_filename.split('_mqt')[0]
+        stats['workers'] = 1
+    stats['exp_id'] = re.findall(r'\d+', log_filename)[-1]
     stats['status'] = _get_termination_status(log_filepath)
     return stats
 
@@ -74,11 +76,12 @@ def load_json(exp_dir : str, add_missing = False):
                 with open(filepath, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     row = data['statistics']
-                    if filename.endswith('mqt.json'):
+                    if 'mqt' in filename:
                         row['tool'] = 'mqt'
                         row['workers'] = 1
-                    else:
+                    elif 'qsylvan' in filename:
                         row['tool'] = 'q-sylvan'
+                    row['exp_id'] = re.findall(r'\d+', filename)[-1]
                     row['status'] = 'FINISHED'
                     if add_missing:
                         row = _add_missing_fields(row)
