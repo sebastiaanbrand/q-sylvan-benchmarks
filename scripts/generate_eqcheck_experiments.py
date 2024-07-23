@@ -71,6 +71,8 @@ def experiments_eqcheck(args):
             for origin_file in origin_files:
                 origin_path  = os.path.join(origin_dir, origin_file)
                 compare_path = os.path.join(comp_dir, origin_file) + comp_ext
+                if not os.path.isfile(compare_path):
+                    continue
 
                 for w in workers:
                     exp_counter += 1
