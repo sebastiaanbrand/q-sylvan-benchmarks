@@ -110,10 +110,9 @@ class EqCheckPlotPipeline(PlotPipeline):
         """
         Check termination issues + correctness of circuit equivalence
         """
-        print("TODO: check correctness of circuit (in)equivalence")
         open(pr_test.issues_file(self.args), 'w', encoding='utf-8')
+        pr_test.check_circuit_equivalence(self.df, self.args)
         pr_test.check_termination_errors(self.df, self.args)
-        pass
     
     def plot_all(self):
         print("TODO: plots")

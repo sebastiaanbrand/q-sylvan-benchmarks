@@ -89,7 +89,7 @@ def check_norms(df : pd.DataFrame, args, ns_names):
     df = df.loc[(df['tool'] == 'q-sylvan') & (df['status'] == 'FINISHED')]
     issues = df.loc[(df['norm'] != 1.0)]
     if len(issues) > 0:
-        print(f"\n    out of {len(df)} finished q-sylvan runs:")
+        print(f"\n    Out of {len(df)} finished q-sylvan runs:")
         print(f"    {len(issues)} instances where norm != 1.0")
         if len([x for x in df['wgt_norm_strat'].unique() if ~np.isnan(x)]) > 1:
             counts = issues.groupby(issues['wgt_norm_strat']).size()
@@ -99,6 +99,35 @@ def check_norms(df : pd.DataFrame, args, ns_names):
         with open(issues_file(args), 'a', encoding='utf-8') as f:
             f.write("Issues with norm:\n")
             f.write(issues.to_string())
+            f.write("\n\n\n")
+    else:
+        print(" all OK")
+
+
+def check_circuit_equivalence(df : pd.DataFrame, args):
+    """
+    Check if circuits which are (not) equivalent are found as such.
+    """
+    print("Checking circuit equivalence results...", end='')
+    df = df.loc[(df['status'] == 'FINISHED')]
+    false_negatives = []
+    false_positives = []
+    for index, row in df.iterrows():
+        if row['circuit_V'].endswith('opt'): # should be equivalent
+            if row['equivalent'] != 1:
+                false_negatives.append(row)
+        else:
+            if row['equivalent'] == 1:       # should not be equivalent
+                false_positives.append(row)
+    incorrect = pd.DataFrame(false_negatives + false_positives)
+    if len(incorrect) > 0:
+        print(f"\n    Out of {len(df)} finished circuit equivalence checks:")
+        print(f"    {len(false_negatives)} false negatives")
+        print(f"    {len(false_positives)} false positives")
+        print(f"    Writing details to {issues_file(args)}")
+        with open(issues_file(args), 'a', encoding='utf-8') as f:
+            f.write("Incorrect equivalence results:\n")
+            f.write(incorrect.to_string())
             f.write("\n\n\n")
     else:
         print(" all OK")
