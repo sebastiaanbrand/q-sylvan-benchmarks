@@ -5,6 +5,7 @@ import os
 import argparse
 from abc import abstractmethod
 from pathlib import Path
+import pandas as pd
 import process_results_load as pr_load
 import process_results_test as pr_test
 import process_results_plot as pr_plot
@@ -48,6 +49,9 @@ class PlotPipeline:
 
 class SimPlotPipeline(PlotPipeline):
 
+    unused_columns = ['approximation_runs', 'distinct_results', 
+                      'final_fidelity', 'seed', 'shots','single_shots']
+
     def __init__(self, args):
         super().__init__(args)
 
@@ -57,7 +61,9 @@ class SimPlotPipeline(PlotPipeline):
         """
         print(f"Loading data from {self.args.dir}")
         self.df = pr_load.load_json(self.args.dir, True)
-        self.df = pr_load.load_logs(self.args.dir, self.df)
+        self.df = self.df.drop(self.unused_columns, axis=1)
+        logs_df = pr_load.load_logs(self.args.dir)
+        self.df = pd.concat([self.df, logs_df], ignore_index=True)
         self.df = pr_load.add_circuit_categories(self.df)
 
     def sanity_checks(self):
@@ -69,6 +75,7 @@ class SimPlotPipeline(PlotPipeline):
         self.fid_df = None
         if self.args.compare_vecs:
             self.fid_df = pr_test.compare_vectors(args)
+        pr_test.check_termination_errors(self.df, self.args)
 
     def plot_all(self):
         """
@@ -85,16 +92,27 @@ class SimPlotPipeline(PlotPipeline):
 
 class EqCheckPlotPipeline(PlotPipeline):
 
+    unused_columns = ['max_nodes_U', 'max_nodes_V', 'time_cpu', 'tolerance', 
+                      'wgt_norm_strat']
+
     def load_data(self):
         """
         Load the data (and do some preprocessing).
         """
         print(f"Loading data from {self.args.dir}")
         self.df = pr_load.load_json(self.args.dir)
-        print("TODO: add data from logs?")
+        self.df = self.df.drop(self.unused_columns, axis=1)
+        logs_df = pr_load.load_logs(self.args.dir)
+        logs_df = logs_df.rename(columns={'benchmark' : 'circuit_U'})
+        self.df = pd.concat([self.df, logs_df], ignore_index=True)
 
     def sanity_checks(self):
-        print("TODO: sanity checks")
+        """
+        Check termination issues + correctness of circuit equivalence
+        """
+        print("TODO: check correctness of circuit (in)equivalence")
+        open(pr_test.issues_file(self.args), 'w', encoding='utf-8')
+        pr_test.check_termination_errors(self.df, self.args)
         pass
     
     def plot_all(self):
@@ -108,7 +126,7 @@ def main():
     """
     args = parser.parse_args()
     pipeline = PlotPipeline.get_PlotPipeline(args)
-    pipeline.load_data()  
+    pipeline.load_data()
     pipeline.sanity_checks()
     pipeline.plot_all()
 

@@ -25,10 +25,14 @@ def _get_termination_status(log_filepath : str):
                 return 'FINISHED'
             elif "timeout" in text:
                 return 'TIMEOUT'
+            elif "Assertion" in text and "failed" in text:
+                return "ERROR"
             else:
-                return 'TODO'
-        else:
-            return 'TODO'
+                print("    Could not get termination status from file:")
+                print("    " + log_filepath)
+        elif 'mqt' in log_filepath:
+            pass
+    return 'TODO'
 
 
 def _get_log_info(log_filepath : str, log_filename : str):
@@ -93,7 +97,7 @@ def load_json(exp_dir : str, add_missing = False):
     return df
 
 
-def load_logs(exp_dir : str, df : pd.DataFrame):
+def load_logs(exp_dir : str):
     """
     Add information from logs to dataframe.
     """
@@ -103,14 +107,11 @@ def load_logs(exp_dir : str, df : pd.DataFrame):
         filepath = os.path.join(log_dir, filename)
         if filename.endswith('.log') and os.path.getsize(filepath) > 0:
             row = _get_log_info(filepath, filename)
-            if row['status'] == 'TODO':
-                continue
-            elif row['status'] == 'FINISHED':
+            if row['status'] == 'FINISHED':
                 assert row['benchmark'] in df['benchmark'].values
             else:
                 new_rows.append(row)
-    df = pd.concat([df, pd.DataFrame(new_rows)], ignore_index=True)
-    return df
+    return pd.DataFrame(new_rows)
 
 
 def add_circuit_categories(df : pd.DataFrame):

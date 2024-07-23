@@ -102,3 +102,19 @@ def check_norms(df : pd.DataFrame, args, ns_names):
             f.write("\n\n\n")
     else:
         print(" all OK")
+
+
+def check_termination_errors(df : pd.DataFrame, args):
+    """
+    Add all non-terminated instances to file.
+    """
+    print(f"Writing instances with termination issues to {issues_file(args)}")
+    keep = ['benchmark', 'circuit_U', 'tool', 'exp_id', 'status']
+    columns = list(df.columns.values)
+    df = df[list(set(columns) & set(keep))]
+    df = df.loc[(df['tool'] == 'q-sylvan') & (df['status'] != 'FINISHED') & (df['status'] != 'TIMEOUT')]
+    if len(df) > 0:
+        with open(issues_file(args), 'a', encoding='utf-8') as f:
+            f.write("Instances with termination other than FINISHED/TIMEOUT:\n")
+            f.write(df.to_string())
+            f.write("\n\n\n")
