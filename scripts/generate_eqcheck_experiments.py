@@ -3,9 +3,12 @@ Python script to generate bash scipts for QC equivalence checking benchmarks.
 """
 import re
 import os
+import json
 import argparse
 from datetime import datetime
 from pathlib import Path
+import qiskit.qasm2
+from qiskit.circuit import QuantumCircuit
 
 
 EXPERIMENTS_DIR = "experiments/"
@@ -44,6 +47,7 @@ def experiments_eqcheck(args):
         output_dir = os.path.join(EXPERIMENTS_DIR, datetime.now().strftime("%Y%m%d_%H%M%S"))
     Path(os.path.join(output_dir,'json')).mkdir(parents=True, exist_ok=True)
     Path(os.path.join(output_dir,'logs')).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(output_dir,'meta')).mkdir(parents=True, exist_ok=True)
     bash_file = os.path.join(output_dir, 'run_all.sh')
     
     cli_args = ''
@@ -73,12 +77,28 @@ def experiments_eqcheck(args):
                 compare_path = os.path.join(comp_dir, origin_file) + comp_ext
                 if not os.path.isfile(compare_path):
                     continue
+                
+                # get circuits for metadata
+                qc_origin  = qiskit.qasm2.load(origin_path)
+                qc_compare = qiskit.qasm2.load(compare_path)
+                assert qc_origin.num_qubits == qc_compare.num_qubits
 
                 for w in workers:
                     exp_counter += 1
                     json_out = f"{output_dir}/json/{origin_file[:-5]}_qsylvan_{w}_{exp_counter}.json"
                     log      = f"{output_dir}/logs/{origin_file[:-5]}_qsylvan_{w}_{exp_counter}.log"
+                    meta     = f"{output_dir}/meta/{origin_file[:-5]}_qsylvan_{w}_{exp_counter}.json"
                     f.write(RUN_EQCHECK.format(args.timeout, origin_path, compare_path, w, cli_args, log, json_out))
+                    with open(meta, 'w', encoding='utf-8') as meta_file:
+                        json.dump({ 'circuit_U' : origin_file[:-5],
+                                    'circuit_V' : os.path.basename(compare_path)[:-5],
+                                    'exp_id' : exp_counter,
+                                    'n_gates_U' : sum(qc_origin.count_ops().values()),
+                                    'n_gates_V' : sum(qc_compare.count_ops().values()),
+                                    'n_qubits' : qc_origin.num_qubits,
+                                    'tool' : 'q-sylvan',
+                                    'type' : os.path.basename(comp_dir),
+                                    'workers' : w}, meta_file, indent=2)
 
 
 def main():

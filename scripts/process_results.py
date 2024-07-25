@@ -92,19 +92,22 @@ class SimPlotPipeline(PlotPipeline):
 
 class EqCheckPlotPipeline(PlotPipeline):
 
-    unused_columns = ['max_nodes_U', 'max_nodes_V', 'time_cpu', 'tolerance', 
-                      'wgt_norm_strat']
+    res_cols = ['exp_id', 'status', 'equivalent', 'counterexample', 
+                'min_fidelity', 'time_wall']
 
     def load_data(self):
         """
         Load the data (and do some preprocessing).
         """
         print(f"Loading data from {self.args.dir}")
-        self.df = pr_load.load_json(self.args.dir)
-        self.df = self.df.drop(self.unused_columns, axis=1)
-        logs_df = pr_load.load_logs(self.args.dir)
-        logs_df = logs_df.rename(columns={'benchmark' : 'circuit_U'})
-        self.df = pd.concat([self.df, logs_df], ignore_index=True)
+        self.df = pr_load.load_meta(self.args.dir)
+        self.df.set_index('exp_id', inplace=True)
+        results = pr_load.load_json(self.args.dir)[self.res_cols]
+        results.set_index('exp_id', inplace=True)
+        self.df = pd.merge(self.df, results, on='exp_id', how='left')
+        logs_df = pr_load.load_logs(self.args.dir)[['exp_id', 'status']]
+        logs_df.set_index('exp_id', inplace=True)
+        self.df.update(logs_df)
 
     def sanity_checks(self):
         """

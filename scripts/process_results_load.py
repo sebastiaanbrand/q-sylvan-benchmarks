@@ -49,7 +49,7 @@ def _get_log_info(log_filepath : str, log_filename : str):
         stats['tool'] = 'mqt'
         stats['benchmark'] = log_filename.split('_mqt')[0]
         stats['workers'] = 1
-    stats['exp_id'] = re.findall(r'\d+', log_filename)[-1]
+    stats['exp_id'] = int(re.findall(r'\d+', log_filename)[-1])
     stats['status'] = _get_termination_status(log_filepath)
     return stats
 
@@ -85,7 +85,7 @@ def load_json(exp_dir : str, add_missing = False):
                         row['workers'] = 1
                     elif 'qsylvan' in filename:
                         row['tool'] = 'q-sylvan'
-                    row['exp_id'] = re.findall(r'\d+', filename)[-1]
+                    row['exp_id'] = int(re.findall(r'\d+', filename)[-1])
                     row['status'] = 'FINISHED'
                     if add_missing:
                         row = _add_missing_fields(row)
@@ -112,6 +112,21 @@ def load_logs(exp_dir : str):
             else:
                 new_rows.append(row)
     return pd.DataFrame(new_rows)
+
+
+def load_meta(exp_dir : str):
+    """
+    Load additional meta data.
+    """
+    meta_data = []
+    meta_dir = os.path.join(exp_dir, 'meta')
+    for filename in sorted(os.listdir(meta_dir)):
+        filepath = os.path.join(meta_dir, filename)
+        if filename.endswith('.json'):
+            with open(filepath, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                meta_data.append(data)
+    return pd.DataFrame(meta_data)
 
 
 def add_circuit_categories(df : pd.DataFrame):
