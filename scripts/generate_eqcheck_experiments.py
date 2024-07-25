@@ -90,7 +90,8 @@ def experiments_eqcheck(args):
                     meta     = f"{output_dir}/meta/{origin_file[:-5]}_qsylvan_{w}_{exp_counter}.json"
                     f.write(RUN_EQCHECK.format(args.timeout, origin_path, compare_path, w, cli_args, log, json_out))
                     with open(meta, 'w', encoding='utf-8') as meta_file:
-                        json.dump({ 'circuit_U' : origin_file[:-5],
+                        json.dump({ 'circuit_type' : origin_file.split('_')[0],
+                                    'circuit_U' : origin_file[:-5],
                                     'circuit_V' : os.path.basename(compare_path)[:-5],
                                     'exp_id' : exp_counter,
                                     'n_gates_U' : sum(qc_origin.count_ops().values()),

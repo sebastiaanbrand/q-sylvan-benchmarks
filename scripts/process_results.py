@@ -118,8 +118,12 @@ class EqCheckPlotPipeline(PlotPipeline):
         pr_test.check_termination_errors(self.df, self.args)
     
     def plot_all(self):
-        print("TODO: plots")
-        pass
+        """
+        Create plots and LaTeX tables.
+        """
+        Path(pr_plot.tables_dir(self.args)).mkdir(parents=True, exist_ok=True)
+        pr_plot.latex_table_equivalent(self.df, self.args)
+        pr_plot.latex_table_non_equivalent(self.df, self.args)
 
 
 def main():

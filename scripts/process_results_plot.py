@@ -19,6 +19,12 @@ def plots_dir(args):
     """
     return os.path.join(args.dir, 'plots')
 
+def tables_dir(args):
+    """
+    Directory in which to put the LaTeX tables.
+    """
+    return os.path.join(args.dir, 'tables')
+
 
 def _plot_diagonal_lines(ax, min_val, max_val, at):
     """
@@ -320,3 +326,41 @@ def plot_relative_speedups(df : pd.DataFrame, args):
                     colors[:len(workers)], legend_labels,
                     '1 worker time (s)', 'w workers time (s)',
                     f'multicore_scatter_{scaling}', args)
+
+
+def latex_table_equivalent(df : pd.DataFrame, args):
+    """
+    Write LaTeX table like Table 4 in https://arxiv.org/pdf/2403.18813.
+    """
+    # select data
+    df = df.loc[(df['type'] == 'opt') & (df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
+    df = df.sort_values(['circuit_type', 'n_qubits'])
+    #pd.set_option('display.max_rows', 500)
+    #print(df)
+    df = df[['circuit_type', 'n_qubits', 'n_gates_U', 'n_gates_V','time_wall']]
+    
+    # styling
+    df = df.rename(columns={'circuit_type' : 'Algorithm', 'n_qubits' : '$n$',
+                            'n_gates_U' : '$|G|$', 'n_gates_V' : '$|G\'|$',
+                            'time_wall' : 'time (s)'})
+    styler = df.style
+    styler.hide(axis='index')
+    styler.format(na_rep='$\\times$')
+    styler.set_table_styles([
+        {'selector': 'toprule', 'props': ':hline;'},
+        {'selector': 'midrule', 'props': ':hline;'},
+        {'selector': 'bottomrule', 'props': ':hline;'},
+    ], overwrite=True)
+
+    # write to file
+    output_file = os.path.join(tables_dir(args), 'eqcheck_table.tex')
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write(styler.to_latex(column_format='l||rrr||r'))
+
+
+def latex_table_non_equivalent(df : pd.DataFrame, args):
+    """
+    Write LaTeX table like Table 5 in https://arxiv.org/pdf/2403.18813.
+    """
+    #print(df)
+    print("TODO: non-equiv table")
