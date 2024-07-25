@@ -122,6 +122,7 @@ class EqCheckPlotPipeline(PlotPipeline):
         Create plots and LaTeX tables.
         """
         Path(pr_plot.tables_dir(self.args)).mkdir(parents=True, exist_ok=True)
+        print(f"Writing tables to {pr_plot.tables_dir(self.args)}")
         pr_plot.latex_table_equivalent(self.df, self.args)
         pr_plot.latex_table_non_equivalent(self.df, self.args)
 

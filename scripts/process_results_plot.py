@@ -335,8 +335,6 @@ def latex_table_equivalent(df : pd.DataFrame, args):
     # select data
     df = df.loc[(df['type'] == 'opt') & (df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
     df = df.sort_values(['circuit_type', 'n_qubits'])
-    #pd.set_option('display.max_rows', 500)
-    #print(df)
     df = df[['circuit_type', 'n_qubits', 'n_gates_U', 'n_gates_V','time_wall']]
     
     # styling
@@ -353,7 +351,7 @@ def latex_table_equivalent(df : pd.DataFrame, args):
     ], overwrite=True)
 
     # write to file
-    output_file = os.path.join(tables_dir(args), 'eqcheck_table.tex')
+    output_file = os.path.join(tables_dir(args), 'eqcheck_equiv_table.tex')
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(styler.to_latex(column_format='l||rrr||r'))
 
@@ -362,5 +360,34 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
     """
     Write LaTeX table like Table 5 in https://arxiv.org/pdf/2403.18813.
     """
-    #print(df)
+    # select data
+    df = df.loc[(df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
+    print(df)
+    df = df[['circuit_type', 'circuit_U', 'n_qubits', 'n_gates_U', 'n_gates_V', 'type', 'time_wall']]
+    gm   = df.loc[(df['type'] == 'gm')].drop('type', axis=1)
+    flip = df.loc[(df['type'] == 'flip')].drop('type', axis=1)
+    df = gm.merge(flip[['circuit_U','time_wall']], 
+                     on='circuit_U', how='outer',
+                     suffixes=('_gm', '_flip')).drop('circuit_U', axis=1)
+    
+    # styling
+    df = df.rename(columns={'circuit_type' : 'Algorithm', 'n_qubits' : '$n$',
+                            'n_gates_U' : '$|G|$', 'n_gates_V' : '$|G\'|$',
+                            'time_wall_gm' : '1 gate missing', 
+                            'time_wall_flip' : 'flipped'})
+    styler = df.style
+    styler.hide(axis='index')
+    styler.format(na_rep='$\\times$')
+    styler.set_table_styles([
+        {'selector': 'toprule', 'props': ':hline;'},
+        {'selector': 'midrule', 'props': ':hline;'},
+        {'selector': 'bottomrule', 'props': ':hline;'},
+    ], overwrite=True)
+
+    print(df)
+    
+    # write to file
+    output_file = os.path.join(tables_dir(args), 'eqcheck_nonequiv_table.tex')
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write(styler.to_latex(column_format='l||rrr||rr'))
     print("TODO: non-equiv table")
