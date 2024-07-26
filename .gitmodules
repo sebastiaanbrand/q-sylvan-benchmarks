@@ -1,6 +1,9 @@
-[submodule "q-sylvan"]
+[submodule "tools/q-sylvan"]
 	path = tools/q-sylvan
 	url = git@github.com:sebastiaanbrand/q-sylvan.git
-[submodule "mqt-ddsim"]
+[submodule "tools/mqt-ddsim"]
 	path = tools/mqt-ddsim
 	url = git@github.com:cda-tum/mqt-ddsim.git
+[submodule "tools/quokka-sharp/GPMC"]
+	path = tools/quokka-sharp/GPMC
+	url = https://git.trs.css.i.nagoya-u.ac.jp/k-hasimt/GPMC.git
