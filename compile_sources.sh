@@ -10,7 +10,7 @@ while getopts "r" opt; do
 done
 
 # (re)compile Q-Sylvan
-cd extern/q-sylvan
+cd tools/q-sylvan
 if [[ $recompile ]]; then rm -r -f build; fi
 mkdir -p build
 cd build
@@ -20,7 +20,7 @@ cd ../../..
 
 
 # compile MQT DDSIM (not recompiled with -r because it takes quite long)
-cd extern/mqt-ddsim
+cd tools/mqt-ddsim
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBINDINGS=ON -DBUILD_DDSIM_TESTS=ON
 cmake --build build --config Release
 cd ../../..

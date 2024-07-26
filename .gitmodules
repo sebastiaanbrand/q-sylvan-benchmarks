@@ -1,6 +1,6 @@
-[submodule "extern/q-sylvan"]
-	path = extern/q-sylvan
+[submodule "q-sylvan"]
+	path = tools/q-sylvan
 	url = git@github.com:sebastiaanbrand/q-sylvan.git
-[submodule "extern/mqt-ddsim"]
-	path = extern/mqt-ddsim
+[submodule "mqt-ddsim"]
+	path = tools/mqt-ddsim
 	url = git@github.com:cda-tum/mqt-ddsim.git

@@ -12,7 +12,7 @@ from qiskit.circuit import QuantumCircuit
 
 
 EXPERIMENTS_DIR = "experiments/"
-RUN_EQCHECK = "timeout {} ./extern/q-sylvan/build/examples/circuit_equivalence {} {} --workers {} {} 2> {} 1> {}\n"
+RUN_EQCHECK = "timeout {} ./tools/q-sylvan/build/examples/circuit_equivalence {} {} --workers {} {} 2> {} 1> {}\n"
 
 
 parser = argparse.ArgumentParser()

@@ -8,7 +8,7 @@
 `--state-vector` adds the complete state vector to the JSON output.
 
 ```shell
-$ ./extern/q-sylvan/build/qasm/run_qasm_on_qmdd <circuit.qasm> [--count-nodes]
+$ ./tools/q-sylvan/build/qasm/run_qasm_on_qmdd <circuit.qasm> [--count-nodes]
 ```
 
 ### MQT-DDSIM
@@ -16,7 +16,7 @@ $ ./extern/q-sylvan/build/qasm/run_qasm_on_qmdd <circuit.qasm> [--count-nodes]
 `--ps` outputs stats, `--pv` outputs the state vector, `--pm` prints the measurement result
 
 ```shell
-$ ./extern/mqt-ddsim/build/apps/ddsim_simple --simulate_file <circuit.qasm> --shots 1 --ps
+$ ./tools/mqt-ddsim/build/apps/ddsim_simple --simulate_file <circuit.qasm> --shots 1 --ps
 ```
 
 ## Running + plotting benchmarks
