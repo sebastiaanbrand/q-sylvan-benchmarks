@@ -1,0 +1,9 @@
+
+# plotting, etc.
+matplotlib
+numpy
+pandas
+
+# benchmarks
+qiskit
+quokka_sharp
