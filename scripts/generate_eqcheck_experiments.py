@@ -12,7 +12,8 @@ from qiskit.circuit import QuantumCircuit
 
 
 EXPERIMENTS_DIR = "experiments/"
-RUN_EQCHECK = "timeout {} ./tools/q-sylvan/build/examples/circuit_equivalence {} {} --workers {} {} 2> {} 1> {}\n"
+Q_SYLVAN = "timeout {} ./tools/q-sylvan/build/examples/circuit_equivalence {} {} --workers {} {} 2> {} 1> {}\n"
+QUOKKA_SHARP = "timeout {} python tools/quokka-sharp/quokka-sharp-cli.py {} {} 2> {} 1> {}\n"
 
 
 parser = argparse.ArgumentParser()
@@ -83,12 +84,31 @@ def experiments_eqcheck(args):
                 qc_compare = qiskit.qasm2.load(compare_path)
                 assert qc_origin.num_qubits == qc_compare.num_qubits
 
+                # add quokka-sharp run
+                exp_counter += 1
+                json_out = f"{output_dir}/json/{origin_file[:-5]}_quokkasharp_{exp_counter}.json"
+                log      = f"{output_dir}/logs/{origin_file[:-5]}_quokkasharp_{exp_counter}.log"
+                meta     = f"{output_dir}/meta/{origin_file[:-5]}_quokkasharp_{exp_counter}.json"
+                f.write(QUOKKA_SHARP.format(args.timeout, origin_path, compare_path, log, json_out))
+                with open(meta, 'w', encoding='utf-8') as meta_file:
+                    json.dump({ 'circuit_type' : origin_file.split('_')[0],
+                                'circuit_U' : origin_file[:-5],
+                                'circuit_V' : os.path.basename(compare_path)[:-5],
+                                'exp_id' : exp_counter,
+                                'n_gates_U' : sum(qc_origin.count_ops().values()),
+                                'n_gates_V' : sum(qc_compare.count_ops().values()),
+                                'n_qubits' : qc_origin.num_qubits,
+                                'tool' : 'quokka-sharp',
+                                'type' : os.path.basename(comp_dir),
+                                'workers' : 1}, meta_file, indent=2)
+
+                # add q-sylvan runs
                 for w in workers:
                     exp_counter += 1
                     json_out = f"{output_dir}/json/{origin_file[:-5]}_qsylvan_{w}_{exp_counter}.json"
                     log      = f"{output_dir}/logs/{origin_file[:-5]}_qsylvan_{w}_{exp_counter}.log"
                     meta     = f"{output_dir}/meta/{origin_file[:-5]}_qsylvan_{w}_{exp_counter}.json"
-                    f.write(RUN_EQCHECK.format(args.timeout, origin_path, compare_path, w, cli_args, log, json_out))
+                    f.write(Q_SYLVAN.format(args.timeout, origin_path, compare_path, w, cli_args, log, json_out))
                     with open(meta, 'w', encoding='utf-8') as meta_file:
                         json.dump({ 'circuit_type' : origin_file.split('_')[0],
                                     'circuit_U' : origin_file[:-5],
