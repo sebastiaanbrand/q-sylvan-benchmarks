@@ -335,12 +335,12 @@ def latex_table_equivalent(df : pd.DataFrame, args):
     # select data
     df = df.loc[(df['type'] == 'opt') & (df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
     df = df.sort_values(['circuit_type', 'n_qubits'])
-    df = df[['circuit_type', 'n_qubits', 'n_gates_U', 'n_gates_V','time_wall']]
+    df = df[['circuit_type', 'n_qubits', 'n_gates_U', 'n_gates_V','wall_time']]
     
     # styling
     df = df.rename(columns={'circuit_type' : 'Algorithm', 'n_qubits' : '$n$',
                             'n_gates_U' : '$|G|$', 'n_gates_V' : '$|G\'|$',
-                            'time_wall' : 'time (s)'})
+                            'wall_time' : 'time (s)'})
     styler = df.style
     styler.hide(axis='index')
     styler.format(na_rep='$\\times$')
@@ -363,18 +363,18 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
     # select data
     df = df.loc[(df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
     print(df)
-    df = df[['circuit_type', 'circuit_U', 'n_qubits', 'n_gates_U', 'n_gates_V', 'type', 'time_wall']]
+    df = df[['circuit_type', 'circuit_U', 'n_qubits', 'n_gates_U', 'n_gates_V', 'type', 'wall_time']]
     gm   = df.loc[(df['type'] == 'gm')].drop('type', axis=1)
     flip = df.loc[(df['type'] == 'flip')].drop('type', axis=1)
-    df = gm.merge(flip[['circuit_U','time_wall']], 
+    df = gm.merge(flip[['circuit_U','wall_time']], 
                      on='circuit_U', how='outer',
                      suffixes=('_gm', '_flip')).drop('circuit_U', axis=1)
     
     # styling
     df = df.rename(columns={'circuit_type' : 'Algorithm', 'n_qubits' : '$n$',
                             'n_gates_U' : '$|G|$', 'n_gates_V' : '$|G\'|$',
-                            'time_wall_gm' : '1 gate missing', 
-                            'time_wall_flip' : 'flipped'})
+                            'wall_time_gm' : '1 gate missing', 
+                            'wall_time_flip' : 'flipped'})
     styler = df.style
     styler.hide(axis='index')
     styler.format(na_rep='$\\times$')

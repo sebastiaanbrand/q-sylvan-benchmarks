@@ -93,7 +93,7 @@ class SimPlotPipeline(PlotPipeline):
 class EqCheckPlotPipeline(PlotPipeline):
 
     res_cols = ['exp_id', 'status', 'equivalent', 'counterexample', 
-                'min_fidelity', 'time_wall']
+                'min_fidelity', 'wall_time']
 
     def load_data(self):
         """
