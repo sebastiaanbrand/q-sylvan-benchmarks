@@ -2,6 +2,9 @@
 Simple wrapper to use Quokka Sharp from command line since all the benchmarks
 are run using bash scripts.
 """
+import os
+import time
+import json
 import argparse
 import quokka_sharp as qk
 
@@ -18,10 +21,21 @@ def equivalence_check(args):
     """
     circuit1 = qk.encoding.QASMparser(args.qasmfile1, True)
     circuit2 = qk.encoding.QASMparser(args.qasmfile2, True)
+
+    t_start = time.time()
     circuit2.dagger()
     circuit1.append(circuit2)
     cnf = qk.encoding.QASM2CNF(circuit1)
-    res = qk.CheckEquivalence(args.gpmc_path, cnf)
+    res = qk.CheckEquivalence(args.gpmc_path + " -mode=1", cnf)
+    t_end = time.time()
+
+    # write stats as JSON
+    stats = {}
+    stats['circuit_U'] = os.path.basename(args.qasmfile1)[:-5]
+    stats['circuit_V'] = os.path.basename(args.qasmfile2)[:-5]
+    stats['equivalent'] = 1 if res else 0
+    stats['wall_time'] = t_end - t_start
+    print(json.dumps(stats, indent=2))
 
 
 def main():
