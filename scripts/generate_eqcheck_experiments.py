@@ -12,7 +12,7 @@ import qiskit.qasm2
 
 EXPERIMENTS_DIR = "experiments/"
 Q_SYLVAN = "timeout {} ./tools/q-sylvan/build/examples/circuit_equivalence {} {} --workers {} {} 2> {} 1> {}\n"
-QUOKKA_SHARP = "python tools/quokka-sharp/quokka-sharp-cli.py {} {} 2> {} 1> {}\n"
+#QUOKKA_SHARP = "python tools/quokka-sharp/quokka-sharp-cli.py {} {} 2> {} 1> {}\n"
 
 
 parser = argparse.ArgumentParser()
@@ -59,7 +59,6 @@ def experiments_eqcheck(args):
     origin_dir = os.path.join(args.qasm_dir, 'origin')
     with open(bash_file, 'w', encoding='utf-8') as f:
         f.write("#!/bin/bash\n\n# Circuit equivalence checking benchmarks\n\n")
-        f.write(f"# timeout for quokka-sharp/GPMC\nexport TIMEOUT={args.timeout}\n")
 
         # get qasm files
         origin_files = []
@@ -85,22 +84,22 @@ def experiments_eqcheck(args):
                 assert qc_origin.num_qubits == qc_compare.num_qubits
 
                 # add quokka-sharp run
-                exp_counter += 1
-                json_out = f"{output_dir}/json/{origin_file[:-5]}_quokkasharp_{exp_counter}.json"
-                log      = f"{output_dir}/logs/{origin_file[:-5]}_quokkasharp_{exp_counter}.log"
-                meta     = f"{output_dir}/meta/{origin_file[:-5]}_quokkasharp_{exp_counter}.json"
-                f.write(QUOKKA_SHARP.format(origin_path, compare_path, log, json_out))
-                with open(meta, 'w', encoding='utf-8') as meta_file:
-                    json.dump({ 'circuit_type' : origin_file.split('_')[0],
-                                'circuit_U' : origin_file[:-5],
-                                'circuit_V' : os.path.basename(compare_path)[:-5],
-                                'exp_id' : exp_counter,
-                                'n_gates_U' : sum(qc_origin.count_ops().values()),
-                                'n_gates_V' : sum(qc_compare.count_ops().values()),
-                                'n_qubits' : qc_origin.num_qubits,
-                                'tool' : 'quokka-sharp',
-                                'type' : os.path.basename(comp_dir),
-                                'workers' : 1}, meta_file, indent=2)
+                #exp_counter += 1
+                #json_out = f"{output_dir}/json/{origin_file[:-5]}_quokkasharp_{exp_counter}.json"
+                #log      = f"{output_dir}/logs/{origin_file[:-5]}_quokkasharp_{exp_counter}.log"
+                #meta     = f"{output_dir}/meta/{origin_file[:-5]}_quokkasharp_{exp_counter}.json"
+                #f.write(QUOKKA_SHARP.format(origin_path, compare_path, log, json_out))
+                #with open(meta, 'w', encoding='utf-8') as meta_file:
+                #    json.dump({ 'circuit_type' : origin_file.split('_')[0],
+                #                'circuit_U' : origin_file[:-5],
+                #                'circuit_V' : os.path.basename(compare_path)[:-5],
+                #                'exp_id' : exp_counter,
+                #                'n_gates_U' : sum(qc_origin.count_ops().values()),
+                #                'n_gates_V' : sum(qc_compare.count_ops().values()),
+                #                'n_qubits' : qc_origin.num_qubits,
+                #                'tool' : 'quokka-sharp',
+                #                'type' : os.path.basename(comp_dir),
+                #                'workers' : 1}, meta_file, indent=2)
 
                 # add q-sylvan runs
                 for w in workers:
