@@ -1,5 +1,6 @@
 
 # plotting, etc.
+Jinja2
 matplotlib
 numpy
 pandas
