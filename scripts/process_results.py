@@ -108,6 +108,7 @@ class EqCheckPlotPipeline(PlotPipeline):
         logs_df = pr_load.load_logs(self.args.dir)[['exp_id', 'status']]
         logs_df.set_index('exp_id', inplace=True)
         self.df.update(logs_df)
+        self.df['status'] = self.df['status'].fillna('TIMEOUT')
 
     def sanity_checks(self):
         """

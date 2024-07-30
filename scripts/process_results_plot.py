@@ -362,7 +362,6 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
     """
     # select data
     df = df.loc[(df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
-    print(df)
     df = df[['circuit_type', 'circuit_U', 'n_qubits', 'n_gates_U', 'n_gates_V', 'type', 'wall_time']]
     gm   = df.loc[(df['type'] == 'gm')].drop('type', axis=1)
     flip = df.loc[(df['type'] == 'flip')].drop('type', axis=1)
@@ -383,11 +382,8 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
         {'selector': 'midrule', 'props': ':hline;'},
         {'selector': 'bottomrule', 'props': ':hline;'},
     ], overwrite=True)
-
-    print(df)
     
     # write to file
     output_file = os.path.join(tables_dir(args), 'eqcheck_nonequiv_table.tex')
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(styler.to_latex(column_format='l||rrr||rr'))
-    print("TODO: non-equiv table")

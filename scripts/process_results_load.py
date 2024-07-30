@@ -32,7 +32,9 @@ def _get_termination_status(log_filepath : str):
                 print("    " + log_filepath)
         elif 'mqt' in log_filepath:
             pass
-    return 'TODO'
+        elif 'quokkasharp' in log_filepath:
+            pass
+    return 'UNKNOWN'
 
 
 def _get_log_info(log_filepath : str, log_filename : str):
