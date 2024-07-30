@@ -35,7 +35,8 @@ def equivalence_check(args):
     stats['circuit_V'] = os.path.basename(args.qasmfile2)[:-5]
     stats['equivalent'] = 1 if res else 0
     stats['wall_time'] = t_end - t_start
-    print(json.dumps(stats, indent=2))
+    json_data = {'statistics' : stats}
+    print(json.dumps(json_data, indent=2))
 
 
 def main():
