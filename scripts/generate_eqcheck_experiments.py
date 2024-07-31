@@ -12,7 +12,7 @@ import qiskit.qasm2
 
 EXPERIMENTS_DIR = "experiments/"
 Q_SYLVAN = "timeout {} ./tools/q-sylvan/build/examples/circuit_equivalence {} {} --workers {} {} 2> {} 1> {}\n"
-QUOKKA_SHARP = "python tools/quokka-sharp/quokka-sharp-cli.py {} {} --workers {} 2> {} 1> {}\n"
+QUOKKA_SHARP = "python tools/quokka-sharp/cli.py {} {} --workers {} 2> {} 1> {}\n"
 
 
 parser = argparse.ArgumentParser()
@@ -49,12 +49,12 @@ def experiments_eqcheck(args):
     Path(os.path.join(output_dir,'logs')).mkdir(parents=True, exist_ok=True)
     Path(os.path.join(output_dir,'meta')).mkdir(parents=True, exist_ok=True)
     bash_file = os.path.join(output_dir, 'run_all.sh')
-    
+
     cli_args = ''
     if args.test_multicore:
         cli_args += ' --count-nodes'
     workers = [1,2,4,8] if args.test_multicore else [1]
-    
+
     print(f"Writing to {bash_file}")
     origin_dir = os.path.join(args.qasm_dir, 'origin')
     with open(bash_file, 'w', encoding='utf-8') as f:
@@ -78,7 +78,7 @@ def experiments_eqcheck(args):
                 compare_path = os.path.join(comp_dir, origin_file) + comp_ext
                 if not os.path.isfile(compare_path):
                     continue
-                
+
                 # get circuits for metadata
                 qc_origin  = qiskit.qasm2.load(origin_path)
                 qc_compare = qiskit.qasm2.load(compare_path)
