@@ -49,10 +49,6 @@ def CheckEquivalence(tool_invocation, cnf, cnf_file_root = tempfile.gettempdir()
     try:
         signal.signal(signal.SIGALRM, timeout)
         signal.alarm(TIMEOUT)
-        #TODO: different number of qubits
-        cnf_file_list = []
-        proclist = []
-        watched_pids = []
 
         result = True
         tool_command = tool_invocation.split(' ')

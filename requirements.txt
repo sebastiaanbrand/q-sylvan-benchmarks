@@ -7,4 +7,3 @@ pandas
 
 # benchmarks
 qiskit
-quokka_sharp
