@@ -334,16 +334,22 @@ def latex_table_equivalent(df : pd.DataFrame, args):
     """
     # select data
     df = df.loc[(df['type'] == 'opt') & (df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
+
+    # style runtime column
+    df = df.astype({'wall_time' : str})
+    df.loc[:,'wall_time'] = df['wall_time'].apply(lambda x : '{:.2f}'.format(float(x)))
+    df.loc[(df['status'] == 'TIMEOUT'), 'wall_time'] = f'> {TIMEOUT_TIME}'
+    df.loc[(df['status'] == 'NODE_TABLE_FULL'), 'wall_time'] = '-'
+    df.loc[(df['status'] == 'WEIGHT_TABLE_FULL'), 'wall_time'] = '-'
+
+    # styling of table
     df = df.sort_values(['circuit_type', 'n_qubits'])
-    df = df[['circuit_type', 'n_qubits', 'n_gates_U', 'n_gates_V','wall_time']]
-    
-    # styling
+    df = df[['circuit_type', 'n_qubits', 'n_gates_U', 'n_gates_V', 'wall_time']]
     df = df.rename(columns={'circuit_type' : 'Algorithm', 'n_qubits' : '$n$',
                             'n_gates_U' : '$|G|$', 'n_gates_V' : '$|G\'|$',
                             'wall_time' : 'time (s)'})
     styler = df.style
     styler.hide(axis='index')
-    styler.format(na_rep='$\\times$')
     styler.set_table_styles([
         {'selector': 'toprule', 'props': ':hline;'},
         {'selector': 'midrule', 'props': ':hline;'},
@@ -362,21 +368,32 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
     """
     # select data
     df = df.loc[(df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
-    df = df[['circuit_type', 'circuit_U', 'n_qubits', 'n_gates_U', 'n_gates_V', 'type', 'wall_time']]
+    df = df[['circuit_type', 'circuit_U', 'n_qubits', 'n_gates_U', 'n_gates_V', 'type', 'wall_time', 'status']]
     gm   = df.loc[(df['type'] == 'gm')].drop('type', axis=1)
     flip = df.loc[(df['type'] == 'flip')].drop('type', axis=1)
-    df = gm.merge(flip[['circuit_U','wall_time']], 
+    df = gm.merge(flip[['circuit_U', 'wall_time', 'status']], 
                      on='circuit_U', how='outer',
                      suffixes=('_gm', '_flip')).drop('circuit_U', axis=1)
+    df['n_gates_V'] = df['n_gates_V'] + 1
     
-    # styling
+    # style runtime columns
+    for suff in ['_gm', '_flip']:
+        df = df.astype({f'wall_time{suff}' : str})
+        df.loc[:,f'wall_time{suff}'] = df[f'wall_time{suff}'].apply(lambda x : '{:.2f}'.format(float(x)))
+        df.loc[(df[f'status{suff}'] == 'TIMEOUT'), f'wall_time{suff}'] = f'> {TIMEOUT_TIME}'
+        df.loc[(df[f'status{suff}'] == 'NODE_TABLE_FULL'), f'wall_time{suff}'] = '-'
+        df.loc[(df[f'status{suff}'] == 'WEIGHT_TABLE_FULL'), f'wall_time{suff}'] = '-'
+    
+    # styling of table
+    df = df.sort_values(['circuit_type', 'n_qubits'])
+    df = df[['circuit_type', 'n_qubits', 'n_gates_U', 'n_gates_V',
+             'wall_time_gm', 'wall_time_flip']]
     df = df.rename(columns={'circuit_type' : 'Algorithm', 'n_qubits' : '$n$',
                             'n_gates_U' : '$|G|$', 'n_gates_V' : '$|G\'|$',
                             'wall_time_gm' : '1 gate missing', 
                             'wall_time_flip' : 'flipped'})
     styler = df.style
     styler.hide(axis='index')
-    styler.format(na_rep='$\\times$')
     styler.set_table_styles([
         {'selector': 'toprule', 'props': ':hline;'},
         {'selector': 'midrule', 'props': ':hline;'},
