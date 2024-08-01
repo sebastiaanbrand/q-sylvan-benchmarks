@@ -3,6 +3,7 @@ Simple wrapper to use Quokka Sharp from command line since all the benchmarks
 are run using bash scripts.
 """
 import os
+import sys
 import time
 import json
 import argparse
@@ -30,11 +31,15 @@ def equivalence_check(args):
     res = qk.CheckEquivalence(args.gpmc_path + " -mode=1", cnf, N=args.workers)
     t_end = time.time()
 
+    if res == "TIMEOUT":
+        print("timeout", file=sys.stderr)
+        return
+
     # write stats as JSON
     stats = {}
     stats['circuit_U'] = os.path.basename(args.qasmfile1)[:-5]
     stats['circuit_V'] = os.path.basename(args.qasmfile2)[:-5]
-    stats['equivalent'] = 1 if res else 0
+    stats['equivalent'] = int(res) if isinstance(res, bool) else res
     stats['wall_time'] = t_end - t_start
     stats['workers'] = args.workers
     json_data = {'statistics' : stats}
