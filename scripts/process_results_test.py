@@ -92,9 +92,11 @@ def check_norms(df : pd.DataFrame, args, ns_names):
         print(f"\n    Out of {len(df)} finished q-sylvan runs:")
         print(f"    {len(issues)} instances where norm != 1.0")
         if len([x for x in df['wgt_norm_strat'].unique() if ~np.isnan(x)]) > 1:
-            counts = issues.groupby(issues['wgt_norm_strat']).size()
-            for norm_strat, count in counts.items():
-                print(f"    of which {count} using norm-{ns_names[norm_strat]}")
+            total_counts = df.groupby(df['wgt_norm_strat']).size()
+            for norm_strat, count in total_counts.items():
+                issue_count = (issues['wgt_norm_strat'] == norm_strat).sum()
+                print(f"      - norm-{ns_names[norm_strat]}:\t{issue_count}/{count}"\
+                      f"({round(issue_count/count*100)}%)")
         print(f"    Writing details to {issues_file(args)}")
         with open(issues_file(args), 'a', encoding='utf-8') as f:
             f.write("Issues with norm:\n")
