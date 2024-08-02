@@ -81,8 +81,8 @@ class SimPlotPipeline(PlotPipeline):
         """
         Renerate all relevant simulation plots.
         """
-        Path(pr_plot.plots_dir(self.args)).mkdir(parents=True, exist_ok=True)
         print(f"Writing plots to {pr_plot.plots_dir(self.args)}")
+        pr_plot.mkdir_plots(self.args)
         pr_plot.plot_tool_comparison(self.df, self.fid_df, self.args)
         pr_plot.plot_dd_size_vs_qubits(self.df, self.args, NS_NAMES)
         pr_plot.plot_relative_speedups(self.df, self.args)
@@ -122,8 +122,8 @@ class EqCheckPlotPipeline(PlotPipeline):
         """
         Create plots and LaTeX tables.
         """
-        Path(pr_plot.tables_dir(self.args)).mkdir(parents=True, exist_ok=True)
         print(f"Writing tables to {pr_plot.tables_dir(self.args)}")
+        Path(pr_plot.tables_dir(self.args)).mkdir(parents=True, exist_ok=True)
         pr_plot.latex_table_equivalent(self.df, self.args)
         pr_plot.latex_table_non_equivalent(self.df, self.args)
 

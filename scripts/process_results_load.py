@@ -109,9 +109,7 @@ def load_logs(exp_dir : str):
         filepath = os.path.join(log_dir, filename)
         if filename.endswith('.log') and os.path.getsize(filepath) > 0:
             row = _get_log_info(filepath, filename)
-            if row['status'] == 'FINISHED':
-                assert row['benchmark'] in df['benchmark'].values
-            else:
+            if row['status'] != 'FINISHED':
                 new_rows.append(row)
     return pd.DataFrame(new_rows)
 

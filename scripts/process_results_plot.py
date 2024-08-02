@@ -3,13 +3,14 @@ Code for generating plots from experiments.
 """
 import os
 import itertools
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
 
 TIMEOUT_TIME = 600 # replaces NaN from timeout with this time in the plots
-FORMATS = ['png']
+FORMATS = ['png', 'pdf']
 COLORS = ['royalblue', 'darkorange', 'forestgreen', 'crimson']
 
 
@@ -18,6 +19,15 @@ def plots_dir(args):
     Directory in which to put the plots.
     """
     return os.path.join(args.dir, 'plots')
+
+def mkdir_plots(args):
+    """
+    Create plots subdirs if not exists.
+    """
+    Path(plots_dir(args)).mkdir(parents=True, exist_ok=True)
+    for sub in (FORMATS + ['annotated']):
+        subdir = os.path.join(plots_dir(args), sub)
+        Path(subdir).mkdir(parents=True, exist_ok=True)
 
 def tables_dir(args):
     """
@@ -84,14 +94,15 @@ def plot_scatter(datas_x, datas_y, datas_labels,
         ax = _plot_diagonal_lines(ax, 0, max_val, at=diagonals)
 
     # save figure
-    outputpath = os.path.join(plots_dir(args), outputname)
     for _format in FORMATS:
+        outputpath = os.path.join(plots_dir(args), _format, outputname)
         fig.savefig(f"{outputpath}.{_format}")
 
     # save version of the figure with labeled data points
     for data_x, data_y, data_labels in zip(datas_x, datas_y, datas_labels):
         for i, bench_name in enumerate(data_labels):
             ax.annotate(bench_name, (data_x[i], data_y[i]), fontsize=1.0, rotation=60)
+    outputpath = os.path.join(plots_dir(args), 'annotated', outputname)
     fig.savefig(f"{outputpath}_annotated.pdf")
     fig.clf()
 
