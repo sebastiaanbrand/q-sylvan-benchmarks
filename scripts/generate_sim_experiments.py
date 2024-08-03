@@ -87,7 +87,7 @@ def experiments_sim_qasm(args):
         qsy_args += ' --count-nodes'
     workers = [1,2,4,8] if args.test_multicore else [1]
     inv_caching = ['', ' --disable-inv-caching'] if args.test_inv_caching else ['']
-    reorder = ['', ' --reorder', ' --reorder-swaps'] if args.test_reorder else [' --reorder-swaps']
+    reorder = ['', ' --reorder', ' --reorder-swaps'] if args.test_reorder else [' --reorder']
     norm_strats = [' -s low', ' -s max', ' -s min',  ' -s l2'] if args.test_norm_strats else [f' -s {args.norm_strat}']
 
     print(f"Writing to {bash_file_all}, {bash_file_mqt}, {bash_file_qsy}")
