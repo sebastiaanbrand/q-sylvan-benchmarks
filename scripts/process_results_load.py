@@ -27,6 +27,8 @@ def _get_termination_status(log_filepath : str):
                 return 'TIMEOUT'
             elif "Assertion" in text and "failed" in text:
                 return "ERROR"
+            elif len(text.splitlines()) and "WARNING" in text:
+                return "UNKNOWN"
             else:
                 print("    Could not get termination status from file:")
                 print("    " + log_filepath)
@@ -45,11 +47,11 @@ def _get_log_info(log_filepath : str, log_filename : str):
     if 'qsylvan' in log_filename:
         stats['tool'] = 'q-sylvan'
         parts = re.split('_|.log', log_filename)
-        stats['benchmark'] = '_'.join(parts[:parts.index('qsylvan')])
+        stats['circuit'] = '_'.join(parts[:parts.index('qsylvan')])
         stats['workers'] = int(parts[parts.index('qsylvan')+1])
     elif 'mqt' in log_filename:
         stats['tool'] = 'mqt'
-        stats['benchmark'] = log_filename.split('_mqt')[0]
+        stats['circuit'] = log_filename.split('_mqt')[0]
         stats['workers'] = 1
     stats['exp_id'] = int(re.findall(r'\d+', log_filename)[-1])
     stats['status'] = _get_termination_status(log_filepath)
@@ -131,7 +133,7 @@ def load_meta(exp_dir : str):
 
 def add_circuit_categories(df : pd.DataFrame):
     """
-    Add column to the df in which every benchmark labeled with a category.
+    Add column to the df in which every circuit labeled with a category.
     """
     cat_info = {}
     with open(CIRCUIT_CATEGORY_FILE, 'r', encoding='utf-8') as f:
@@ -140,7 +142,7 @@ def add_circuit_categories(df : pd.DataFrame):
     use_cat = cat_info['use_category']
     df.insert(loc=1, column='category', value = 'N/A')
     for i, row in df.iterrows():
-        circ_type = row['benchmark'].split('_')[0]
+        circ_type = row['circuit'].split('_')[0]
         if circ_type in circuit_types:
             df.at[i, 'category'] = circuit_types[circ_type][use_cat]
         else:

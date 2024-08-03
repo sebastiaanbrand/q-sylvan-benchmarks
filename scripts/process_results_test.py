@@ -71,7 +71,7 @@ def compare_vectors(args):
     if len(fidelity_issues) > 0:
         print(f"    {len(fidelity_issues)} instances where fidelity !~= 1.000")
         print(f"    Writing details to {issues_file(args)}")
-        issues_df = pd.DataFrame(fidelity_issues)[['benchmark', 'n_qubits',
+        issues_df = pd.DataFrame(fidelity_issues)[['circuit', 'n_qubits',
                     'simulation_time', 'workers', 'reorder', 'wgt_norm_strat',
                     'wgt_inv_caching', 'max_nodes', 'norm', 'fidelity']]
         with open(issues_file(args), 'a', encoding='utf-8') as f:
@@ -140,7 +140,7 @@ def check_termination_errors(df : pd.DataFrame, args):
     Add all non-terminated instances to file.
     """
     print(f"Writing instances with termination issues to {issues_file(args)}")
-    keep = ['benchmark', 'circuit_U', 'tool', 'exp_id', 'status']
+    keep = ['circuit', 'circuit_U', 'tool', 'exp_id', 'status']
     columns = list(df.columns.values)
     df = df[list(set(columns) & set(keep))]
     df = df.loc[(df['tool'] == 'q-sylvan') & (df['status'] != 'FINISHED') & (df['status'] != 'TIMEOUT')]

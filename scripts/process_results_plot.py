@@ -117,12 +117,12 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args):
         print("No MQT data, skipping plot")
         return
 
-    joined = pd.merge(left, right, on='benchmark', how='outer', suffixes=('_l','_r'))
+    joined = pd.merge(left, right, on='circuit', how='outer', suffixes=('_l','_r'))
 
     if fid_df is None:
         data_l = joined['simulation_time_l'].fillna(TIMEOUT_TIME)
         data_r = joined['simulation_time_r'].fillna(TIMEOUT_TIME)
-        data_labels = [f"{n} ({s})" for n, s in zip(joined['benchmark'],joined['status_r'])]
+        data_labels = [f"{n} ({s})" for n, s in zip(joined['circuit'],joined['status_r'])]
 
         plot_scatter([data_l], [data_r], [data_labels],
                     [], 'linear', 'linear',
@@ -130,7 +130,7 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args):
                     'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
                     'mqt_vs_qsylvan', args)
     else:
-        joined = pd.merge(joined, fid_df, on='benchmark', how='left')
+        joined = pd.merge(joined, fid_df, on='circuit', how='left')
         joined['fidelity'] = joined['fidelity'].fillna(-1)
         fid_1    = joined.loc[(joined['fidelity'] > .999) & (joined['fidelity'] < 1.001)]
         fid_not1 = joined.loc[((joined['fidelity'] < .999) | (joined['fidelity'] > 1.001))
@@ -148,7 +148,7 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args):
             fid = fid.reset_index()
             datas_l.append(fid['simulation_time_l'].fillna(TIMEOUT_TIME))
             datas_r.append(fid['simulation_time_r'].fillna(TIMEOUT_TIME))
-            datas_labels.append(fid['benchmark'])
+            datas_labels.append(fid['circuit'])
             leg_names.append(leg_name)
 
         plot_scatter(datas_l, datas_r, datas_labels,
@@ -163,8 +163,6 @@ def plot_inv_cache_comparison(df : pd.DataFrame, args):
     """
     Plot nodecounts of inverse cache ON vs OFF.
     """
-    # TODO: include non-terminated benchmarks
-    # (maybe have experiment generation write JSON files with settings)
     df = df.loc[(df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
 
     left  = df.loc[df['wgt_inv_caching'] == 0]
@@ -173,12 +171,12 @@ def plot_inv_cache_comparison(df : pd.DataFrame, args):
         print("No inv caching data, skipping plot")
         return
 
-    joined = pd.merge(left, right, on='benchmark', how='inner', suffixes=('_l', '_r'))
+    joined = pd.merge(left, right, on='circuit', how='inner', suffixes=('_l', '_r'))
 
     # plot max nodes
     data_l = joined['max_nodes_l']
     data_r = joined['max_nodes_r']
-    data_labels = joined['benchmark']
+    data_labels = joined['circuit']
     plot_scatter([data_l], [data_r], [data_labels],
                  [], 'linear', 'linear',
                  ['royalblue'], None,
@@ -188,7 +186,7 @@ def plot_inv_cache_comparison(df : pd.DataFrame, args):
     # plot runtime
     data_l = joined['simulation_time_l']
     data_r = joined['simulation_time_r']
-    data_labels = joined['benchmark']
+    data_labels = joined['circuit']
     plot_scatter([data_l], [data_r], [data_labels],
                  [], 'linear', 'linear',
                  ['royalblue'], None,
@@ -212,7 +210,7 @@ def plot_norm_strat_comparison(df : pd.DataFrame, args, ns_names):
         left  = df.loc[df['wgt_norm_strat'] == s1]
         right = df.loc[df['wgt_norm_strat'] == s2]
 
-        joined = pd.merge(left, right, on='benchmark', how='inner', suffixes=('_l', '_r'))
+        joined = pd.merge(left, right, on='circuit', how='inner', suffixes=('_l', '_r'))
 
         # split into groups depending on if norm is 1
         joined_ok2 = joined.loc[(joined['norm_l'] == 1) & (joined['norm_r'] == 1)]
@@ -233,7 +231,7 @@ def plot_norm_strat_comparison(df : pd.DataFrame, args, ns_names):
                 subset = subset.reset_index()
                 datas_l.append(subset['max_nodes_l'])
                 datas_r.append(subset['max_nodes_r'])
-                datas_labels.append(subset['benchmark'])
+                datas_labels.append(subset['circuit'])
                 legend_names.append(name)
         plot_scatter(datas_l, datas_r, datas_labels,
                      [], 'linear', 'linear',
@@ -290,7 +288,7 @@ def plot_dd_size_vs_qubits(df : pd.DataFrame, args, ns_names):
             cat_data = data.loc[data['category'] == cat].reset_index()
             datas_x.append(cat_data['n_qubits'])
             datas_y.append(cat_data['max_nodes'])
-            datas_labels.append(cat_data['benchmark'])
+            datas_labels.append(cat_data['circuit'])
         plot_scatter(datas_x, datas_y, datas_labels,
                     None, 'linear', 'log',
                     COLORS, categories,
@@ -299,7 +297,7 @@ def plot_dd_size_vs_qubits(df : pd.DataFrame, args, ns_names):
 
 def plot_relative_speedups(df : pd.DataFrame, args):
     """
-    For each benchmark, plot multicore time / 1 core time.
+    For each circuit, plot multicore time / 1 core time.
     """
     # Get only q-sylvan data
     data = df.loc[(df['tool'] == 'q-sylvan')]
@@ -320,13 +318,13 @@ def plot_relative_speedups(df : pd.DataFrame, args):
     datas_labels = []
     for w in workers:
         data_w = data.loc[data['workers'] == w]
-        joined = pd.merge(data_1, data_w, on='benchmark', how='outer', suffixes=('_1','_w'))
+        joined = pd.merge(data_1, data_w, on='circuit', how='outer', suffixes=('_1','_w'))
         joined[['status_1','status_w']] = joined[['status_1', 'status_w']].fillna('TIMEOUT')
 
         datas_x.append(joined['simulation_time_1'].fillna(TIMEOUT_TIME))
         datas_y.append(joined['simulation_time_w'].fillna(TIMEOUT_TIME))
         datas_labels.append([f"{n} ({s1},{sw})" for n, s1, sw in\
-                       zip(joined['benchmark'], joined['status_1'], joined['status_w'])])
+                       zip(joined['circuit'], joined['status_1'], joined['status_w'])])
     # Pass to plot scatter
     colors = ['grey', 'royalblue', 'darkorange', 'forestgreen', 'orchid'] # add more if needed
     legend_labels = [f"1v{int(w)} workers" for w in workers]

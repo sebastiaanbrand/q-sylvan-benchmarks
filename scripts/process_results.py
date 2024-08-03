@@ -23,17 +23,18 @@ class PlotPipeline:
 
     def __init__(self, args):
         self.args = args
-    
+        self.df = None
+
     @abstractmethod
-    def load_data():
+    def load_data(self):
         pass
 
     @abstractmethod
-    def sanity_checks():
+    def sanity_checks(self):
         pass
 
     @abstractmethod
-    def plot_all():
+    def plot_all(self):
         pass
 
     @staticmethod
@@ -48,23 +49,34 @@ class PlotPipeline:
 
 
 class SimPlotPipeline(PlotPipeline):
+    """
+    Process results from circuit simulation experiments.
+    """
 
-    unused_columns = ['approximation_runs', 'distinct_results', 
-                      'final_fidelity', 'seed', 'shots','single_shots']
+    res_cols = ['exp_id', 'applied_gates', 'final_nodes', 'max_nodes', 'norm',
+                'reorder', 'seed', 'simulation_time', 'tolerance', 
+                'wgt_inv_caching', 'wgt_norm_strat', 'status']
 
     def __init__(self, args):
         super().__init__(args)
+        self.fid_df = None
 
     def load_data(self):
         """
         Load the data (and do some preprocessing).
         """
         print(f"Loading data from {self.args.dir}")
-        self.df = pr_load.load_json(self.args.dir, True)
-        self.df = self.df.drop(self.unused_columns, axis=1)
+
+        self.df = pr_load.load_meta(self.args.dir)
+        self.df.set_index('exp_id', inplace=True)
+        results = pr_load.load_json(self.args.dir)[self.res_cols]
+        results.set_index('exp_id', inplace=True)
+        self.df = pd.merge(self.df, results, on='exp_id', how='left')
         logs_df = pr_load.load_logs(self.args.dir)
-        self.df = pd.concat([self.df, logs_df], ignore_index=True)
+        logs_df.set_index('exp_id', inplace=True)
+        self.df.update(logs_df, overwrite=False)
         self.df = pr_load.add_circuit_categories(self.df)
+        self.df['status'] = self.df['status'].fillna('TIMEOUT')
 
     def sanity_checks(self):
         """
@@ -72,9 +84,8 @@ class SimPlotPipeline(PlotPipeline):
         """
         open(pr_test.issues_file(self.args), 'w', encoding='utf-8')
         pr_test.check_norms(self.df, self.args, NS_NAMES)
-        self.fid_df = None
         if self.args.compare_vecs:
-            self.fid_df = pr_test.compare_vectors(args)
+            self.fid_df = pr_test.compare_vectors(self.args)
         pr_test.check_termination_errors(self.df, self.args)
 
     def plot_all(self):
@@ -91,8 +102,11 @@ class SimPlotPipeline(PlotPipeline):
 
 
 class EqCheckPlotPipeline(PlotPipeline):
+    """
+    Process results from circuit equivalence checking experiments.
+    """
 
-    res_cols = ['exp_id', 'status', 'equivalent', 'counterexample', 
+    res_cols = ['exp_id', 'status', 'equivalent', 'counterexample',
                 'min_fidelity', 'wall_time']
 
     def load_data(self):
@@ -117,7 +131,7 @@ class EqCheckPlotPipeline(PlotPipeline):
         open(pr_test.issues_file(self.args), 'w', encoding='utf-8')
         pr_test.check_circuit_equivalence(self.df, self.args)
         pr_test.check_termination_errors(self.df, self.args)
-    
+
     def plot_all(self):
         """
         Create plots and LaTeX tables.

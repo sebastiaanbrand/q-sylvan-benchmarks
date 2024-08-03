@@ -121,7 +121,7 @@ def experiments_sim_qasm(args):
             exp_counter += 1
             json_output = f"{output_dir}/json/{filename[:-5]}_mqt_{exp_counter}.json"
             log         = f"{output_dir}/logs/{filename[:-5]}_mqt_{exp_counter}.log"
-            meta        = f"{output_dir}/meta/{filename[:-5]}_mqt_{exp_counter}.log"
+            meta        = f"{output_dir}/meta/{filename[:-5]}_mqt_{exp_counter}.json"
             f_all.write(MQT_QASM.format(args.timeout, filepath, mqt_args, log, json_output))
             f_mqt.write(MQT_QASM.format(args.timeout, filepath, mqt_args, log, json_output))
             with open(meta, 'w', encoding='utf-8') as meta_file:
@@ -139,7 +139,7 @@ def experiments_sim_qasm(args):
                             exp_counter += 1
                             json_output = f"{output_dir}/json/{filename[:-5]}_qsylvan_{exp_counter}.json"
                             log         = f"{output_dir}/logs/{filename[:-5]}_qsylvan_{exp_counter}.log"
-                            meta        = f"{output_dir}/meta/{filename[:-5]}_qsylvan_{exp_counter}.log"
+                            meta        = f"{output_dir}/meta/{filename[:-5]}_qsylvan_{exp_counter}.json"
                             f_all.write(QSY_QASM.format(args.timeout, filepath, w, qsy_args+s+inv+r, json_output, log))
                             f_qsy.write(QSY_QASM.format(args.timeout, filepath, w, qsy_args+s+inv+r, json_output, log))
                             with open(meta, 'w', encoding='utf-8') as meta_file:
