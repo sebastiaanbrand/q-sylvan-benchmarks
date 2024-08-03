@@ -129,6 +129,7 @@ def experiments_sim_qasm(args):
                             'exp_id' : exp_counter,
                             'n_qubits' : get_num_qubits(filename),
                             'tool' : 'mqt',
+                            'norm_strat' : 'l2',
                             'workers' : 1}, meta_file, indent=2)
 
             # Q-Sylvan
@@ -147,6 +148,7 @@ def experiments_sim_qasm(args):
                                             'exp_id' : exp_counter,
                                             'n_qubits' : get_num_qubits(filename),
                                             'tool' : 'q-sylvan',
+                                            'norm_strat' : s.split()[-1],
                                             'workers' : w}, meta_file, indent=2)
 
 
