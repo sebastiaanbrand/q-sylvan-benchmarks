@@ -257,6 +257,35 @@ def plot_norm_strat_comparison(df : pd.DataFrame, args, ns_names):
                      f'norm_strat_runtime_{ns_names[s1]}_vs_{ns_names[s2]}', args)
 
 
+def plot_qubit_reorder_comparison(df : pd.DataFrame, args):
+    """
+    Plot effect of reordering qubits before simulation.
+    """
+    df = df.loc[(df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
+
+    reorder_strats = sorted(df['reorder'].unique())
+    reorder_strats = [int(s) for s in reorder_strats if not np.isnan(s)]
+    if len(reorder_strats) == 1:
+        print("No reorder data, skipping plot")
+        return
+
+    # compare reorder strategies against each other
+    for r1, r2 in itertools.combinations(reorder_strats, 2):
+        left  = df.loc[df['reorder'] == r1]
+        right = df.loc[df['reorder'] == r2]
+        joined = pd.merge(left, right, on='circuit', how='outer', suffixes=('_l', '_r'))
+
+        # plot runtime
+        data_l = joined['simulation_time_l'].fillna(TIMEOUT_TIME)
+        data_r = joined['simulation_time_r'].fillna(TIMEOUT_TIME)
+        data_labels = joined['circuit']
+        plot_scatter([data_l], [data_r], [data_labels],
+                     [], 'linear', 'linear',
+                     COLORS, None,
+                     f'runtime (s) reorder={r1}', f'runtime (s) reorder={r2}',
+                     f'reorder_runtime_{r1}_{r2}', args)
+
+
 def plot_dd_size_vs_qubits(df : pd.DataFrame, args, ns_names):
     """
     Plot (log) DD-size vs the number of qubits.

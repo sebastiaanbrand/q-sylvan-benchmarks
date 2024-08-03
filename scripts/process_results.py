@@ -99,6 +99,7 @@ class SimPlotPipeline(PlotPipeline):
         pr_plot.plot_relative_speedups(self.df, self.args)
         pr_plot.plot_norm_strat_comparison(self.df, self.args, NS_NAMES)
         pr_plot.plot_inv_cache_comparison(self.df, self.args)
+        pr_plot.plot_qubit_reorder_comparison(self.df, self.args)
 
 
 class EqCheckPlotPipeline(PlotPipeline):
