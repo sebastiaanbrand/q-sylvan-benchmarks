@@ -119,9 +119,9 @@ def experiments_eqcheck(args):
 
                     # q-sylvan run
                     exp_counter += 1
-                    json_out = f"{output_dir}/json/{origin_file[:-5]}_qsylvan_{w}_{exp_counter}.json"
-                    log      = f"{output_dir}/logs/{origin_file[:-5]}_qsylvan_{w}_{exp_counter}.log"
-                    meta     = f"{output_dir}/meta/{origin_file[:-5]}_qsylvan_{w}_{exp_counter}.json"
+                    json_out = f"{output_dir}/json/{origin_file[:-5]}_qsylvan_{exp_counter}.json"
+                    log      = f"{output_dir}/logs/{origin_file[:-5]}_qsylvan_{exp_counter}.log"
+                    meta     = f"{output_dir}/meta/{origin_file[:-5]}_qsylvan_{exp_counter}.json"
                     f_all.write(Q_SYLVAN.format(args.timeout, origin_path, compare_path, w, cli_args, log, json_out))
                     f_qsy.write(Q_SYLVAN.format(args.timeout, origin_path, compare_path, w, cli_args, log, json_out))
                     with open(meta, 'w', encoding='utf-8') as meta_file:

@@ -3,6 +3,7 @@ Python script to generate bash scipts for QC simulation benchmarks.
 """
 import re
 import os
+import json
 import argparse
 from datetime import datetime
 from pathlib import Path
@@ -72,6 +73,7 @@ def experiments_sim_qasm(args):
         output_dir = os.path.join(EXPERIMENTS_DIR, datetime.now().strftime("%Y%m%d_%H%M%S"))
     Path(os.path.join(output_dir,'json')).mkdir(parents=True, exist_ok=True)
     Path(os.path.join(output_dir,'logs')).mkdir(parents=True, exist_ok=True)
+    Path(os.path.join(output_dir,'meta')).mkdir(parents=True, exist_ok=True)
     bash_file_all = output_dir + '/run_all.sh'
     bash_file_mqt = output_dir + '/run_mqt.sh'
     bash_file_qsy = output_dir + '/run_qsylvan.sh'
@@ -114,22 +116,38 @@ def experiments_sim_qasm(args):
             filename = os.path.basename(filepath)
             if skip(filename, args):
                 continue
+
             # MQT
             exp_counter += 1
             json_output = f"{output_dir}/json/{filename[:-5]}_mqt_{exp_counter}.json"
             log         = f"{output_dir}/logs/{filename[:-5]}_mqt_{exp_counter}.log"
+            meta        = f"{output_dir}/meta/{filename[:-5]}_mqt_{exp_counter}.log"
             f_all.write(MQT_QASM.format(args.timeout, filepath, mqt_args, log, json_output))
             f_mqt.write(MQT_QASM.format(args.timeout, filepath, mqt_args, log, json_output))
+            with open(meta, 'w', encoding='utf-8') as meta_file:
+                json.dump({ 'circuit' : filename[:-5],
+                            'exp_id' : exp_counter,
+                            'n_qubits' : get_num_qubits(filename),
+                            'tool' : 'mqt',
+                            'workers' : 1}, meta_file, indent=2)
+
             # Q-Sylvan
             for w in workers:
                 for s in norm_strats:
                     for inv in inv_caching:
                         for r in reorder:
                             exp_counter += 1
-                            json_output = f"{output_dir}/json/{filename[:-5]}_qsylvan_{w}_{exp_counter}.json"
-                            log         = f"{output_dir}/logs/{filename[:-5]}_qsylvan_{w}_{exp_counter}.log"
+                            json_output = f"{output_dir}/json/{filename[:-5]}_qsylvan_{exp_counter}.json"
+                            log         = f"{output_dir}/logs/{filename[:-5]}_qsylvan_{exp_counter}.log"
+                            meta        = f"{output_dir}/meta/{filename[:-5]}_qsylvan_{exp_counter}.log"
                             f_all.write(QSY_QASM.format(args.timeout, filepath, w, qsy_args+s+inv+r, json_output, log))
                             f_qsy.write(QSY_QASM.format(args.timeout, filepath, w, qsy_args+s+inv+r, json_output, log))
+                            with open(meta, 'w', encoding='utf-8') as meta_file:
+                                json.dump({ 'circuit' : filename[:-5],
+                                            'exp_id' : exp_counter,
+                                            'n_qubits' : get_num_qubits(filename),
+                                            'tool' : 'q-sylvan',
+                                            'workers' : w}, meta_file, indent=2)
 
 
 def main():
