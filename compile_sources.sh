@@ -36,29 +36,30 @@ cmake --build build --config Release
 cd ../..
 
 # get Quasimodo dependencies
-#if [ ! -d tools/_deps/boost_1_81_0 ]; then
-#  mkdir -p tools/_deps/
-#  cd tools/_deps/
-#  if [ ! -f boost_1_81_0.tar.gz ]; then
-#    wget https://boostorg.jfrog.io/artifactory/main/release/1.81.0/source/boost_1_81_0.tar.gz
-#  fi
-#  tar -xf boost_1_81_0.tar.gz
-#  cd ../..
-#fi
-#export BOOST_PATH="$PWD/tools/_deps/boost_1_81_0"
-#export PYTHON_INCLUDE="$PWD/.venv/include"
+if [ ! -d tools/_deps/boost_1_81_0 ]; then
+  mkdir -p tools/_deps/
+  cd tools/_deps/
+  if [ ! -f boost_1_81_0.tar.gz ]; then
+    wget https://boostorg.jfrog.io/artifactory/main/release/1.81.0/source/boost_1_81_0.tar.gz
+  fi
+  tar -xf boost_1_81_0.tar.gz
+  cd ../..
+fi
+export BOOST_PATH="$PWD/tools/_deps/boost_1_81_0"
+export CPLUS_INCLUDE_PATH="$BOOST_PATH:$CPLUS_INCLUDE_PATH"
+export PYTHON_INCLUDE=`python -c "from sysconfig import get_paths as gp; print(gp()[\"include\"])"`
 
 
 # compile Quasimodo
-#cd tools/Quasimodo/cflobdd/cudd-complex-big/
-#autoupdate
-#autoreconf
-# "Edit configure to add -fPIC flag to CFLAGS and CXXFlAGS and then run the following after saving the file"
-# ^ ?
-#./configure
-#make
-#cd ../..
-#cd python_pkg/
-#invoke build-quasimodo
-#invoke build-pybind11
-#cd ../../../
+cd tools/Quasimodo/cflobdd/cudd-complex-big/
+autoupdate
+autoreconf
+sed -i 's/: ${CFLAGS="-Wall -Wextra -g -O3"}/: ${CFLAGS="-Wall -Wextra -g -O3 -fPIC"}/g' configure
+sed -i 's/: ${CXXFLAGS="-Wall -Wextra -std=c++0x -g -O3"}/: ${CXXFLAGS="-Wall -Wextra -std=c++0x -g -O3 -fPIC"}/g' configure
+./configure
+make
+cd ../..
+cd python_pkg/
+invoke build-quasimodo
+invoke build-pybind11
+cd ../../../
