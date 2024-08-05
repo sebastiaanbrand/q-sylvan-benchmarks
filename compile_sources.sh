@@ -23,10 +23,10 @@ if [[ $only_qsylvan ]]; then exit 0; fi
 
 
 # compile GPMC (required for Quokka-Sharp)
-cd tools/GPMC
+cd tools/quokka-sharp/GPMC
 if [[ $recompile ]]; then rm -r -f build; fi
 ./build.sh r
-cd ../..
+cd ../../..
 
 # compile MQT DDSIM
 cd tools/mqt-ddsim

@@ -13,7 +13,7 @@ import quokka_sharp.quokka_sharp as qk
 parser = argparse.ArgumentParser()
 parser.add_argument('qasmfile1', help="Path to .qasm file.")
 parser.add_argument('qasmfile2', help="Path to .qasm file.")
-parser.add_argument('--gpmc_path', default="tools/GPMC/bin/gpmc", help="Path to gpmc executable.")
+parser.add_argument('--gpmc_path', default="tools/quokka-sharp/GPMC/bin/gpmc", help="Path to gpmc executable.")
 parser.add_argument('--workers', type=int, default=1, help="Number of parallel processes.")
 
 
