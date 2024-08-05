@@ -18,6 +18,7 @@ CMakeFiles/
 CMakeCache.txt
 qsylvan.pc
 *.swp
+tools/_deps/
 
 # Python
 .venv

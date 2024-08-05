@@ -7,3 +7,7 @@ pandas
 
 # benchmarks
 qiskit
+
+# for Quasimodo
+invoke
+pybind11
