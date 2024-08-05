@@ -28,9 +28,9 @@ if [[ $recompile ]]; then rm -r -f build; fi
 ./build.sh r
 cd ../..
 
-# compile MQT DDSIM (not recompiled with -r because it takes quite long)
+# compile MQT DDSIM
 cd tools/mqt-ddsim
 if [[ $recompile ]]; then rm -r -f build; fi
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBINDINGS=ON -DBUILD_DDSIM_TESTS=ON
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 cd ../../..

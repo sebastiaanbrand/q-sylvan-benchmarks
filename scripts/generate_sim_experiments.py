@@ -11,7 +11,7 @@ from pathlib import Path
 EXPERIMENTS_DIR = "experiments/"
 
 QSY_QASM = "timeout {} ./tools/q-sylvan/build/qasm/run_qasm_on_qmdd {} --workers {} {} --json {} &> {}\n"
-MQT_QASM = "timeout {} ./tools/mqt-ddsim/build/apps/ddsim_simple --simulate_file {} --shots 1 --ps --pm {} 2> {} 1> {}\n"
+MQT_QASM = "timeout {} ./tools/mqt-ddsim/build/apps/mqt-ddsim-simple --simulate_file {} --shots 1 --ps --pm {} 2> {} 1> {}\n"
 
 
 parser = argparse.ArgumentParser()
