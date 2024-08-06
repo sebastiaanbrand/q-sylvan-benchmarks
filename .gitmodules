@@ -7,3 +7,7 @@
 [submodule "tools/quokka-sharp/GPMC"]
 	path = tools/quokka-sharp/GPMC
 	url = https://git.trs.css.i.nagoya-u.ac.jp/k-hasimt/GPMC.git
+[submodule "tools/Quasimodo"]
+	path = tools/Quasimodo
+	url = git@github.com:trishullab/Quasimodo.git
+	ignore = dirty

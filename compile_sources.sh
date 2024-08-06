@@ -60,6 +60,7 @@ sed -i 's/: ${CXXFLAGS="-Wall -Wextra -std=c++0x -g -O3"}/: ${CXXFLAGS="-Wall -W
 make
 cd ../..
 cd python_pkg/
+sed -i 's/python3.9/python3/' tasks.py # remove hardcoded python version
 invoke build-quasimodo
 invoke build-pybind11
 cd ../../../
