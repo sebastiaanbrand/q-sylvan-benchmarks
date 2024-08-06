@@ -60,7 +60,8 @@ sed -i 's/: ${CXXFLAGS="-Wall -Wextra -std=c++0x -g -O3"}/: ${CXXFLAGS="-Wall -W
 make
 cd ../..
 cd python_pkg/
-sed -i 's/python3.9/python3/' tasks.py # remove hardcoded python version
+PYTHON_MINOR_VERSION=`python -c "import sys; print(sys.version_info[1]);"`
+sed -i "s/python3.9/python3.$PYTHON_MINOR_VERSION/" tasks.py # change to current version
 invoke build-quasimodo
 invoke build-pybind11
-cd ../../../
+cd ../../..
