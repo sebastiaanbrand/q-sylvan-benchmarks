@@ -65,3 +65,4 @@ sed -i "s/python3.9/python3.$PYTHON_MINOR_VERSION/" tasks.py # change to current
 invoke build-quasimodo
 invoke build-pybind11
 cd ../../..
+cp tools/quasimodo_qasm.py tools/Quasimodo/python_pkg/quasimodo_qasm.py
