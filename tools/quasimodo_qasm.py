@@ -125,7 +125,7 @@ def simulate_circuit(args):
 
     # write stats as JSON
     stats = {}
-    stats['circuit'] = os.path.basename(args.qasmfile)[:-5]
+    stats['benchmark'] = os.path.basename(args.qasmfile)[:-5]
     stats['simulation_time'] = t_end - t_start
     stats['status'] = status
     json_data = {'statistics' : stats}

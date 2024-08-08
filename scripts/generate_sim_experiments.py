@@ -12,6 +12,9 @@ EXPERIMENTS_DIR = "experiments/"
 
 QSY_QASM = "timeout {} ./tools/q-sylvan/build/qasm/run_qasm_on_qmdd {} --workers {} {} --json {} &> {}\n"
 MQT_QASM = "timeout {} ./tools/mqt-ddsim/build/apps/mqt-ddsim-simple --simulate_file {} --shots 1 --ps --pm {} 2> {} 1> {}\n"
+QUA_QASM = "cd tools/Quasimodo/python_pkg; "\
+           "timeout {} python quasimodo_qasm.py ../../../{} 2> ../../../{} 1> ../../../{}; "\
+           "cd ../../..\n"
 
 
 parser = argparse.ArgumentParser()
@@ -24,6 +27,7 @@ parser.add_argument('--test_multicore', action='store_true', default=False, help
 parser.add_argument('--test_norm_strats', action='store_true', default=False, help="Run with different norm strats.")
 parser.add_argument('--test_inv_caching', action='store_true', default=False ,help="Run with both INV-CACHING on/off.")
 parser.add_argument('--test_reorder', action='store_true', default=False, help="Run with reorder qubits on/off.")
+parser.add_argument('--tools', nargs='+', default=['q-sylvan','mqt'], help="Which tools to include (q-sylvan, mqt, quasimodo).")
 parser.add_argument('--timeout', action='store', default='10m', help='Timeout time per benchmark')
 parser.add_argument('--recursive', action='store_true', default=False, help="Recursively look for .qasm files in given dir.")
 
@@ -77,6 +81,7 @@ def experiments_sim_qasm(args):
     bash_file_all = output_dir + '/run_all.sh'
     bash_file_mqt = output_dir + '/run_mqt.sh'
     bash_file_qsy = output_dir + '/run_qsylvan.sh'
+    bash_file_qua = output_dir + '/run_quasimodo.sh'
 
     mqt_args = ''
     qsy_args = ''
@@ -93,10 +98,12 @@ def experiments_sim_qasm(args):
     print(f"Writing to {bash_file_all}, {bash_file_mqt}, {bash_file_qsy}")
     with open(bash_file_all, 'w', encoding='utf-8') as f_all,\
          open(bash_file_mqt, 'w', encoding='utf-8') as f_mqt,\
-         open(bash_file_qsy, 'w', encoding='utf-8') as f_qsy:
-        f_all.write("#!/bin/bash\n\n# Q-Sylvan + MQT DDSIM benchmarks\n")
-        f_mqt.write("#!/bin/bash\n\n# MQT DDSIM benchmarks\n")
-        f_qsy.write("#!/bin/bash\n\n# Q-Sylvan benchmarks\n")
+         open(bash_file_qsy, 'w', encoding='utf-8') as f_qsy,\
+         open(bash_file_qua, 'w', encoding='utf-8') as f_qua:
+        f_all.write(f"#!/bin/bash\n\n# Circuit simulation benchmarks on {args.tools}\n")
+        f_mqt.write("#!/bin/bash\n\n# MQT DDSIM circuit simulation benchmarks\n")
+        f_qsy.write("#!/bin/bash\n\n# Q-Sylvan circuit simulation benchmarks\n")
+        f_qua.write("#!/bin/bash\n\n# Quasimodo circuit simulation benchmarks\n")
 
         # get qasm files
         filepaths = []
@@ -117,39 +124,58 @@ def experiments_sim_qasm(args):
             if skip(filename, args):
                 continue
 
-            # MQT
-            exp_counter += 1
-            json_output = f"{output_dir}/json/{filename[:-5]}_mqt_{exp_counter}.json"
-            log         = f"{output_dir}/logs/{filename[:-5]}_mqt_{exp_counter}.log"
-            meta        = f"{output_dir}/meta/{filename[:-5]}_mqt_{exp_counter}.json"
-            f_all.write(MQT_QASM.format(args.timeout, filepath, mqt_args, log, json_output))
-            f_mqt.write(MQT_QASM.format(args.timeout, filepath, mqt_args, log, json_output))
-            with open(meta, 'w', encoding='utf-8') as meta_file:
-                json.dump({ 'circuit' : filename[:-5],
-                            'exp_id' : exp_counter,
-                            'n_qubits' : get_num_qubits(filename),
-                            'tool' : 'mqt',
-                            'norm_strat' : 'l2',
-                            'workers' : 1}, meta_file, indent=2)
+            # TODO: put code for each of the tools in separate function
+            # MQT (QMDD)
+            if 'mqt' in args.tools:
+                exp_counter += 1
+                json_output = f"{output_dir}/json/{filename[:-5]}_mqt_{exp_counter}.json"
+                log         = f"{output_dir}/logs/{filename[:-5]}_mqt_{exp_counter}.log"
+                meta        = f"{output_dir}/meta/{filename[:-5]}_mqt_{exp_counter}.json"
+                f_all.write(MQT_QASM.format(args.timeout, filepath, mqt_args, log, json_output))
+                f_mqt.write(MQT_QASM.format(args.timeout, filepath, mqt_args, log, json_output))
+                with open(meta, 'w', encoding='utf-8') as meta_file:
+                    json.dump({ 'circuit' : filename[:-5],
+                                'exp_id' : exp_counter,
+                                'n_qubits' : get_num_qubits(filename),
+                                'tool' : 'mqt',
+                                'norm_strat' : 'l2',
+                                'workers' : 1}, meta_file, indent=2)
 
-            # Q-Sylvan
-            for w in workers:
-                for s in norm_strats:
-                    for inv in inv_caching:
-                        for r in reorder:
-                            exp_counter += 1
-                            json_output = f"{output_dir}/json/{filename[:-5]}_qsylvan_{exp_counter}.json"
-                            log         = f"{output_dir}/logs/{filename[:-5]}_qsylvan_{exp_counter}.log"
-                            meta        = f"{output_dir}/meta/{filename[:-5]}_qsylvan_{exp_counter}.json"
-                            f_all.write(QSY_QASM.format(args.timeout, filepath, w, qsy_args+s+inv+r, json_output, log))
-                            f_qsy.write(QSY_QASM.format(args.timeout, filepath, w, qsy_args+s+inv+r, json_output, log))
-                            with open(meta, 'w', encoding='utf-8') as meta_file:
-                                json.dump({ 'circuit' : filename[:-5],
-                                            'exp_id' : exp_counter,
-                                            'n_qubits' : get_num_qubits(filename),
-                                            'tool' : 'q-sylvan',
-                                            'norm_strat' : s.split()[-1],
-                                            'workers' : w}, meta_file, indent=2)
+            # Quasimodo (CFLOBDD)
+            if 'quasimodo' in args.tools:
+                exp_counter += 1
+                json_output = f"{output_dir}/json/{filename[:-5]}_quasimodo_{exp_counter}.json"
+                log         = f"{output_dir}/logs/{filename[:-5]}_quasimodo_{exp_counter}.log"
+                meta        = f"{output_dir}/meta/{filename[:-5]}_quasimodo_{exp_counter}.json"
+                f_all.write(QUA_QASM.format(args.timeout, filepath, log, json_output))
+                f_qua.write(QUA_QASM.format(args.timeout, filepath, log, json_output))
+                with open(meta, 'w', encoding='utf-8') as meta_file:
+                    json.dump({ 'circuit' : filename[:-5],
+                                'exp_id' : exp_counter,
+                                'n_qubits' : get_num_qubits(filename),
+                                'tool' : 'quasimodo',
+                                'norm_strat' : 'n/a',
+                                'workers' : 1}, meta_file, indent=2)
+
+            # Q-Sylvan (QMDD)
+            if 'q-sylvan' in args.tools:
+                for w in workers:
+                    for s in norm_strats:
+                        for inv in inv_caching:
+                            for r in reorder:
+                                exp_counter += 1
+                                json_output = f"{output_dir}/json/{filename[:-5]}_qsylvan_{exp_counter}.json"
+                                log         = f"{output_dir}/logs/{filename[:-5]}_qsylvan_{exp_counter}.log"
+                                meta        = f"{output_dir}/meta/{filename[:-5]}_qsylvan_{exp_counter}.json"
+                                f_all.write(QSY_QASM.format(args.timeout, filepath, w, qsy_args+s+inv+r, json_output, log))
+                                f_qsy.write(QSY_QASM.format(args.timeout, filepath, w, qsy_args+s+inv+r, json_output, log))
+                                with open(meta, 'w', encoding='utf-8') as meta_file:
+                                    json.dump({ 'circuit' : filename[:-5],
+                                                'exp_id' : exp_counter,
+                                                'n_qubits' : get_num_qubits(filename),
+                                                'tool' : 'q-sylvan',
+                                                'norm_strat' : s.split()[-1],
+                                                'workers' : w}, meta_file, indent=2)
 
 
 def main():
