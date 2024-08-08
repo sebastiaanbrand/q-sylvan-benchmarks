@@ -52,6 +52,14 @@ def apply_gate(qc, instruction, qubit_map):
         qc.t(qubits[0])
     elif name == 'tdg':
         qc.p(qubits[0], math.pi/4)
+    elif name == 'sx':
+        qc.h(qubits[0])
+        qc.s(qubits[0])
+        qc.h(qubits[0])
+    elif name == 'rz':
+        angle = instruction.operation.params[0]
+        qc.p(qubits[0], angle)
+        qc.gp(angle/2)
     elif name == 'p' or name == 'u1':
         angle = instruction.operation.params[0]
         qc.p(qubits[0], angle)
@@ -89,7 +97,6 @@ def simulate_qiskit_circuit(circuit, qubit_map):
     # loop over circuit instructions
     for instruction in circuit.data:
         op_name = instruction.operation.name
-        
         if op_name == 'measure': # ignore measurment, measure at the end
             continue             # (intermediate measurements shoulnd't occur in bench set)
         elif op_name == 'barrier': # ignore barriers
