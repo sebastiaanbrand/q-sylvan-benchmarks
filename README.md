@@ -1,45 +1,45 @@
 # Q-Sylvan parallel benchmarks
 
+## 1. Installation
 
-## Simulating individual QASM files
-
-### Q-Sylvan
-
-`--state-vector` adds the complete state vector to the JSON output.
-
+Install Basic build tools + specific dependencies.
 ```shell
-$ ./tools/q-sylvan/build/qasm/run_qasm_on_qmdd <circuit.qasm> [--count-nodes]
+$ sudo apt install build-essential cmake autoconf
+$ sudo apt install libgmp-dev libmpfr-dev libmpc-dev zlib
 ```
 
-### MQT-DDSIM
-
-`--ps` outputs stats, `--pv` outputs the state vector, `--pm` prints the measurement result
-
+Python libraries (creating a virtual environment is recommended but optional).
 ```shell
-$ ./tools/mqt-ddsim/build/apps/ddsim_simple --simulate_file <circuit.qasm> --shots 1 --ps
+$ python -m venv .venv
+$ source .venv/bin/activate
+$ pip install -r requirements.txt
 ```
 
-## Running + plotting benchmarks
+After installing the dependencies above, everything should compile with
+```
+$ ./compile_all.sh
+```
+
+
+## 2. Running + plotting benchmarks
 
 Generate bash file with:
 ```shell
-$ python scripts/generate_experiments.py qasm --qasm_dir <dir_with_qasm_files>
+$ python scripts/generate_experiments.py qasm <dir_with_qasm_files> --name output_dir_name
 ```
 
-Run with either:
+Run everything:
 ```shell
-$ bash experiments/<exp_id>/run_qsylvan.sh
-$ bash experiments/<exp_id>/run_mqt.sh
-$ bash experiments/<exp_id>/run_all.sh
+$ bash experiments/output_dir_name/run_all.sh
 ```
 
-Plot:
+Generating plots (also runs sanity checks on output):
 ```shell
-$ python scripgs/generate_plots.py experiments/<exp_id>/
+$ python scripgs/process_results.py experiments/output_dir_name/
 ```
 
 
 ## Benchmark sets
-
-* https://www.cda.cit.tum.de/mqtbench/
-* https://github.com/pnnl/QASMBench
+* [MQT Bench](https://www.cda.cit.tum.de/mqtbench/)
+* [KetGPT](https://www.kaggle.com/datasets/boranapak/ketgpt-data)
+* TODO: script for downloading qasm files automatically
