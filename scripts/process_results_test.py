@@ -25,20 +25,42 @@ def _to_complex_vector(state_vector_json):
 def compare_vectors(args):
     """
     Compare state vectors in json files, and write all issue cases to file.
+    (Assumes only 1 q-sylvan run and 1 mqt run per circuit among the json files)
     """
-    print("Comparing state vectors between both tools")
+    print("Comparing state vectors between both tools...")
     json_dir = os.path.join(args.dir, 'json')
     regexp = re.compile(r'(.*)qsylvan(.*)json')
     fidelities = []
     fidelity_issues = []
+
+    # pair up all files
+    mqt_runs = {}
+    qsylvan_runs = {}
     for filename in sorted(os.listdir(json_dir)):
-        filepath = os.path.join(json_dir, filename)
-        if regexp.search(filepath) and os.path.getsize(filepath) > 0:
+        circuit = re.split('_mqt_|_qsylvan_', filename)[0]
+        if '_qsylvan_' in filename:
+            qsylvan_runs[circuit] = filename
+        elif '_mqt_' in filename:
+            mqt_runs[circuit] = filename
+
+    # check vectors for all pairs
+    for circuit in qsylvan_runs:
+        if circuit in mqt_runs:
+
+            # get filepaths
+            qsylvan_file = os.path.join(json_dir, qsylvan_runs[circuit])
+            mqt_file     = os.path.join(json_dir, mqt_runs[circuit])
+
+            # skip if one is empty
+            if os.path.getsize(qsylvan_file) == 0 or os.path.getsize(mqt_file) == 0:
+                continue
+    
+            # try to read files
             vec_qsy = None
             vec_mqt = None
             row = None
             try:
-                with open(filepath, 'r', encoding='utf-8') as f:
+                with open(qsylvan_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     if 'state_vector' in data:
                         vec_qsy = _to_complex_vector(data['state_vector'])
@@ -46,7 +68,6 @@ def compare_vectors(args):
                         print(f"No state vector in {filepath}, skipping")
                         continue
                     row = data['statistics']
-                mqt_file = filepath.split('qsylvan')[0] + 'mqt.json'
                 try:
                     with open(mqt_file, 'r', encoding='utf-8') as f:
                         data = json.load(f)
@@ -57,24 +78,26 @@ def compare_vectors(args):
             except:
                 print(f"    Could not get json data from {filepath}, skipping")
 
+            # compare vectors
             if not vec_qsy is None and not vec_mqt is None:
                 # normalize global phase
                 in_prod = np.dot(vec_qsy.conj().T, vec_mqt)[0,0]
                 fidelity = (abs(in_prod))**2
                 row['fidelity'] = fidelity
                 fidelities.append(row)
-                if abs(in_prod - 1.0) > 1e-3:
-                    if abs(fidelity - 1.0) > 1e-3:
-                        fidelity_issues.append(row)
-                    #else:
-                    #    print(f"Note: different global phase for {filename[:-15]}")
+                if abs(fidelity - 1.0) > 1e-3:
+                    fidelity_issues.append(row)
+    
+    # gather results in dataframe
     fid_df = pd.DataFrame(fidelities)
+    fid_df.rename(columns={'benchmark':'circuit'}, inplace=True)
     if len(fidelity_issues) > 0:
         print(f"    {len(fidelity_issues)} instances where fidelity !~= 1.000")
         print(f"    Writing details to {issues_file(args)}")
-        issues_df = pd.DataFrame(fidelity_issues)[['circuit', 'n_qubits',
+        issues_df = pd.DataFrame(fidelity_issues)[['benchmark', 'n_qubits',
                     'simulation_time', 'workers', 'reorder', 'wgt_norm_strat',
                     'wgt_inv_caching', 'max_nodes', 'norm', 'fidelity']]
+        issues_df.rename(columns={'benchmark':'circuit'}, inplace=True)
         with open(issues_file(args), 'a', encoding='utf-8') as f:
             f.write("Issues with fidelity:\n")
             f.write(issues_df.to_string())
