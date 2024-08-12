@@ -21,7 +21,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('qasm_dir', help="Path of directory with .qasm files.")
 parser.add_argument('--name', help="Name for experiments dir.")
 parser.add_argument('--log_vector', action='store_true', default=False, help="Log entire final state vector.")
-parser.add_argument('--max_qubits', type=int, help="Get all qasm files from qasm_dir, up to max_qubits.")
+parser.add_argument('--nqubits', type=int, nargs='+', help="Only include circuits of nqubits.")
+parser.add_argument('--max_qubits', type=int, help="Only include circuits up to max_qubits.")
 parser.add_argument('--norm_strat', choices=['low','max','min','l2'], default='max', help="Norm strat to use for all q-sylvan runs.")
 parser.add_argument('--test_multicore', action='store_true', default=False, help="Run multicore benchmarks.")
 parser.add_argument('--test_norm_strats', action='store_true', default=False, help="Run with different norm strats.")
@@ -63,6 +64,9 @@ def skip(filename : str, args):
     if args.max_qubits is not None:
         if get_num_qubits(filename) is None or\
            get_num_qubits(filename) > args.max_qubits:
+            return True
+    if args.nqubits is not None:
+        if get_num_qubits(filename) not in args.nqubits:
             return True
     return False
 
