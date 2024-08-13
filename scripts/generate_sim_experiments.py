@@ -138,7 +138,8 @@ def experiments_sim_qasm(args):
                 f_all.write(MQT_QASM.format(args.timeout, filepath, mqt_args, log, json_output))
                 f_mqt.write(MQT_QASM.format(args.timeout, filepath, mqt_args, log, json_output))
                 with open(meta, 'w', encoding='utf-8') as meta_file:
-                    json.dump({ 'circuit' : filename[:-5],
+                    json.dump({ 'circuit_type' : filename.split('_')[0],
+                                'circuit' : filename[:-5],
                                 'exp_id' : exp_counter,
                                 'n_qubits' : get_num_qubits(filename),
                                 'tool' : 'mqt',
@@ -154,7 +155,8 @@ def experiments_sim_qasm(args):
                 f_all.write(QUA_QASM.format(args.timeout, filepath, log, json_output))
                 f_qua.write(QUA_QASM.format(args.timeout, filepath, log, json_output))
                 with open(meta, 'w', encoding='utf-8') as meta_file:
-                    json.dump({ 'circuit' : filename[:-5],
+                    json.dump({ 'circuit_type' : filename.split('_')[0],
+                                'circuit' : filename[:-5],
                                 'exp_id' : exp_counter,
                                 'n_qubits' : get_num_qubits(filename),
                                 'tool' : 'quasimodo',
@@ -174,7 +176,8 @@ def experiments_sim_qasm(args):
                                 f_all.write(QSY_QASM.format(args.timeout, filepath, w, qsy_args+s+inv+r, json_output, log))
                                 f_qsy.write(QSY_QASM.format(args.timeout, filepath, w, qsy_args+s+inv+r, json_output, log))
                                 with open(meta, 'w', encoding='utf-8') as meta_file:
-                                    json.dump({ 'circuit' : filename[:-5],
+                                    json.dump({ 'circuit_type' : filename.split('_')[0],
+                                                'circuit' : filename[:-5],
                                                 'exp_id' : exp_counter,
                                                 'n_qubits' : get_num_qubits(filename),
                                                 'tool' : 'q-sylvan',
