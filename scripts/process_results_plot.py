@@ -366,6 +366,59 @@ def plot_relative_speedups(df : pd.DataFrame, args):
                     f'multicore_scatter_{scaling}', args)
 
 
+def latex_table_simulation(df : pd.DataFrame, args):
+    """
+    Write a LaTeX table with the simulation time results.
+    """
+    # select data
+    d1 = df.loc[(df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
+    d2 = df.loc[(df['tool'] == 'mqt') & (df['workers'] == 1)]
+    d3 = df.loc[(df['tool'] == 'quasimodo') & (df['workers'] == 1)]
+
+    if len(d3) == 0:
+        print("No Quasimodo data, skipping table.")
+        return
+
+
+    # merge d1, d2, d3
+    merge_on = ['circuit']
+    meta_data = ['circuit_type','n_qubits']
+    stats = ['status','simulation_time']
+    d1 = d1[merge_on + meta_data + stats].rename(columns=dict([(x,f'{x}_1') for x in stats]))
+    d2 = d2[merge_on + stats].rename(columns=dict([(x,f'{x}_2') for x in stats]))
+    d3 = d3[merge_on + stats].rename(columns=dict([(x,f'{x}_3') for x in stats]))
+    df = pd.merge(d1, d2, on=merge_on, how='outer')
+    df = pd.merge(df, d3, on=merge_on, how='outer')
+
+    # style runtime column
+    for suff in ['_1','_2','_3']:
+        df = df.astype({f'simulation_time{suff}' : str})
+        df.loc[:,f'simulation_time{suff}'] = df[f'simulation_time{suff}'].apply(lambda x : '{:.2f}'.format(float(x)))
+        df.loc[(df[f'status{suff}'] == 'TIMEOUT'), f'simulation_time{suff}'] = f'> {TIMEOUT_TIME}'
+        df.loc[(df[f'status{suff}'] == 'NODE_TABLE_FULL'), f'simulation_time{suff}'] = '-'
+        df.loc[(df[f'status{suff}'] == 'WEIGHT_TABLE_FULL'), f'simulation_time{suff}'] = '-'
+
+    # styling of table
+    df = df.sort_values(['circuit_type', 'n_qubits'])
+    df = df[meta_data + ['simulation_time_1', 'simulation_time_2', 'simulation_time_3']]
+    df = df.rename(columns={'circuit_type' : 'Algorithm', 'n_qubits' : '$n$',
+                            'simulation_time_1' : 'Q-Sylvan (QMDD)', 
+                            'simulation_time_2' : 'MQT DDSIM (QMDD)',
+                            'simulation_time_3' : 'Quasimodo (CLFOBDD)'})
+    styler = df.style
+    styler.hide(axis='index')
+    styler.set_table_styles([
+        {'selector': 'toprule', 'props': ':hline;'},
+        {'selector': 'midrule', 'props': ':hline;'},
+        {'selector': 'bottomrule', 'props': ':hline;'},
+    ], overwrite=True)
+
+    # write to file
+    output_file = os.path.join(tables_dir(args), 'simulation_time.tex')
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write(styler.to_latex(column_format='lr||rrr'))
+
+
 def latex_table_equivalent(df : pd.DataFrame, args):
     """
     Write LaTeX table like Table 4 in https://arxiv.org/pdf/2403.18813.
@@ -380,7 +433,7 @@ def latex_table_equivalent(df : pd.DataFrame, args):
     stats = ['equivalent','status','wall_time']
     d1 = d1[merge_on + meta_data + stats]
     d2 = d2[merge_on + stats]
-    joined = pd.merge(d1, d2, on=['circuit_U'], how='outer', suffixes=('_1','_2'))
+    joined = pd.merge(d1, d2, on=merge_on, how='outer', suffixes=('_1','_2'))
 
     # style runtime column
     df = joined
@@ -399,7 +452,6 @@ def latex_table_equivalent(df : pd.DataFrame, args):
                             'n_gates_U' : '$|G|$', 'n_gates_V' : '$|G\'|$',
                             'wall_time_1' : 'Q-Sylvan', 
                             'wall_time_2': 'Quokka-Sharp'})
-
     styler = df.style
     styler.hide(axis='index')
     styler.set_table_styles([
@@ -430,14 +482,14 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
         gm   = dtool.loc[(df['type'] == 'gm')].drop('type', axis=1)
         flip = dtool.loc[(df['type'] == 'flip')].drop('type', axis=1)
         dtool = gm.merge(flip[merge_on + stats], 
-                        on='circuit_U', how='outer',
+                        on=merge_on, how='outer',
                         suffixes=('_gm', '_flip'))
         dtool['n_gates_V'] = dtool['n_gates_V'] + 1
         dfs.append(dtool)
 
     # merge d1 and d2
     dfs[1] = dfs[1].drop(columns=meta_data, errors='ignore')
-    joined = pd.merge(dfs[0], dfs[1], on=['circuit_U'], how='outer', suffixes=('_0','_1'))
+    joined = pd.merge(dfs[0], dfs[1], on=merge_on, how='outer', suffixes=('_0','_1'))
     
     # style runtime columns
     df = joined

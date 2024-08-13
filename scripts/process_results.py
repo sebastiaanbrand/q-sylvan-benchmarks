@@ -100,6 +100,9 @@ class SimPlotPipeline(PlotPipeline):
         pr_plot.plot_norm_strat_comparison(self.df, self.args, NS_NAMES)
         pr_plot.plot_inv_cache_comparison(self.df, self.args)
         pr_plot.plot_qubit_reorder_comparison(self.df, self.args)
+        print(f"Writing tables to {pr_plot.tables_dir(self.args)}")
+        Path(pr_plot.tables_dir(self.args)).mkdir(parents=True, exist_ok=True)
+        pr_plot.latex_table_simulation(self.df, self.args)
 
 
 class EqCheckPlotPipeline(PlotPipeline):
