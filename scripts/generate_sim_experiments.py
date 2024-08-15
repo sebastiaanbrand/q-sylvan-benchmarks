@@ -24,6 +24,8 @@ parser.add_argument('--log_vector', action='store_true', default=False, help="Lo
 parser.add_argument('--nqubits', type=int, nargs='+', help="Only include circuits of nqubits.")
 parser.add_argument('--max_qubits', type=int, help="Only include circuits up to max_qubits.")
 parser.add_argument('--norm_strat', choices=['low','max','min','l2'], default='max', help="Norm strat to use for all q-sylvan runs.")
+parser.add_argument('--wgt_tab_size', type=int, default=23, help="log2 of max edge weight table size.")
+parser.add_argument('--node_tab_size', type=int, default=25, help="log2 of max node table size.")
 parser.add_argument('--test_multicore', action='store_true', default=False, help="Run multicore benchmarks.")
 parser.add_argument('--test_norm_strats', action='store_true', default=False, help="Run with different norm strats.")
 parser.add_argument('--test_inv_caching', action='store_true', default=False ,help="Run with both INV-CACHING on/off.")
@@ -98,6 +100,8 @@ def experiments_sim_qasm(args):
     inv_caching = ['', ' --disable-inv-caching'] if args.test_inv_caching else ['']
     reorder = ['', ' --reorder', ' --reorder-swaps'] if args.test_reorder else [' --reorder']
     norm_strats = [' -s low', ' -s max', ' -s min',  ' -s l2'] if args.test_norm_strats else [f' -s {args.norm_strat}']
+    qsy_args += f' --wgt-tab-size {args.wgt_tab_size}'
+    qsy_args += f' --node-tab-size {args.node_tab_size}'
 
     print(f"Writing to {bash_file_all}, {bash_file_mqt}, {bash_file_qsy}")
     with open(bash_file_all, 'w', encoding='utf-8') as f_all,\
