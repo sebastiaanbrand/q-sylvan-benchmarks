@@ -239,8 +239,8 @@ def plot_norm_strat_comparison(df : pd.DataFrame, args, ns_names):
             legend_names = None
         plot_scatter(args, f'norm_strat_nodecount_{ns_names[s1]}_vs_{ns_names[s2]}',
                      datas_l, datas_r, datas_labels,
-                     f'max nodes norm-{ns_names[s1]}',
-                     f'max nodes norm-{ns_names[s2]}',
+                     f'peak # of nodes norm-{ns_names[s1]}',
+                     f'peak # of nodes norm-{ns_names[s2]}',
                      COLORS, legend_names, [],
                      x_scale='log', y_scale='log',
                      cosiness=1.7)
