@@ -9,9 +9,10 @@ pandas == 2.2.2
 qiskit == 1.1.1
 
 # tools to benchmark against
-mqt.ddsim == 1.23.0
 mqt.qcec == 2.7.0
-#quokka-sharp # use local version with most recent updates
+#mqt.ddsim == 1.23.0 # using cl executable (using python package would require
+                     # updating whole benchmark pipeline)
+#quokka-sharp == 1.0.2 # using local version with most recent updates
 
 # for building Quasimodo
 invoke == 2.2.0
