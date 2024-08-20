@@ -54,10 +54,11 @@ def _plot_diagonal_lines(ax, min_val, max_val, at):
     return ax
 
 
-def plot_scatter(datas_x, datas_y, datas_labels,
-                 diagonals, x_scale, y_scale,
-                 colors, legend_labels,
-                 label_x, label_y, outputname, args):
+def plot_scatter(args, outputname,
+                 datas_x, datas_y, datas_labels,
+                 label_x, label_y,
+                 colors, legend_labels, diagonals,
+                 x_scale='linear', y_scale='linear'):
     """
     Produce scatter plot.
 
@@ -124,11 +125,10 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args):
         data_r = joined['simulation_time_r'].fillna(TIMEOUT_TIME)
         data_labels = [f"{n} ({s})" for n, s in zip(joined['circuit'],joined['status_r'])]
 
-        plot_scatter([data_l], [data_r], [data_labels],
-                    [], 'linear', 'linear',
-                    ['royalblue'], None,
+        plot_scatter(args, 'mqt_vs_qsylvan',
+                    [data_l], [data_r], [data_labels],
                     'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
-                    'mqt_vs_qsylvan', args)
+                    ['royalblue'], None, [])
     else:
         joined = pd.merge(joined, fid_df, on='circuit', how='left')
         joined['fidelity'] = joined['fidelity'].fillna(-1)
@@ -151,12 +151,10 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args):
             datas_labels.append(fid['circuit'])
             leg_names.append(leg_name)
 
-        plot_scatter(datas_l, datas_r, datas_labels,
-                    [], 'linear', 'linear',
-                    ['royalblue', 'darkorange', 'orchid'],
-                    leg_names,
-                    'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
-                    'mqt_vs_qsylvan_fid', args)
+        plot_scatter(arsg, 'mqt_vs_qsylvan_fid',
+                     datas_l, datas_r, datas_labels,
+                     'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
+                     COLORS, leg_names, [])
 
 
 def plot_inv_cache_comparison(df : pd.DataFrame, args):
@@ -177,21 +175,19 @@ def plot_inv_cache_comparison(df : pd.DataFrame, args):
     data_l = joined['max_nodes_l']
     data_r = joined['max_nodes_r']
     data_labels = joined['circuit']
-    plot_scatter([data_l], [data_r], [data_labels],
-                 [], 'linear', 'linear',
-                 ['royalblue'], None,
+    plot_scatter(args, 'inv_caching_nodecount',
+                 [data_l], [data_r], [data_labels],
                  'max nodes inverse cache OFF', 'max nodes inverse cache ON',
-                 'inv_caching_nodecount', args)
+                 ['royalblue'], None, [])
 
     # plot runtime
     data_l = joined['simulation_time_l']
     data_r = joined['simulation_time_r']
     data_labels = joined['circuit']
-    plot_scatter([data_l], [data_r], [data_labels],
-                 [], 'linear', 'linear',
-                 ['royalblue'], None,
+    plot_scatter(args, 'inv_caching_runtime',
+                 [data_l], [data_r], [data_labels],
                  'runtime (s) inverse cache OFF', 'runtime (s) inverse cache ON',
-                 'inv_caching_runtime', args)
+                 ['royalblue'], None, [])
 
 
 def plot_norm_strat_comparison(df : pd.DataFrame, args, ns_names):
@@ -233,12 +229,13 @@ def plot_norm_strat_comparison(df : pd.DataFrame, args, ns_names):
                 datas_r.append(subset['max_nodes_r'])
                 datas_labels.append(subset['circuit'])
                 legend_names.append(name)
-        plot_scatter(datas_l, datas_r, datas_labels,
-                     [], 'linear', 'linear',
-                     COLORS, legend_names,
+        if len(legend_names) == 1 and legend_names[0] == 'norm $=$ 1 (both)':
+            legend_names = []
+        plot_scatter(args, f'norm_strat_nodecount_{ns_names[s1]}_vs_{ns_names[s2]}',
+                     datas_l, datas_r, datas_labels,
                      f'max nodes norm strat {ns_names[s1]}',
                      f'max nodes norm strat {ns_names[s2]}',
-                     f'norm_strat_nodecount_{ns_names[s1]}_vs_{ns_names[s2]}', args)
+                     COLORS, legend_names, [])
 
         # plot runtime (separate for each norm subset)
         # (labels and legend can be is already sset in previous loop)
@@ -249,12 +246,11 @@ def plot_norm_strat_comparison(df : pd.DataFrame, args, ns_names):
                 subset = subset.reset_index()
                 datas_l.append(subset['simulation_time_l'])
                 datas_r.append(subset['simulation_time_r'])
-        plot_scatter(datas_l, datas_r, datas_labels,
-                     [], 'linear', 'linear',
-                     COLORS, legend_names,
+        plot_scatter(args, f'norm_strat_runtime_{ns_names[s1]}_vs_{ns_names[s2]}',
+                     datas_l, datas_r, datas_labels,
                      f'runtime (s) norm strat {ns_names[s1]}',
                      f'runtime (s) norm strat {ns_names[s2]}',
-                     f'norm_strat_runtime_{ns_names[s1]}_vs_{ns_names[s2]}', args)
+                     COLORS, legend_names, [])
 
 
 def plot_qubit_reorder_comparison(df : pd.DataFrame, args):
@@ -279,11 +275,10 @@ def plot_qubit_reorder_comparison(df : pd.DataFrame, args):
         data_l = joined['simulation_time_l'].fillna(TIMEOUT_TIME)
         data_r = joined['simulation_time_r'].fillna(TIMEOUT_TIME)
         data_labels = joined['circuit']
-        plot_scatter([data_l], [data_r], [data_labels],
-                     [], 'linear', 'linear',
-                     COLORS, None,
+        plot_scatter(args, f'reorder_runtime_{r1}_{r2}',
+                     [data_l], [data_r], [data_labels],
                      f'runtime (s) reorder={r1}', f'runtime (s) reorder={r2}',
-                     f'reorder_runtime_{r1}_{r2}', args)
+                     COLORS, None, [])
 
 
 def plot_dd_size_vs_qubits(df : pd.DataFrame, args, ns_names):
@@ -318,10 +313,11 @@ def plot_dd_size_vs_qubits(df : pd.DataFrame, args, ns_names):
             datas_x.append(cat_data['n_qubits'])
             datas_y.append(cat_data['max_nodes'])
             datas_labels.append(cat_data['circuit'])
-        plot_scatter(datas_x, datas_y, datas_labels,
-                    None, 'linear', 'log',
-                    COLORS, categories,
-                    '# qubits', 'max nodes', f'qubits_vs_nodes_{name}', args)
+        plot_scatter(args, f'qubits_vs_nodes_{name}',
+                     datas_x, datas_y, datas_labels,
+                    '# qubits', 'max nodes',
+                    COLORS, categories, None,
+                    y_scale='log')
 
 
 def plot_relative_speedups(df : pd.DataFrame, args):
@@ -359,11 +355,11 @@ def plot_relative_speedups(df : pd.DataFrame, args):
     legend_labels = [f"1v{int(w)} workers" for w in workers]
     diagonal_lines = [1/x for x in workers[1:]]
     for scaling in ['linear', 'log']:
-        plot_scatter(datas_x, datas_y, datas_labels,
-                    diagonal_lines, scaling, scaling,
-                    colors[:len(workers)], legend_labels,
-                    '1 worker time (s)', 'w workers time (s)',
-                    f'multicore_scatter_{scaling}', args)
+        plot_scatter(args, f'multicore_scatter_{scaling}',
+                     datas_x, datas_y, datas_labels,
+                     '1 worker time (s)', 'w workers time (s)',
+                     colors[:len(workers)], legend_labels, diagonal_lines,
+                     x_scale=scaling, y_scale=scaling)
 
 
 def latex_table_simulation(df : pd.DataFrame, args):
