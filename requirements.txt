@@ -1,13 +1,18 @@
 
 # plotting, etc.
-Jinja2
-matplotlib
-numpy
-pandas
+Jinja2 == 3.1.4
+matplotlib == 3.9.0
+numpy == 2.0.1
+pandas == 2.2.2
 
-# benchmarks
-qiskit
+# generating benchmarks
+qiskit == 1.1.1
 
-# for Quasimodo
-invoke
-pybind11
+# tools to benchmark against
+mqt.ddsim == 1.23.0
+mqt.qcec == 2.7.0
+#quokka-sharp # use local version with most recent updates
+
+# for building Quasimodo
+invoke == 2.2.0
+pybind11 == 2.13.1
