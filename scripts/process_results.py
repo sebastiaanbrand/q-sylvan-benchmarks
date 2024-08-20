@@ -11,7 +11,7 @@ import process_results_test as pr_test
 import process_results_plot as pr_plot
 
 
-NS_NAMES = { 0 : 'low', 1 : 'max', 2 : 'min', 3 : 'l2'}
+NS_NAMES = { 0 : 'low', 1 : 'max', 2 : 'min', 3 : 'L2'}
 
 
 parser = argparse.ArgumentParser()

@@ -58,7 +58,8 @@ def plot_scatter(args, outputname,
                  datas_x, datas_y, datas_labels,
                  label_x, label_y,
                  colors, legend_labels, diagonals,
-                 x_scale='linear', y_scale='linear'):
+                 x_scale='linear', y_scale='linear',
+                 cosiness=1):
     """
     Produce scatter plot.
 
@@ -93,6 +94,11 @@ def plot_scatter(args, outputname,
     # plot diagonal line
     if diagonals is not None:
         ax = _plot_diagonal_lines(ax, 0, max_val, at=diagonals)
+    
+    # squeeze/stretch
+    w, h = fig.get_size_inches()
+    fig.set_size_inches(w=(w/cosiness), h=(h/cosiness))
+    fig.tight_layout()
 
     # save figure
     for _format in FORMATS:
@@ -230,12 +236,14 @@ def plot_norm_strat_comparison(df : pd.DataFrame, args, ns_names):
                 datas_labels.append(subset['circuit'])
                 legend_names.append(name)
         if len(legend_names) == 1 and legend_names[0] == 'norm $=$ 1 (both)':
-            legend_names = []
+            legend_names = None
         plot_scatter(args, f'norm_strat_nodecount_{ns_names[s1]}_vs_{ns_names[s2]}',
                      datas_l, datas_r, datas_labels,
-                     f'max nodes norm strat {ns_names[s1]}',
-                     f'max nodes norm strat {ns_names[s2]}',
-                     COLORS, legend_names, [])
+                     f'max nodes norm-{ns_names[s1]}',
+                     f'max nodes norm-{ns_names[s2]}',
+                     COLORS, legend_names, [],
+                     x_scale='log', y_scale='log',
+                     cosiness=1.7)
 
         # plot runtime (separate for each norm subset)
         # (labels and legend can be is already sset in previous loop)
@@ -248,9 +256,11 @@ def plot_norm_strat_comparison(df : pd.DataFrame, args, ns_names):
                 datas_r.append(subset['simulation_time_r'])
         plot_scatter(args, f'norm_strat_runtime_{ns_names[s1]}_vs_{ns_names[s2]}',
                      datas_l, datas_r, datas_labels,
-                     f'runtime (s) norm strat {ns_names[s1]}',
-                     f'runtime (s) norm strat {ns_names[s2]}',
-                     COLORS, legend_names, [])
+                     f'runtime (s) norm-{ns_names[s1]}',
+                     f'runtime (s) norm-{ns_names[s2]}',
+                     COLORS, legend_names, [],
+                     x_scale='linear', y_scale='linear',
+                     cosiness=1.7)
 
 
 def plot_qubit_reorder_comparison(df : pd.DataFrame, args):
