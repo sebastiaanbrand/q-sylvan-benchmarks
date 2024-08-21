@@ -24,7 +24,7 @@ def equivalence_check(args):
     stats = {}
     stats['circuit_U'] = os.path.basename(args.qasmfile1)[:-5]
     stats['circuit_V'] = os.path.basename(args.qasmfile2)[:-5]
-    stats['equivalent'] = 1 if res == "equivalent" else 0
+    stats['equivalent'] = str(res.equivalence)
     stats['wall_time'] = res.check_time
     stats['workers'] = res.configuration.execution.nthreads
     json_data = {'statistics' : stats}
