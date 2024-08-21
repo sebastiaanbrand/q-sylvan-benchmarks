@@ -3,7 +3,6 @@ Simple wrapper to use MQT QCEC from command line since all benchmarks are run
 using bash scripts.
 """
 import os
-import time
 import json
 import argparse
 from mqt import qcec
@@ -12,7 +11,6 @@ from mqt import qcec
 parser = argparse.ArgumentParser()
 parser.add_argument('qasmfile1', help="Path to .qasm file.")
 parser.add_argument('qasmfile2', help="Path to .qasm file.")
-parser.add_argument('--timeout', type=int, default=600, help="Timeout (in seconds).")
 parser.add_argument('--workers', type=int, default=1, help="Number of parallel processes.")
 
 
@@ -20,8 +18,7 @@ def equivalence_check(args):
     """
     Run circuit equivalence checking using MQT QCEC on given circuits.
     """
-    res = qcec.verify(args.qasmfile1, args.qasmfile2, timeout=args.timeout,
-                                                      nthreads=args.workers)
+    res = qcec.verify(args.qasmfile1, args.qasmfile2, nthreads=args.workers)
 
     # write stats as JSON
     stats = {}

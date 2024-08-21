@@ -13,7 +13,7 @@ import qiskit.qasm2
 EXPERIMENTS_DIR = "experiments/"
 Q_SYLVAN = "timeout {} ./tools/q-sylvan/build/examples/circuit_equivalence {} {} --workers {} {} 2> {} 1> {}\n"
 QUOKKA_SHARP = "python tools/quokka-sharp/cli.py {} {} --workers {} 2> {} 1> {}\n"
-MQT_QCEC = "python tools/mqt_qcec.py {} {} --timeout {} --workers {} 2> {} 1> {}\n"
+MQT_QCEC = "timeout {} python tools/mqt_qcec.py {} {} --workers {} 2> {} 1> {}\n"
 
 
 parser = argparse.ArgumentParser()
@@ -126,8 +126,8 @@ def experiments_eqcheck(args):
                     json_out = f"{output_dir}/json/{origin_file[:-5]}_mqt_{exp_counter}.json"
                     log      = f"{output_dir}/logs/{origin_file[:-5]}_mqt_{exp_counter}.log"
                     meta     = f"{output_dir}/meta/{origin_file[:-5]}_mqt_{exp_counter}.json"
-                    f_all.write(MQT_QCEC.format(origin_path, compare_path, args.timeout, w, log, json_out))
-                    f_mqt.write(MQT_QCEC.format(origin_path, compare_path, args.timeout, w, log, json_out))
+                    f_all.write(MQT_QCEC.format(args.timeout, origin_path, compare_path, w, log, json_out))
+                    f_mqt.write(MQT_QCEC.format(args.timeout, origin_path, compare_path, w, log, json_out))
                     with open(meta, 'w', encoding='utf-8') as meta_file:
                         json.dump({ 'circuit_type' : origin_file.split('_')[0],
                                     'circuit_U' : origin_file[:-5],
