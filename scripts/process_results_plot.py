@@ -12,6 +12,10 @@ import matplotlib.pyplot as plt
 TIMEOUT_TIME = 600 # replaces NaN from timeout with this time in the plots
 FORMATS = ['png', 'pdf']
 COLORS = ['royalblue', 'darkorange', 'forestgreen', 'crimson']
+EQTAB_SELECTION = ['graphstate', 'grover-noancilla', 'qaoa', 'qnn', 'qft', 
+                   'qpe-inexact', 'vqe', 'wstate']
+NEQTAB_SELECTION = ['grover-noancilla', 'qaoa', 'qft', 'qnn', 'qpe-inexact',
+                    'vqe', 'wstate']
 
 
 def plots_dir(args):
@@ -465,11 +469,18 @@ def latex_table_equivalent(df : pd.DataFrame, args):
         {'selector': 'midrule', 'props': ':hline;'},
         {'selector': 'bottomrule', 'props': ':hline;'},
     ], overwrite=True)
+    column_format = 'l||rrr||rr'
 
     # write to file
+    output_file = os.path.join(tables_dir(args), 'eqcheck_equiv_table_full.tex')
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write(styler.to_latex(column_format=column_format))
+    
+    # write selection
+    df['Algorithm'] = df['Algorithm'].apply(lambda x : x if x in EQTAB_SELECTION else f'%{x}')
     output_file = os.path.join(tables_dir(args), 'eqcheck_equiv_table.tex')
     with open(output_file, 'w', encoding='utf-8') as f:
-        f.write(styler.to_latex(column_format='l||rrr||rr'))
+        f.write(styler.to_latex(column_format=column_format))
 
 
 def latex_table_non_equivalent(df : pd.DataFrame, args):
@@ -527,8 +538,15 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
         {'selector': 'midrule', 'props': ':hline;'},
         {'selector': 'bottomrule', 'props': ':hline;'},
     ], overwrite=True)
+    column_format = 'l||rrr||rr||rr'
     
     # write to file
+    output_file = os.path.join(tables_dir(args), 'eqcheck_nonequiv_table_full.tex')
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write(styler.to_latex(column_format=column_format))
+    
+    # write selection
+    df['Algorithm'] = df['Algorithm'].apply(lambda x : x if x in NEQTAB_SELECTION else f'%{x}')
     output_file = os.path.join(tables_dir(args), 'eqcheck_nonequiv_table.tex')
     with open(output_file, 'w', encoding='utf-8') as f:
-        f.write(styler.to_latex(column_format='l||rrr||rr||rr'))
+        f.write(styler.to_latex(column_format=column_format))
