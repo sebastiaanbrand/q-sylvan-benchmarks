@@ -94,10 +94,10 @@ def plot_scatter(args, outputname,
     # plot diagonal line
     if diagonals is not None:
         ax = _plot_diagonal_lines(ax, 0, max_val, at=diagonals)
-    
+
     # squeeze/stretch
     w, h = fig.get_size_inches()
-    fig.set_size_inches(w=(w/cosiness), h=(h/cosiness))
+    fig.set_size_inches(w = w/cosiness, h = h/cosiness)
     fig.tight_layout()
 
     # save figure
@@ -157,7 +157,7 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args):
             datas_labels.append(fid['circuit'])
             leg_names.append(leg_name)
 
-        plot_scatter(arsg, 'mqt_vs_qsylvan_fid',
+        plot_scatter(args, 'mqt_vs_qsylvan_fid',
                      datas_l, datas_r, datas_labels,
                      'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
                      COLORS, leg_names, [])
@@ -399,7 +399,7 @@ def latex_table_simulation(df : pd.DataFrame, args):
     # style runtime column
     for suff in ['_1','_2','_3']:
         df = df.astype({f'simulation_time{suff}' : str})
-        df.loc[:,f'simulation_time{suff}'] = df[f'simulation_time{suff}'].apply(lambda x : '{:.2f}'.format(float(x)))
+        df.loc[:,f'simulation_time{suff}'] = df[f'simulation_time{suff}'].apply(lambda x : f'{float(x):.2f}')
         df.loc[(df[f'status{suff}'] == 'TIMEOUT'), f'simulation_time{suff}'] = f'> {TIMEOUT_TIME}'
         df.loc[(df[f'status{suff}'] == 'NODE_TABLE_FULL'), f'simulation_time{suff}'] = '-'
         df.loc[(df[f'status{suff}'] == 'WEIGHT_TABLE_FULL'), f'simulation_time{suff}'] = '-'
@@ -432,7 +432,7 @@ def latex_table_equivalent(df : pd.DataFrame, args):
     # select data
     d1 = df.loc[(df['type'] == 'opt') & (df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
     d2 = df.loc[(df['type'] == 'opt') & (df['tool'] == 'quokka-sharp') & (df['workers'] == 1)]
-    
+
     # merge d1 and d2
     merge_on = ['circuit_U']
     meta_data = ['circuit_type','n_qubits','n_gates_U','n_gates_V']
@@ -445,7 +445,7 @@ def latex_table_equivalent(df : pd.DataFrame, args):
     df = joined
     for suff in ['_1','_2']:
         df = df.astype({f'wall_time{suff}' : str})
-        df.loc[:,f'wall_time{suff}'] = df[f'wall_time{suff}'].apply(lambda x : '{:.2f}'.format(float(x)))
+        df.loc[:,f'wall_time{suff}'] = df[f'wall_time{suff}'].apply(lambda x : f'{float(x):.2f}')
         df.loc[(df[f'status{suff}'] == 'TIMEOUT'), f'wall_time{suff}'] = f'> {TIMEOUT_TIME}'
         df.loc[(df[f'status{suff}'] == 'NODE_TABLE_FULL'), f'wall_time{suff}'] = '-'
         df.loc[(df[f'status{suff}'] == 'WEIGHT_TABLE_FULL'), f'wall_time{suff}'] = '-'
@@ -496,20 +496,19 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
     # merge d1 and d2
     dfs[1] = dfs[1].drop(columns=meta_data, errors='ignore')
     joined = pd.merge(dfs[0], dfs[1], on=merge_on, how='outer', suffixes=('_0','_1'))
-    
+
     # style runtime columns
     df = joined
     for suff_type in ['_gm', '_flip']:
         for suff_tool in ['_0', '_1']:
             suff = suff_type + suff_tool
             df = df.astype({f'wall_time{suff}' : str})
-            df.loc[:,f'wall_time{suff}'] = df[f'wall_time{suff}'].apply(lambda x : '{:.2f}'.format(float(x)))
+            df.loc[:,f'wall_time{suff}'] = df[f'wall_time{suff}'].apply(lambda x : f'{float(x):.2f}')
             df.loc[(df[f'status{suff}'] == 'TIMEOUT'), f'wall_time{suff}'] = f'> {TIMEOUT_TIME}'
             df.loc[(df[f'status{suff}'] == 'NODE_TABLE_FULL'), f'wall_time{suff}'] = '-'
             df.loc[(df[f'status{suff}'] == 'WEIGHT_TABLE_FULL'), f'wall_time{suff}'] = '-'
             df.loc[(df[f'equivalent{suff}'] == 1), f'wall_time{suff}'] = '$\\times$'
 
-    
     # styling of table
     df = df.sort_values(['circuit_type', 'n_qubits'])
     df = df[['circuit_type', 'n_qubits', 'n_gates_U', 'n_gates_V',
@@ -527,7 +526,7 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
         {'selector': 'midrule', 'props': ':hline;'},
         {'selector': 'bottomrule', 'props': ':hline;'},
     ], overwrite=True)
-    
+
     # write to file
     output_file = os.path.join(tables_dir(args), 'eqcheck_nonequiv_table.tex')
     with open(output_file, 'w', encoding='utf-8') as f:
