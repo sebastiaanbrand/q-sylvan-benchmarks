@@ -26,11 +26,11 @@ parser.add_argument('--max_qubits', type=int, help="Only include circuits up to 
 parser.add_argument('--norm_strat', choices=['low','max','min','l2'], default='max', help="Norm strat to use for all q-sylvan runs.")
 parser.add_argument('--wgt_tab_size', type=int, default=23, help="log2 of max edge weight table size.")
 parser.add_argument('--node_tab_size', type=int, default=25, help="log2 of max node table size.")
-parser.add_argument('--test_multicore', action='store_true', default=False, help="Run multicore benchmarks.")
 parser.add_argument('--test_norm_strats', action='store_true', default=False, help="Run with different norm strats.")
 parser.add_argument('--test_inv_caching', action='store_true', default=False ,help="Run with both INV-CACHING on/off.")
 parser.add_argument('--test_reorder', action='store_true', default=False, help="Run with reorder qubits on/off.")
 parser.add_argument('--tools', nargs='+', default=['q-sylvan','mqt'], help="Which tools to include (q-sylvan, mqt, quasimodo).")
+parser.add_argument('--workers', nargs='+', default=[1], help="Run multicore benchmarks for given number of workers.")
 parser.add_argument('--timeout', action='store', default='10m', help='Timeout time per benchmark')
 parser.add_argument('--recursive', action='store_true', default=False, help="Recursively look for .qasm files in given dir.")
 
@@ -94,9 +94,8 @@ def experiments_sim_qasm(args):
     if args.log_vector:
         mqt_args += '--pv'
         qsy_args += '--state-vector'
-    if not args.test_multicore:
+    if len(args.workers) == 1 and int(args.workers[0]) == 1:
         qsy_args += ' --count-nodes'
-    workers = [1,2,4,8] if args.test_multicore else [1]
     inv_caching = ['', ' --disable-inv-caching'] if args.test_inv_caching else ['']
     reorder = ['', ' --reorder', ' --reorder-swaps'] if args.test_reorder else [' --reorder']
     norm_strats = [' -s low', ' -s max', ' -s min',  ' -s l2'] if args.test_norm_strats else [f' -s {args.norm_strat}']
@@ -169,7 +168,7 @@ def experiments_sim_qasm(args):
 
             # Q-Sylvan (QMDD)
             if 'q-sylvan' in args.tools:
-                for w in workers:
+                for w in args.workers:
                     for s in norm_strats:
                         for inv in inv_caching:
                             for r in reorder:
