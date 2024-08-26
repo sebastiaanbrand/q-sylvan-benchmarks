@@ -27,8 +27,13 @@ def _get_termination_status(log_filepath : str):
                 return 'TIMEOUT'
             elif "Assertion" in text and "failed" in text:
                 return "ERROR"
-            elif len(text.splitlines()) and "WARNING" in text:
-                return "UNKNOWN"
+            elif len(text.splitlines()) == 1 and "WARNING" in text:
+                parts = os.path.normpath(log_filepath).split(os.path.sep)
+                json_path = os.path.join(*parts[:-2], 'json', parts[-1].replace('.log','.json'))
+                if os.path.isfile(json_path) and os.path.getsize(json_path) > 0:
+                    return 'FINISHED'
+                else:
+                    return 'TIMEOUT'
             else:
                 print("    Could not get termination status from file:")
                 print("    " + log_filepath)
