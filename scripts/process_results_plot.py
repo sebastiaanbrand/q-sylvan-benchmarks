@@ -389,7 +389,6 @@ def latex_table_simulation(df : pd.DataFrame, args):
         print("No Quasimodo data, skipping table.")
         return
 
-
     # merge d1, d2, d3
     merge_on = ['circuit']
     meta_data = ['circuit_type','n_qubits']
@@ -436,32 +435,35 @@ def latex_table_equivalent(df : pd.DataFrame, args):
     # select data
     d1 = df.loc[(df['type'] == 'opt') & (df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
     d2 = df.loc[(df['type'] == 'opt') & (df['tool'] == 'quokka-sharp') & (df['workers'] == 1)]
+    d3 = df.loc[(df['type'] == 'opt') & (df['tool'] == 'mqt-qcec') & (df['workers'] == 1)]
 
-    # merge d1 and d2
+    # merge d1, d2, d3
     merge_on = ['circuit_U']
     meta_data = ['circuit_type','n_qubits','n_gates_U','n_gates_V']
     stats = ['equivalent','status','wall_time']
-    d1 = d1[merge_on + meta_data + stats]
-    d2 = d2[merge_on + stats]
-    joined = pd.merge(d1, d2, on=merge_on, how='outer', suffixes=('_1','_2'))
+    d1 = d1[merge_on + meta_data + stats].rename(columns=dict([(x,f'{x}_1') for x in stats]))
+    d2 = d2[merge_on + stats].rename(columns=dict([(x,f'{x}_2') for x in stats]))
+    d3 = d3[merge_on + stats].rename(columns=dict([(x,f'{x}_3') for x in stats]))
+    df = pd.merge(d1, d2, on=merge_on, how='outer')
+    df = pd.merge(df, d3, on=merge_on, how='outer')
 
     # style runtime column
-    df = joined
-    for suff in ['_1','_2']:
+    for suff in ['_1','_2','_3']:
         df = df.astype({f'wall_time{suff}' : str})
         df.loc[:,f'wall_time{suff}'] = df[f'wall_time{suff}'].apply(lambda x : f'{float(x):.2f}')
         df.loc[(df[f'status{suff}'] == 'TIMEOUT'), f'wall_time{suff}'] = f'> {TIMEOUT_TIME}'
         df.loc[(df[f'status{suff}'] == 'NODE_TABLE_FULL'), f'wall_time{suff}'] = '-'
         df.loc[(df[f'status{suff}'] == 'WEIGHT_TABLE_FULL'), f'wall_time{suff}'] = '-'
-        df.loc[(df[f'equivalent{suff}'] == 0), f'wall_time{suff}'] = '$\\times$'
+        df.loc[(df[f'equivalent{suff}'] == 'not_equivalent'), f'wall_time{suff}'] = '$\\times$'
 
     # styling of table
     df = df.sort_values(['circuit_type', 'n_qubits'])
-    df = df[meta_data + ['wall_time_1', 'wall_time_2']]
+    df = df[meta_data + ['wall_time_1', 'wall_time_2', 'wall_time_3']]
     df = df.rename(columns={'circuit_type' : 'Algorithm', 'n_qubits' : '$n$',
                             'n_gates_U' : '$|G|$', 'n_gates_V' : '$|G\'|$',
                             'wall_time_1' : 'Q-Sylvan', 
-                            'wall_time_2': 'Quokka-Sharp'})
+                            'wall_time_2': 'Quokka-Sharp',
+                            'wall_time_3': 'MQT QCEC'})
     styler = df.style
     styler.hide(axis='index')
     styler.set_table_styles([
@@ -469,7 +471,7 @@ def latex_table_equivalent(df : pd.DataFrame, args):
         {'selector': 'midrule', 'props': ':hline;'},
         {'selector': 'bottomrule', 'props': ':hline;'},
     ], overwrite=True)
-    column_format = 'l||rrr||rr'
+    column_format = 'l||rrr||rrr'
 
     # write to file
     output_file = os.path.join(tables_dir(args), 'eqcheck_equiv_table_full.tex')
@@ -493,7 +495,7 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
 
     # select data + combine corresponding gm and flip into single rows)
     dfs = []
-    for tool in ['q-sylvan','quokka-sharp']:
+    for tool in ['q-sylvan', 'quokka-sharp', 'mqt-qcec']:
         dtool = df.loc[(df['tool'] == tool) & (df['workers'] == 1)]
         dtool = dtool[merge_on + meta_data + stats]
         gm   = dtool.loc[(df['type'] == 'gm')].drop('type', axis=1)
@@ -503,33 +505,42 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
                         suffixes=('_gm', '_flip'))
         dtool['n_gates_V'] = dtool['n_gates_V'] + 1
         dfs.append(dtool)
+    # update stats, metadata columns
+    stats = [y for x in stats for y in (f'{x}_gm',f'{x}_flip')] # oh python
+    meta_data.remove('type')
 
-    # merge d1 and d2
-    dfs[1] = dfs[1].drop(columns=meta_data, errors='ignore')
-    joined = pd.merge(dfs[0], dfs[1], on=merge_on, how='outer', suffixes=('_0','_1'))
+    # merge d1, d2, d3
+    d1, d2, d3 = dfs[0], dfs[1], dfs[2]
+    d1 = d1[merge_on + meta_data + stats].rename(columns=dict([(x,f'{x}_1') for x in stats]))
+    d2 = d2[merge_on + stats].rename(columns=dict([(x,f'{x}_2') for x in stats]))
+    d3 = d3[merge_on + stats].rename(columns=dict([(x,f'{x}_3') for x in stats]))
+    df = pd.merge(d1, d2, on=merge_on, how='outer')
+    df = pd.merge(df, d3, on=merge_on, how='outer')
 
     # style runtime columns
-    df = joined
     for suff_type in ['_gm', '_flip']:
-        for suff_tool in ['_0', '_1']:
+        for suff_tool in ['_1', '_2', '_3']:
             suff = suff_type + suff_tool
             df = df.astype({f'wall_time{suff}' : str})
             df.loc[:,f'wall_time{suff}'] = df[f'wall_time{suff}'].apply(lambda x : f'{float(x):.2f}')
             df.loc[(df[f'status{suff}'] == 'TIMEOUT'), f'wall_time{suff}'] = f'> {TIMEOUT_TIME}'
             df.loc[(df[f'status{suff}'] == 'NODE_TABLE_FULL'), f'wall_time{suff}'] = '-'
             df.loc[(df[f'status{suff}'] == 'WEIGHT_TABLE_FULL'), f'wall_time{suff}'] = '-'
-            df.loc[(df[f'equivalent{suff}'] == 1), f'wall_time{suff}'] = '$\\times$'
+            df.loc[(df[f'equivalent{suff}'] == 'equivalent'), f'wall_time{suff}'] = '$\\times$'
 
     # styling of table
     df = df.sort_values(['circuit_type', 'n_qubits'])
     df = df[['circuit_type', 'n_qubits', 'n_gates_U', 'n_gates_V',
-            'wall_time_gm_0', 'wall_time_gm_1', 'wall_time_flip_0', 'wall_time_flip_1']]
+            'wall_time_gm_1', 'wall_time_gm_2', 'wall_time_gm_3',
+            'wall_time_flip_1', 'wall_time_flip_2', 'wall_time_flip_3']]
     df = df.rename(columns={'circuit_type' : 'Algorithm', 'n_qubits' : '$n$',
                             'n_gates_U' : '$|G|$', 'n_gates_V' : '$|G\'|$',
-                            'wall_time_gm_0' : 'Q-Sylvan GM', 
-                            'wall_time_flip_0' : 'Q-Sylvan flip',
-                            'wall_time_gm_1' : 'Quokka-Sharp GM',
-                            'wall_time_flip_1': 'Quokka-Sharp flip'})
+                            'wall_time_gm_1' : 'Q-Sylvan GM', 
+                            'wall_time_flip_1' : 'Q-Sylvan flip',
+                            'wall_time_gm_2' : 'Quokka-Sharp GM',
+                            'wall_time_flip_2': 'Quokka-Sharp flip',
+                            'wall_time_gm_3' : 'MQT QCEC GM',
+                            'wall_time_flip_3' : 'MQT QCEC flip'})
     styler = df.style
     styler.hide(axis='index')
     styler.set_table_styles([
@@ -537,14 +548,14 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
         {'selector': 'midrule', 'props': ':hline;'},
         {'selector': 'bottomrule', 'props': ':hline;'},
     ], overwrite=True)
-    column_format = 'l||rrr||rr||rr'
+    column_format = 'l||rrr||rrr||rrr'
 
     # write to file
     output_file = os.path.join(tables_dir(args), 'eqcheck_nonequiv_table_full.tex')
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(styler.to_latex(column_format=column_format))
     
-    # write selection
+    # write selection (TODO: also write complement of this selection?)
     df['Algorithm'] = df['Algorithm'].apply(lambda x : x if x in NEQTAB_SELECTION else f'%{x}')
     output_file = os.path.join(tables_dir(args), 'eqcheck_nonequiv_table.tex')
     with open(output_file, 'w', encoding='utf-8') as f:

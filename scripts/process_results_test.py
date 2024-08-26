@@ -140,10 +140,10 @@ def check_circuit_equivalence(df : pd.DataFrame, args):
     false_positives = []
     for index, row in df.iterrows():
         if row['circuit_V'].endswith('opt'): # should be equivalent
-            if row['equivalent'] != 1:
+            if row['equivalent'] != 'equivalent':
                 false_negatives.append(row)
         else:
-            if row['equivalent'] == 1:       # should not be equivalent
+            if row['equivalent'] != 'not_equivalent': # should not be equivalent
                 false_positives.append(row)
     incorrect = pd.DataFrame(false_negatives + false_positives)
     if len(incorrect) > 0:

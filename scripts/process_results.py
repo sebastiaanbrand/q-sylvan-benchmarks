@@ -127,6 +127,9 @@ class EqCheckPlotPipeline(PlotPipeline):
         logs_df.set_index('exp_id', inplace=True)
         self.df.update(logs_df)
         self.df['status'] = self.df['status'].fillna('TIMEOUT')
+        self.df.loc[(self.df['equivalent'] == 0), 'equivalent'] = 'not_equivalent'
+        self.df.loc[(self.df['equivalent'] == 1), 'equivalent'] = 'equivalent'
+        self.df.loc[(self.df['equivalent'] == 'equivalent_up_to_global_phase'), 'equivalent'] = 'equivalent'
 
     def sanity_checks(self):
         """
