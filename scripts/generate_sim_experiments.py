@@ -30,7 +30,7 @@ parser.add_argument('--test_norm_strats', action='store_true', default=False, he
 parser.add_argument('--test_inv_caching', action='store_true', default=False ,help="Run with both INV-CACHING on/off.")
 parser.add_argument('--test_reorder', action='store_true', default=False, help="Run with reorder qubits on/off.")
 parser.add_argument('--tools', nargs='+', default=['q-sylvan','mqt'], help="Which tools to include (q-sylvan, mqt, quasimodo).")
-parser.add_argument('--workers', nargs='+', default=[1], help="Run multicore benchmarks for given number of workers.")
+parser.add_argument('--workers', nargs='+', default=[1], type=int, help="Run multicore benchmarks for given number of workers.")
 parser.add_argument('--timeout', action='store', default='10m', help='Timeout time per benchmark')
 parser.add_argument('--recursive', action='store_true', default=False, help="Recursively look for .qasm files in given dir.")
 
