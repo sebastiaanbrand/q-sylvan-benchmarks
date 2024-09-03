@@ -2,13 +2,13 @@
 
 ## 1. Installation
 
-Install Basic build tools + specific dependencies.
+Basic build tools + specific dependencies.
 ```shell
 $ sudo apt install build-essential cmake autoconf
 $ sudo apt install libgmp-dev libmpfr-dev libmpc-dev zlib
 ```
 
-Python libraries (creating a virtual environment is recommended but optional).
+Python libraries (creating a virtual environment is optional but recommended).
 ```shell
 $ python -m venv .venv
 $ source .venv/bin/activate
