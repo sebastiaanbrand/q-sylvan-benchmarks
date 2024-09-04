@@ -24,6 +24,7 @@ def plots_dir(args):
     """
     return os.path.join(args.dir, 'plots')
 
+
 def mkdir_plots(args):
     """
     Create plots subdirs if not exists.
@@ -32,6 +33,7 @@ def mkdir_plots(args):
     for sub in (FORMATS + ['annotated']):
         subdir = os.path.join(plots_dir(args), sub)
         Path(subdir).mkdir(parents=True, exist_ok=True)
+
 
 def tables_dir(args):
     """
@@ -477,7 +479,7 @@ def latex_table_equivalent(df : pd.DataFrame, args):
     output_file = os.path.join(tables_dir(args), 'eqcheck_equiv_table_full.tex')
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(styler.to_latex(column_format=column_format))
-    
+
     # write selection
     df['Algorithm'] = df['Algorithm'].apply(lambda x : x if x in EQTAB_SELECTION else f'%{x}')
     output_file = os.path.join(tables_dir(args), 'eqcheck_equiv_table.tex')
@@ -554,7 +556,7 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
     output_file = os.path.join(tables_dir(args), 'eqcheck_nonequiv_table_full.tex')
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(styler.to_latex(column_format=column_format))
-    
+
     # write selection (TODO: also write complement of this selection?)
     df['Algorithm'] = df['Algorithm'].apply(lambda x : x if x in NEQTAB_SELECTION else f'%{x}')
     output_file = os.path.join(tables_dir(args), 'eqcheck_nonequiv_table.tex')

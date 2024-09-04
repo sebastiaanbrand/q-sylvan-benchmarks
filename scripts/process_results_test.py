@@ -29,7 +29,6 @@ def compare_vectors(args):
     """
     print("Comparing state vectors between both tools...")
     json_dir = os.path.join(args.dir, 'json')
-    regexp = re.compile(r'(.*)qsylvan(.*)json')
     fidelities = []
     fidelity_issues = []
 
@@ -44,17 +43,17 @@ def compare_vectors(args):
             mqt_runs[circuit] = filename
 
     # check vectors for all pairs
-    for circuit in qsylvan_runs:
+    for circuit, qsylvan_filename in qsylvan_runs:
         if circuit in mqt_runs:
 
             # get filepaths
-            qsylvan_file = os.path.join(json_dir, qsylvan_runs[circuit])
+            qsylvan_file = os.path.join(json_dir, qsylvan_filename)
             mqt_file     = os.path.join(json_dir, mqt_runs[circuit])
 
             # skip if one is empty
             if os.path.getsize(qsylvan_file) == 0 or os.path.getsize(mqt_file) == 0:
                 continue
-    
+
             # try to read files
             vec_qsy = None
             vec_mqt = None
@@ -65,7 +64,7 @@ def compare_vectors(args):
                     if 'state_vector' in data:
                         vec_qsy = _to_complex_vector(data['state_vector'])
                     else:
-                        print(f"No state vector in {filepath}, skipping")
+                        print(f"    No state vector in {qsylvan_file}, skipping")
                         continue
                     row = data['statistics']
                 try:
@@ -76,7 +75,7 @@ def compare_vectors(args):
                 except:
                     print(f"    Could not get json data from {mqt_file}, skipping")
             except:
-                print(f"    Could not get json data from {filepath}, skipping")
+                print(f"    Could not get json data from {qsylvan_file}, skipping")
 
             # compare vectors
             if not vec_qsy is None and not vec_mqt is None:
@@ -87,7 +86,7 @@ def compare_vectors(args):
                 fidelities.append(row)
                 if abs(fidelity - 1.0) > 1e-3:
                     fidelity_issues.append(row)
-    
+
     # gather results in dataframe
     fid_df = pd.DataFrame(fidelities)
     fid_df.rename(columns={'benchmark':'circuit'}, inplace=True)
@@ -138,7 +137,7 @@ def check_circuit_equivalence(df : pd.DataFrame, args):
     df = df.loc[(df['status'] == 'FINISHED')]
     false_negatives = []
     false_positives = []
-    for index, row in df.iterrows():
+    for _, row in df.iterrows():
         if row['circuit_V'].endswith('opt'): # should be equivalent
             if row['equivalent'] != 'equivalent':
                 false_negatives.append(row)
@@ -167,7 +166,9 @@ def check_termination_errors(df : pd.DataFrame, args):
     keep = ['circuit', 'circuit_U', 'tool', 'exp_id', 'status']
     columns = list(df.columns.values)
     df = df[list(set(columns) & set(keep))]
-    df = df.loc[(df['tool'] == 'q-sylvan') & (df['status'] != 'FINISHED') & (df['status'] != 'TIMEOUT')]
+    df = df.loc[(df['tool'] == 'q-sylvan') &
+                (df['status'] != 'FINISHED') &
+                (df['status'] != 'TIMEOUT')]
     if len(df) > 0:
         with open(issues_file(args), 'a', encoding='utf-8') as f:
             f.write("Instances with termination other than FINISHED/TIMEOUT:\n")
