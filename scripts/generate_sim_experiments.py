@@ -17,9 +17,17 @@ QUA_QASM = "cd tools/Quasimodo/python_pkg; "\
            "cd ../../..\n"
 
 
+class ReadLinesAction(argparse.Action):
+    """ Custom action to read lines of file with argparse. """
+    def __call__(self, _parser, namespace, values, option_string=None):
+        with open(values, 'r', encoding='utf-8') as f:
+            lines = f.read().splitlines()
+        setattr(namespace, self.dest, lines)
+
 parser = argparse.ArgumentParser()
 parser.add_argument('qasm_dir', help="Path of directory with .qasm files.")
 parser.add_argument('--name', help="Name for experiments dir.")
+parser.add_argument('--from_list', action=ReadLinesAction, help="Only include circuits in given list (.txt file).")
 parser.add_argument('--log_vector', action='store_true', default=False, help="Log entire final state vector.")
 parser.add_argument('--nqubits', type=int, nargs='+', help="Only include circuits of nqubits.")
 parser.add_argument('--max_qubits', type=int, help="Only include circuits up to max_qubits.")
@@ -69,6 +77,9 @@ def skip(filename : str, args):
             return True
     if args.nqubits is not None:
         if get_num_qubits(filename) not in args.nqubits:
+            return True
+    if args.from_list is not None:
+        if filename not in args.from_list:
             return True
     return False
 

@@ -7,6 +7,7 @@ from abc import abstractmethod
 from pathlib import Path
 import pandas as pd
 import process_results_load as pr_load
+import process_results_info as pr_info
 import process_results_test as pr_test
 import process_results_plot as pr_plot
 
@@ -20,6 +21,10 @@ parser.add_argument('--compare_vecs', action='store_true', default=False, help="
 
 
 class PlotPipeline:
+    """
+    Abstract class to bring some structure to the processing of different types
+    of results (sim or eqcheck).
+    """
 
     def __init__(self, args):
         self.args = args
@@ -27,18 +32,23 @@ class PlotPipeline:
 
     @abstractmethod
     def load_data(self):
-        pass
+        """ Load the data (and do some preprocessing). """
+
+    @abstractmethod
+    def write_info(self):
+        """ Write some summary information. """
 
     @abstractmethod
     def sanity_checks(self):
-        pass
+        """ Some sanity checks on experimental results. """
 
     @abstractmethod
     def plot_all(self):
-        pass
+        """ Renerate all relevant plots/tables."""
 
     @staticmethod
     def get_PlotPipeline(args):
+        """ Choose between processing sim or eqcheck results. """
         run_script = os.path.join(args.dir, 'run_all.sh')
         with open(run_script, 'r', encoding='utf-8') as f:
             text = f.read()
@@ -66,7 +76,6 @@ class SimPlotPipeline(PlotPipeline):
         Load the data (and do some preprocessing).
         """
         print(f"Loading data from {self.args.dir}")
-
         self.df = pr_load.load_meta(self.args.dir)
         self.df.set_index('exp_id', inplace=True)
         results = pr_load.load_json(self.args.dir)[self.res_cols]
@@ -77,6 +86,12 @@ class SimPlotPipeline(PlotPipeline):
         self.df.update(logs_df, overwrite=False)
         self.df = pr_load.add_circuit_categories(self.df)
         self.df['status'] = self.df['status'].fillna('TIMEOUT')
+
+    def write_info(self):
+        """
+        Write some summary information.
+        """
+        pr_info.write_non_timeout_list(self.df, self.args)
 
     def sanity_checks(self):
         """
@@ -131,6 +146,11 @@ class EqCheckPlotPipeline(PlotPipeline):
         self.df.loc[(self.df['equivalent'] == 1), 'equivalent'] = 'equivalent'
         self.df.loc[(self.df['equivalent'] == 'equivalent_up_to_global_phase'), 'equivalent'] = 'equivalent'
 
+    def write_info(self):
+        """
+        Write some useful summary information.
+        """
+
     def sanity_checks(self):
         """
         Check termination issues + correctness of circuit equivalence
@@ -156,6 +176,7 @@ def main():
     args = parser.parse_args()
     pipeline = PlotPipeline.get_PlotPipeline(args)
     pipeline.load_data()
+    pipeline.write_info()
     pipeline.sanity_checks()
     pipeline.plot_all()
 
