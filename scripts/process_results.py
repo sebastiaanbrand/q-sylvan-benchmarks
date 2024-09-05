@@ -109,7 +109,7 @@ class SimPlotPipeline(PlotPipeline):
         """
         print(f"Writing plots to {pr_plot.plots_dir(self.args)}")
         pr_plot.mkdir_plots(self.args)
-        pr_plot.plot_tool_comparison(self.df, self.fid_df, self.args)
+        pr_plot.plot_tool_comparison_workers(self.df, self.fid_df, self.args)
         pr_plot.plot_dd_size_vs_qubits(self.df, self.args, NS_NAMES)
         pr_plot.plot_relative_speedups(self.df, self.args)
         pr_plot.plot_norm_strat_comparison(self.df, self.args, NS_NAMES)
