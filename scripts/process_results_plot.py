@@ -9,7 +9,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-TIMEOUT_TIME = 600 # replaces NaN from timeout with this time in the plots
 FORMATS = ['png', 'pdf']
 COLORS = ['royalblue', 'darkorange', 'forestgreen', 'crimson']
 EQTAB_SELECTION = ['graphstate', 'grover-noancilla', 'qaoa', 'qnn', 'qft', 
@@ -85,8 +84,8 @@ def plot_scatter(args, outputname,
     for data_x, data_y, col in zip(datas_x, datas_y, colors):
         max_val = max(max_val, np.amax([data_x, data_y]))
         fc_cols = np.array([col for _ in range(len(data_x))])
-        fc_cols[data_x == TIMEOUT_TIME] = 'none'
-        fc_cols[data_y == TIMEOUT_TIME] = 'none'
+        fc_cols[data_x == args.timeoutt] = 'none'
+        fc_cols[data_y == args.timeoutt] = 'none'
         ax.scatter(data_x, data_y, facecolors=fc_cols, edgecolors=col)
 
     # axis labels, legend, etc.
@@ -133,8 +132,8 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args, w=1, sc
     joined = pd.merge(left, right, on='circuit', how='outer', suffixes=('_l','_r'))
 
     if fid_df is None:
-        data_l = joined['simulation_time_l'].fillna(TIMEOUT_TIME)
-        data_r = joined['simulation_time_r'].fillna(TIMEOUT_TIME)
+        data_l = joined['simulation_time_l'].fillna(args.timeoutt)
+        data_r = joined['simulation_time_r'].fillna(args.timeoutt)
         data_labels = [f"{n} ({s})" for n, s in zip(joined['circuit'],joined['status_r'])]
 
         plot_scatter(args, f'mqt_vs_qsylvan{w}_{scale}',
@@ -160,8 +159,8 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args, w=1, sc
             if len(fid) == 0:
                 continue
             fid = fid.reset_index()
-            datas_l.append(fid['simulation_time_l'].fillna(TIMEOUT_TIME))
-            datas_r.append(fid['simulation_time_r'].fillna(TIMEOUT_TIME))
+            datas_l.append(fid['simulation_time_l'].fillna(args.timeoutt))
+            datas_r.append(fid['simulation_time_r'].fillna(args.timeoutt))
             datas_labels.append(fid['circuit'])
             leg_names.append(leg_name)
 
@@ -312,8 +311,8 @@ def plot_qubit_reorder_comparison(df : pd.DataFrame, args):
         joined = pd.merge(left, right, on='circuit', how='outer', suffixes=('_l', '_r'))
 
         # plot runtime
-        data_l = joined['simulation_time_l'].fillna(TIMEOUT_TIME)
-        data_r = joined['simulation_time_r'].fillna(TIMEOUT_TIME)
+        data_l = joined['simulation_time_l'].fillna(args.timeoutt)
+        data_r = joined['simulation_time_r'].fillna(args.timeoutt)
         data_labels = joined['circuit']
         plot_scatter(args, f'reorder_runtime_{r1}_{r2}',
                      [data_l], [data_r], [data_labels],
@@ -386,8 +385,8 @@ def plot_relative_speedups(df : pd.DataFrame, args):
         joined = pd.merge(data_1, data_w, on='circuit', how='outer', suffixes=('_1','_w'))
         joined[['status_1','status_w']] = joined[['status_1', 'status_w']].fillna('TIMEOUT')
 
-        datas_x.append(joined['simulation_time_1'].fillna(TIMEOUT_TIME))
-        datas_y.append(joined['simulation_time_w'].fillna(TIMEOUT_TIME))
+        datas_x.append(joined['simulation_time_1'].fillna(args.timeoutt))
+        datas_y.append(joined['simulation_time_w'].fillna(args.timeoutt))
         datas_labels.append([f"{n} ({s1},{sw})" for n, s1, sw in\
                        zip(joined['circuit'], joined['status_1'], joined['status_w'])])
     # Pass to plot scatter
@@ -429,7 +428,7 @@ def latex_table_simulation(df : pd.DataFrame, args):
     for suff in ['_1','_2','_3']:
         df = df.astype({f'simulation_time{suff}' : str})
         df.loc[:,f'simulation_time{suff}'] = df[f'simulation_time{suff}'].apply(lambda x : f'{float(x):.2f}')
-        df.loc[(df[f'status{suff}'] == 'TIMEOUT'), f'simulation_time{suff}'] = f'> {TIMEOUT_TIME}'
+        df.loc[(df[f'status{suff}'] == 'TIMEOUT'), f'simulation_time{suff}'] = f'> {args.timeoutt}'
         df.loc[(df[f'status{suff}'] == 'NODE_TABLE_FULL'), f'simulation_time{suff}'] = '-'
         df.loc[(df[f'status{suff}'] == 'WEIGHT_TABLE_FULL'), f'simulation_time{suff}'] = '-'
 
@@ -477,7 +476,7 @@ def latex_table_equivalent(df : pd.DataFrame, args):
     for suff in ['_1','_2','_3']:
         df = df.astype({f'wall_time{suff}' : str})
         df.loc[:,f'wall_time{suff}'] = df[f'wall_time{suff}'].apply(lambda x : f'{float(x):.2f}')
-        df.loc[(df[f'status{suff}'] == 'TIMEOUT'), f'wall_time{suff}'] = f'> {TIMEOUT_TIME}'
+        df.loc[(df[f'status{suff}'] == 'TIMEOUT'), f'wall_time{suff}'] = f'> {args.timeoutt}'
         df.loc[(df[f'status{suff}'] == 'NODE_TABLE_FULL'), f'wall_time{suff}'] = '-'
         df.loc[(df[f'status{suff}'] == 'WEIGHT_TABLE_FULL'), f'wall_time{suff}'] = '-'
         df.loc[(df[f'equivalent{suff}'] == 'not_equivalent'), f'wall_time{suff}'] = '$\\times$'
@@ -549,7 +548,7 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
             suff = suff_type + suff_tool
             df = df.astype({f'wall_time{suff}' : str})
             df.loc[:,f'wall_time{suff}'] = df[f'wall_time{suff}'].apply(lambda x : f'{float(x):.2f}')
-            df.loc[(df[f'status{suff}'] == 'TIMEOUT'), f'wall_time{suff}'] = f'> {TIMEOUT_TIME}'
+            df.loc[(df[f'status{suff}'] == 'TIMEOUT'), f'wall_time{suff}'] = f'> {args.timeoutt}'
             df.loc[(df[f'status{suff}'] == 'NODE_TABLE_FULL'), f'wall_time{suff}'] = '-'
             df.loc[(df[f'status{suff}'] == 'WEIGHT_TABLE_FULL'), f'wall_time{suff}'] = '-'
             df.loc[(df[f'equivalent{suff}'] == 'equivalent'), f'wall_time{suff}'] = '$\\times$'
