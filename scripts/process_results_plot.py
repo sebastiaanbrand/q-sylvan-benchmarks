@@ -120,7 +120,7 @@ def plot_scatter(args, outputname,
     fig.clf()
 
 
-def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args, w=1):
+def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args, w=1, scale='linear'):
     """
     Plot Q-Sylvan ('w' worker) vs MQT-DDSIM.
     """
@@ -137,10 +137,11 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args, w=1):
         data_r = joined['simulation_time_r'].fillna(TIMEOUT_TIME)
         data_labels = [f"{n} ({s})" for n, s in zip(joined['circuit'],joined['status_r'])]
 
-        plot_scatter(args, f'mqt_vs_qsylvan{w}',
+        plot_scatter(args, f'mqt_vs_qsylvan{w}_{scale}',
                     [data_l], [data_r], [data_labels],
                     'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
-                    ['royalblue'], None, [])
+                    ['royalblue'], None, [],
+                    x_scale=scale, y_scale=scale)
         return data_l, data_r, data_labels
     else:
         joined = pd.merge(joined, fid_df, on='circuit', how='left')
@@ -164,29 +165,32 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args, w=1):
             datas_labels.append(fid['circuit'])
             leg_names.append(leg_name)
 
-        plot_scatter(args, f'mqt_vs_qsylvan{w}_fid',
+        plot_scatter(args, f'mqt_vs_qsylvan{w}_{scale}_fid',
                      datas_l, datas_r, datas_labels,
                      'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
-                     COLORS, leg_names, [])
+                     COLORS, leg_names, [], 
+                     x_scale=scale, y_scale=scale)
 
 
 def plot_tool_comparison_workers(df : pd.DataFrame, fid_df : pd.DataFrame, args):
     """
     Plot Q-Sylvan ('w' worker) vs MQT-DDSIM, for all 'w'.
     """
-    datas_l = []
-    datas_r = []
-    datas_labels = []
     workers = sorted(df['workers'].unique())
-    for w in workers:
-        data_l, data_r, data_labels = plot_tool_comparison(df, fid_df, args, w)
-        datas_l.append(data_l)
-        datas_r.append(data_r)
-        datas_labels.append(datas_labels)
-    plot_scatter(args, f'mqt_vs_qsylvan_{"_".join(str(w) for w in workers)}',
-                 datas_l, datas_r, datas_labels,
-                 'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
-                 COLORS, [f'{w} workers' for w in workers], [])
+    for scale in ['linear', 'log']:
+        datas_l = []
+        datas_r = []
+        datas_labels = []
+        for w in workers:
+            data_l, data_r, data_labels = plot_tool_comparison(df, fid_df, args, w, scale)
+            datas_l.append(data_l)
+            datas_r.append(data_r)
+            datas_labels.append(datas_labels)
+        plot_scatter(args, f'mqt_vs_qsylvan_{"_".join(str(w) for w in workers)}_{scale}',
+                    datas_l, datas_r, datas_labels,
+                    'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
+                    COLORS, [f'{w} workers' for w in workers], [],
+                    x_scale=scale, y_scale=scale)
 
 
 def plot_inv_cache_comparison(df : pd.DataFrame, args):
