@@ -15,7 +15,7 @@ while getopts "rqm" opt; do
     ;;
     m) compile_qsylvan=false;
        compile_mqt=true;
-       compile_quokka=true;
+       compile_quokka=false;
        compile_quasimodo=false;
     ;;
     \?) echo "Invalid option -$OPTARG" >&1; exit 1;
