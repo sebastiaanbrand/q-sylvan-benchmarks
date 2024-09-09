@@ -28,5 +28,5 @@ __pycache__/
 experiments/
 results/
 
-# ignore qasm files until final version
+# benchmark files
 qasm/

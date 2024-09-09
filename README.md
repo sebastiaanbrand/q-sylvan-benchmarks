@@ -42,4 +42,3 @@ $ python scripgs/process_results.py experiments/output_dir_name/
 ## Benchmark sets
 * [MQT Bench](https://www.cda.cit.tum.de/mqtbench/)
 * [KetGPT](https://www.kaggle.com/datasets/boranapak/ketgpt-data)
-* TODO: script for downloading qasm files automatically
