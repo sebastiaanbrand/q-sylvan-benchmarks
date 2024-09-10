@@ -415,6 +415,7 @@ def latex_table_simulation(df : pd.DataFrame, args):
         return
 
     # merge d1, d2, d3
+    suffixes = ['_1', '_2', '_3']
     merge_on = ['circuit']
     meta_data = ['circuit_type','n_qubits']
     stats = ['status','simulation_time']
@@ -423,6 +424,9 @@ def latex_table_simulation(df : pd.DataFrame, args):
     d3 = d3[merge_on + stats].rename(columns=dict([(x,f'{x}_3') for x in stats]))
     df = pd.merge(d1, d2, on=merge_on, how='outer')
     df = pd.merge(df, d3, on=merge_on, how='outer')
+    df['min_time'] = df[[f'simulation_time{suff}' for suff in suffixes]].min(axis=1)
+    df['min_tool'] = df[[f'simulation_time{suff}' for suff in suffixes]].idxmin(axis=1)
+    df.loc[(df['min_time'] == args.timeoutt), 'min_tool'] = 'all timeout'
 
     # style runtime column
     for suff in ['_1','_2','_3']:
@@ -431,13 +435,15 @@ def latex_table_simulation(df : pd.DataFrame, args):
         df.loc[(df[f'status{suff}'] == 'TIMEOUT'), f'simulation_time{suff}'] = f'> {args.timeoutt}'
         df.loc[(df[f'status{suff}'] == 'NODE_TABLE_FULL'), f'simulation_time{suff}'] = '-'
         df.loc[(df[f'status{suff}'] == 'WEIGHT_TABLE_FULL'), f'simulation_time{suff}'] = '-'
+        df.loc[(df['min_tool'] == f'simulation_time{suff}'), f'simulation_time{suff}'] =\
+                df[f'simulation_time{suff}'].apply(lambda x : f'\\textbf{{{x}}}')
 
     # styling of table
     df = df.sort_values(['circuit_type', 'n_qubits'])
     df = df[meta_data + ['simulation_time_1', 'simulation_time_2', 'simulation_time_3']]
     df = df.rename(columns={'circuit_type' : 'Algorithm', 'n_qubits' : '$n$',
-                            'simulation_time_1' : 'Q-Sylvan (QMDD)', 
-                            'simulation_time_2' : 'MQT DDSIM (QMDD)',
+                            'simulation_time_1' : 'Q-Sylvan (EVDD)', 
+                            'simulation_time_2' : 'MQT DDSIM (EVDD)',
                             'simulation_time_3' : 'Quasimodo (CLFOBDD)'})
     styler = df.style
     styler.hide(axis='index')
