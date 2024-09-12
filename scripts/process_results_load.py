@@ -149,7 +149,9 @@ def add_circuit_categories(df : pd.DataFrame):
     for i, row in df.iterrows():
         circ_type = row['circuit'].split('_')[0]
         if circ_type in circuit_types:
-            df.at[i, 'category'] = circuit_types[circ_type][use_cat]
+            cat = circuit_types[circ_type][use_cat]
+             # zero-width space for ordering the categories in the legends
+            df.at[i, 'category'] = '\u200b'*cat_info['order'].index(cat) + cat
         else:
             df.at[i, 'category'] = circ_type
     return df
