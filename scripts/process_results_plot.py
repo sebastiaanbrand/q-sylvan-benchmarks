@@ -136,9 +136,10 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args, w=1, sc
         data_r = joined['simulation_time_r'].fillna(args.timeoutt)
         data_labels = [f"{n} ({s})" for n, s in zip(joined['circuit'],joined['status_r'])]
 
+        w_label = f'1 worker' if w == 1 else f'{w} workers'
         plot_scatter(args, f'mqt_vs_qsylvan{w}_{scale}',
                     [data_l], [data_r], [data_labels],
-                    'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
+                    'MQT-DDSIM time (s)', f'Q-Sylvan ({w_label}) time (s)',
                     ['royalblue'], None, [],
                     x_scale=scale, y_scale=scale)
         return data_l, data_r, data_labels
@@ -164,9 +165,10 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args, w=1, sc
             datas_labels.append(fid['circuit'])
             leg_names.append(leg_name)
 
+        w_label = f'1 worker' if w == 1 else f'{w} workers'
         plot_scatter(args, f'mqt_vs_qsylvan{w}_{scale}_fid',
                      datas_l, datas_r, datas_labels,
-                     'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
+                     'MQT-DDSIM time (s)', f'Q-Sylvan ({w_label}) time (s)',
                      COLORS, leg_names, [], 
                      x_scale=scale, y_scale=scale)
 
@@ -187,7 +189,7 @@ def plot_tool_comparison_workers(df : pd.DataFrame, fid_df : pd.DataFrame, args)
             datas_labels.append(datas_labels)
         plot_scatter(args, f'mqt_vs_qsylvan_{"_".join(str(w) for w in workers)}_{scale}',
                     datas_l, datas_r, datas_labels,
-                    'MQT-DDSIM time (s)', 'Q-Sylvan (1 worker) time (s)',
+                    'MQT-DDSIM (single core) time (s)', 'Q-Sylvan (multi core) time (s)',
                     COLORS, [f'{w} workers' for w in workers], [],
                     x_scale=scale, y_scale=scale)
 
