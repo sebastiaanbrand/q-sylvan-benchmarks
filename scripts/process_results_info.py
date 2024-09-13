@@ -48,6 +48,12 @@ def write_statistics_summary(df : pd.DataFrame, args):
     """
     Write some summarized statistics.
     """
+    # rename so that both sim and eqcheck results can be run through this function
+    df = df.rename({'circuit_V' : 'circuit',
+                    'simulation_time' : 'time',
+                    'wall_time' : 'time'}, axis='columns')
+    df.fillna({'time': args.timeoutt}, inplace=True)
+
     output_file = os.path.join(args.dir, 'summary.txt')
     with open(output_file, 'w', encoding='utf-8') as f:
 
@@ -58,18 +64,24 @@ def write_statistics_summary(df : pd.DataFrame, args):
             f.write(f"* {tool}_{w} : {finished}/{len(data)} ({percent}%)\n")
         
         # write % faster for all instances (>= cutoff sec for at least one tool)
-        f.write("\nNumber of instances faster\n")
+        f.write("\nTool vs tool win % (excludes circuits where both timeout)\n")
         groups = [(t, w) for (t, w), _ in df.groupby(by=['tool','workers'])]
         for comb in combinations(groups, 2):
-            (t1, w1), (t2, w2) = comb
+            # order such that q-sylvan is always t2
+            if comb[0][0] == 'q-sylvan' and comb[1][0] != 'q-sylvan':
+                (t2, w2), (t1, w1) = comb
+            else:
+                (t1, w1), (t2, w2) = comb
             d1 = df.loc[(df['tool'] == t1) & (df['workers'] == w1)]
             d2 = df.loc[(df['tool'] == t2) & (df['workers'] == w2)]
             joined = pd.merge(d1, d2, on='circuit', how='outer', suffixes=('_1','_2'))
             for cutoff in [0, 1, 10]:
-                select = joined.loc[(joined['simulation_time_1'] >= cutoff) |
-                                    (joined['simulation_time_2'] >= cutoff)]
+                select = joined.loc[((joined['time_1'] >= cutoff) |
+                                     (joined['time_2'] >= cutoff)) &
+                                    ((joined['time_1'] < args.timeoutt) |
+                                     (joined['time_2'] < args.timeoutt))]
 
-                t2_faster = sum(select['simulation_time_2'] < select['simulation_time_1'])
+                t2_faster = sum(select['time_2'] < select['time_1'])
                 percent = round(t2_faster/len(select) * 100, 2)
                 f.write(f"{t2}_{w2} < {t1}_{w1} on "\
                         f"{t2_faster}/{len(select)} ({percent}%)"\

@@ -152,6 +152,7 @@ class EqCheckPlotPipeline(PlotPipeline):
         """
         Write some useful summary information.
         """
+        pr_info.write_statistics_summary(self.df, self.args)
 
     def sanity_checks(self):
         """
