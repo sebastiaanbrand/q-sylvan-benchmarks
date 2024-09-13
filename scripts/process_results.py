@@ -92,6 +92,7 @@ class SimPlotPipeline(PlotPipeline):
         """
         Write some summary information.
         """
+        pr_info.write_statistics_summary(self.df, self.args)
         pr_info.write_non_timeout_list(self.df, self.args)
 
     def sanity_checks(self):

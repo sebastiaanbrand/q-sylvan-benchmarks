@@ -3,6 +3,7 @@ Code for writing some summary information from experiments.
 """
 import os
 import re
+from itertools import combinations
 import pandas as pd
 
 
@@ -41,3 +42,35 @@ def write_non_timeout_list(df : pd.DataFrame, args):
         f.write("\n")
         for circuit in sorted(non_timeouts, key=natural_sorting):
             f.writelines(f"{circuit}.qasm\n")
+
+
+def write_statistics_summary(df : pd.DataFrame, args):
+    """
+    Write some summarized statistics.
+    """
+    output_file = os.path.join(args.dir, 'summary.txt')
+    with open(output_file, 'w', encoding='utf-8') as f:
+
+        f.write("Total finised:\n")
+        for (tool, w), data  in df.groupby(by=['tool','workers']):
+            finished = data['status'].value_counts()['FINISHED']
+            percent = round(finished/len(data) * 100, 1)
+            f.write(f"* {tool}_{w} : {finished}/{len(data)} ({percent}%)\n")
+        
+        # write % faster for all instances (>= cutoff sec for at least one tool)
+        f.write("\nNumber of instances faster\n")
+        groups = [(t, w) for (t, w), _ in df.groupby(by=['tool','workers'])]
+        for comb in combinations(groups, 2):
+            (t1, w1), (t2, w2) = comb
+            d1 = df.loc[(df['tool'] == t1) & (df['workers'] == w1)]
+            d2 = df.loc[(df['tool'] == t2) & (df['workers'] == w2)]
+            joined = pd.merge(d1, d2, on='circuit', how='outer', suffixes=('_1','_2'))
+            for cutoff in [0, 1, 10]:
+                select = joined.loc[(joined['simulation_time_1'] >= cutoff) |
+                                    (joined['simulation_time_2'] >= cutoff)]
+
+                t2_faster = sum(select['simulation_time_2'] < select['simulation_time_1'])
+                percent = round(t2_faster/len(select) * 100, 2)
+                f.write(f"{t2}_{w2} < {t1}_{w1} on "\
+                        f"{t2_faster}/{len(select)} ({percent}%)"\
+                        f" of circuits with time >= {cutoff} s \n")
