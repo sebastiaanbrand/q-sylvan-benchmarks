@@ -44,45 +44,70 @@ def write_non_timeout_list(df : pd.DataFrame, args):
             f.writelines(f"{circuit}.qasm\n")
 
 
-def write_statistics_summary(df : pd.DataFrame, args):
+def _write_statistics_summary(df : pd.DataFrame, file, args):
     """
     Write some summarized statistics.
     """
-    # rename so that both sim and eqcheck results can be run through this function
-    df = df.rename({'circuit_V' : 'circuit',
-                    'simulation_time' : 'time',
-                    'wall_time' : 'time'}, axis='columns')
-    df.fillna({'time': args.timeoutt}, inplace=True)
+    file.write("Total finised:\n")
+    for (tool, w), data  in df.groupby(by=['tool','workers']):
+        finished = data['status'].value_counts()['FINISHED']
+        percent = round(finished/len(data) * 100, 1)
+        file.write(f"* {tool}_{w} : {finished}/{len(data)} ({percent}%)\n")
+    
+    # write % faster for all instances (>= cutoff sec for at least one tool)
+    file.write("\nTool vs tool win % (excludes circuits where both timeout)\n")
+    groups = [(t, w) for (t, w), _ in df.groupby(by=['tool','workers'])]
+    for comb in combinations(groups, 2):
+        # order such that q-sylvan is always t2
+        if comb[0][0] == 'q-sylvan' and comb[1][0] != 'q-sylvan':
+            (t2, w2), (t1, w1) = comb
+        else:
+            (t1, w1), (t2, w2) = comb
+        d1 = df.loc[(df['tool'] == t1) & (df['workers'] == w1)]
+        d2 = df.loc[(df['tool'] == t2) & (df['workers'] == w2)]
+        joined = pd.merge(d1, d2, on='circuit', how='outer', suffixes=('_1','_2'))
+        for cutoff in [0, 1, 10]:
+            select = joined.loc[((joined['time_1'] >= cutoff) |
+                                    (joined['time_2'] >= cutoff)) &
+                                ((joined['time_1'] < args.timeoutt) |
+                                    (joined['time_2'] < args.timeoutt))]
 
+            t2_faster = sum(select['time_2'] < select['time_1'])
+            percent = round(t2_faster/len(select) * 100, 2)
+            file.write(f"{t2}_{w2} < {t1}_{w1} on "\
+                       f"{t2_faster}/{len(select)} ({percent}%)"\
+                       f" of circuits with time >= {cutoff} s \n")
+
+
+def write_statistics_summary_sim(df : pd.DataFrame, args):
+    """
+    Write some summarized statistics.
+    """
+    df = df.rename({'simulation_time' : 'time'}, axis='columns')
+    df.fillna({'time': args.timeoutt}, inplace=True)
     output_file = os.path.join(args.dir, 'summary.txt')
     with open(output_file, 'w', encoding='utf-8') as f:
+        _write_statistics_summary(df, f, args)
 
-        f.write("Total finised:\n")
-        for (tool, w), data  in df.groupby(by=['tool','workers']):
-            finished = data['status'].value_counts()['FINISHED']
-            percent = round(finished/len(data) * 100, 1)
-            f.write(f"* {tool}_{w} : {finished}/{len(data)} ({percent}%)\n")
-        
-        # write % faster for all instances (>= cutoff sec for at least one tool)
-        f.write("\nTool vs tool win % (excludes circuits where both timeout)\n")
-        groups = [(t, w) for (t, w), _ in df.groupby(by=['tool','workers'])]
-        for comb in combinations(groups, 2):
-            # order such that q-sylvan is always t2
-            if comb[0][0] == 'q-sylvan' and comb[1][0] != 'q-sylvan':
-                (t2, w2), (t1, w1) = comb
-            else:
-                (t1, w1), (t2, w2) = comb
-            d1 = df.loc[(df['tool'] == t1) & (df['workers'] == w1)]
-            d2 = df.loc[(df['tool'] == t2) & (df['workers'] == w2)]
-            joined = pd.merge(d1, d2, on='circuit', how='outer', suffixes=('_1','_2'))
-            for cutoff in [0, 1, 10]:
-                select = joined.loc[((joined['time_1'] >= cutoff) |
-                                     (joined['time_2'] >= cutoff)) &
-                                    ((joined['time_1'] < args.timeoutt) |
-                                     (joined['time_2'] < args.timeoutt))]
 
-                t2_faster = sum(select['time_2'] < select['time_1'])
-                percent = round(t2_faster/len(select) * 100, 2)
-                f.write(f"{t2}_{w2} < {t1}_{w1} on "\
-                        f"{t2_faster}/{len(select)} ({percent}%)"\
-                        f" of circuits with time >= {cutoff} s \n")
+def write_statistics_summary_eqcheck(df : pd.DataFrame, args):
+    """
+    Write some summarized statistics for eqcheck results
+    """
+    df = df.rename({'circuit_V' : 'circuit',
+                    'wall_time' : 'time'}, axis='columns')
+    df.fillna({'time': args.timeoutt}, inplace=True)
+    output_file = os.path.join(args.dir, 'summary.txt')
+    with open(output_file, 'w', encoding='utf-8') as f:
+        # equivalent circuits
+        f.write("Equivalent circuits:\n")
+        f.write("--------------------\n")
+        d1 = df.loc[df['type'] == 'opt']
+        _write_statistics_summary(d1, f, args)
+        f.write("\n\n")
+
+        # non-equivalent circuits
+        f.write("Non-equivalent circuits:\n")
+        f.write("------------------------\n")
+        d2 = df.loc[df['type'] != 'opt']
+        _write_statistics_summary(d2, f, args)
