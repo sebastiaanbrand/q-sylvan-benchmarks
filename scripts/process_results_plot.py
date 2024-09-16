@@ -488,6 +488,7 @@ def latex_table_equivalent(df : pd.DataFrame, args):
         df.loc[(df[f'status{suff}'] == 'NODE_TABLE_FULL'), f'wall_time{suff}'] = '-'
         df.loc[(df[f'status{suff}'] == 'WEIGHT_TABLE_FULL'), f'wall_time{suff}'] = '-'
         df.loc[(df[f'equivalent{suff}'] == 'not_equivalent'), f'wall_time{suff}'] = '$\\times$'
+        df.loc[(df[f'wall_time{suff}'] == 'nan'), f'wall_time{suff}'] = ''
 
     # styling of table
     df = df.sort_values(['circuit_type', 'n_qubits'])
@@ -567,6 +568,7 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
             df.loc[(df[f'status{suff}'] == 'NODE_TABLE_FULL'), f'wall_time{suff}'] = '-'
             df.loc[(df[f'status{suff}'] == 'WEIGHT_TABLE_FULL'), f'wall_time{suff}'] = '-'
             df.loc[(df[f'equivalent{suff}'] == 'equivalent'), f'wall_time{suff}'] = '$\\times$'
+            df.loc[(df[f'wall_time{suff}'] == 'nan'), f'wall_time{suff}'] = ''
 
     # styling of table
     df = df.sort_values(['circuit_type', 'n_qubits'])
