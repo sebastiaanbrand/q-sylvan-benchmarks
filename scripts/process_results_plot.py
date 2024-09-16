@@ -506,14 +506,21 @@ def latex_table_equivalent(df : pd.DataFrame, args):
     ], overwrite=True)
     column_format = 'l||rrr||rrr'
 
-    # write to file
+    # write full table
     output_file = os.path.join(tables_dir(args), 'eqcheck_equiv_table_full.tex')
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(styler.to_latex(column_format=column_format))
 
     # write selection
-    df['Algorithm'] = df['Algorithm'].apply(lambda x : x if x in EQTAB_SELECTION else f'%{x}')
-    output_file = os.path.join(tables_dir(args), 'eqcheck_equiv_table.tex')
+    algorithms = df['Algorithm'].copy()
+    df['Algorithm'] = algorithms.apply(lambda x : x if x in EQTAB_SELECTION else f'%{x}')
+    output_file = os.path.join(tables_dir(args), 'eqcheck_equiv_table_selection.tex')
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write(styler.to_latex(column_format=column_format))
+
+    # write inverse of selection
+    df['Algorithm'] = algorithms.apply(lambda x : f'%{x}' if x in EQTAB_SELECTION else x)
+    output_file = os.path.join(tables_dir(args), 'eqcheck_equiv_table_rest.tex')
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(styler.to_latex(column_format=column_format))
 
@@ -583,13 +590,20 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
     ], overwrite=True)
     column_format = 'l||rrr||rrr||rrr'
 
-    # write to file
+    # write full table
     output_file = os.path.join(tables_dir(args), 'eqcheck_nonequiv_table_full.tex')
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(styler.to_latex(column_format=column_format))
 
-    # write selection (TODO: also write complement of this selection?)
-    df['Algorithm'] = df['Algorithm'].apply(lambda x : x if x in NEQTAB_SELECTION else f'%{x}')
-    output_file = os.path.join(tables_dir(args), 'eqcheck_nonequiv_table.tex')
+    # write selection
+    algorithms = df['Algorithm'].copy()
+    df['Algorithm'] = algorithms.apply(lambda x : x if x in NEQTAB_SELECTION else f'%{x}')
+    output_file = os.path.join(tables_dir(args), 'eqcheck_nonequiv_table_selection.tex')
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write(styler.to_latex(column_format=column_format))
+    
+    # write inverse of selection
+    df['Algorithm'] = algorithms.apply(lambda x : f'%{x}' if x in NEQTAB_SELECTION else x)
+    output_file = os.path.join(tables_dir(args), 'eqcheck_nonequiv_table_rest.tex')
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(styler.to_latex(column_format=column_format))
