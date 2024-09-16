@@ -60,7 +60,7 @@ def experiments_eqcheck(args):
         cli_args += ' --count-nodes'
     workers = [1,2,4,8] if args.test_multicore else [1]
 
-    print(f"Writing to {bash_file_all}, {bash_file_qsy}, {bash_file_quo}")
+    print(f"Writing to {output_dir}")
     origin_dir = os.path.join(args.qasm_dir, 'origin')
     with open(bash_file_all, 'w', encoding='utf-8') as f_all,\
          open(bash_file_qsy, 'w', encoding='utf-8') as f_qsy,\

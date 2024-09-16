@@ -118,7 +118,7 @@ def experiments_sim_qasm(args):
     qsy_args += f' --wgt-tab-size {args.wgt_tab_size}'
     qsy_args += f' --node-tab-size {args.node_tab_size}'
 
-    print(f"Writing to {bash_file_all}, {bash_file_mqt}, {bash_file_qsy}")
+    print(f"Writing to {output_dir}")
     with open(bash_file_all, 'w', encoding='utf-8') as f_all,\
          open(bash_file_mqt, 'w', encoding='utf-8') as f_mqt,\
          open(bash_file_qsy, 'w', encoding='utf-8') as f_qsy,\
