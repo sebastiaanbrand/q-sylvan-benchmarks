@@ -30,6 +30,7 @@ parser.add_argument('--name', help="Name for experiments dir.")
 parser.add_argument('--from_list', action=ReadLinesAction, help="Only include circuits in given list (.txt file).")
 parser.add_argument('--log_vector', action='store_true', default=False, help="Log entire final state vector.")
 parser.add_argument('--nqubits', type=int, nargs='+', help="Only include circuits of nqubits.")
+parser.add_argument('--min_qubits', type=int, help="Only include circuits with at leats min_qubits.")
 parser.add_argument('--max_qubits', type=int, help="Only include circuits up to max_qubits.")
 parser.add_argument('--norm_strat', choices=['low','max','min','l2'], default='max', help="Norm strat to use for all q-sylvan runs.")
 parser.add_argument('--wgt_tab_size', type=int, default=23, help="log2 of max edge weight table size.")
@@ -71,8 +72,12 @@ def skip(filename : str, args):
     """
     Returns True if file should be skipped based on args.
     """
+    if args.min_qubits is not None:
+        if get_num_qubits(filename) is not None and\
+           get_num_qubits(filename) < args.min_qubits:
+           return True
     if args.max_qubits is not None:
-        if get_num_qubits(filename) is None or\
+        if get_num_qubits(filename) is not None and\
            get_num_qubits(filename) > args.max_qubits:
             return True
     if args.nqubits is not None:
