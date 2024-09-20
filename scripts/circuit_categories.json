@@ -24,7 +24,7 @@
         "qftentangled" :        ["other",   "no sharing"],
         "qpeexact" :            ["other",   "some sharing"],
         "qpeinexact" :          ["other",   "no sharing"],
-        "qwalk-noancilla" :     ["other",   "high sharing"],
+        "qwalk-noancilla" :     ["other",   "some sharing"],
         "random" :              ["other",   "no sharing"],
         "realamprandom" :       ["other",   "no sharing"],
         "su2random" :           ["other",   "no sharing"],
