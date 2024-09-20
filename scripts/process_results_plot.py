@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.ticker import LogLocator
 
 
 FORMATS = ['png', 'pdf']
@@ -77,6 +78,7 @@ def plot_scatter(args, outputname,
     assert len(datas_x) == len(datas_labels)
     assert len(datas_x) <= len(colors)
 
+    #plt.rcParams.update({'font.size': fontsize})
     fig, ax = plt.subplots()
 
     # plot the x and y data
@@ -95,6 +97,12 @@ def plot_scatter(args, outputname,
     ax.set_yscale(y_scale)
     if legend_labels is not None:
         ax.legend(legend_labels)
+    if x_scale == 'log':
+        ax.set_xticks([10**x for x in range(-4, 4)])
+        ax.xaxis.set_minor_locator(LogLocator(base=10, subs="auto", numticks=10))
+    if y_scale == 'log':
+        ax.set_yticks([10**x for x in range(-4, 4)])
+        ax.yaxis.set_minor_locator(LogLocator(base=10, subs="auto", numticks=10))
 
     # plot diagonal line
     if diagonals is not None:
@@ -141,7 +149,8 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args, w=1, sc
                     [data_l], [data_r], [data_labels],
                     'MQT-DDSIM time (s)', f'Q-Sylvan ({w_label}) time (s)',
                     ['royalblue'], None, [],
-                    x_scale=scale, y_scale=scale)
+                    x_scale=scale, y_scale=scale,
+                    cosiness=1.6)
         return data_l, data_r, data_labels
     else:
         joined = pd.merge(joined, fid_df, on='circuit', how='left')

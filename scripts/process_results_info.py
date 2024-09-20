@@ -50,7 +50,7 @@ def _write_statistics_summary(df : pd.DataFrame, file, args):
     """
     file.write("Total finised:\n")
     for (tool, w), data  in df.groupby(by=['tool','workers']):
-        finished = data['status'].value_counts()['FINISHED']
+        finished = sum(data['status'] == 'FINISHED')
         percent = round(finished/len(data) * 100, 1)
         file.write(f"* {tool}_{w} : {finished}/{len(data)} ({percent}%)\n")
     
