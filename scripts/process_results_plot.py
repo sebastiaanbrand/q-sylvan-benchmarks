@@ -12,6 +12,7 @@ from matplotlib.ticker import LogLocator
 
 FORMATS = ['png', 'pdf']
 COLORS = ['royalblue', 'darkorange', 'forestgreen', 'crimson']
+MARKERS = ['^', 'o', 'd', 'o', 'o']
 EQTAB_SELECTION = ['graphstate', 'grover-noancilla', 'qaoa', 'qnn', 'qft', 
                    'qpe-inexact', 'vqe', 'wstate']
 NEQTAB_SELECTION = ['grover-noancilla', 'qaoa', 'qft', 'qnn', 'qpe-inexact',
@@ -65,7 +66,7 @@ def plot_scatter(args, outputname,
                  label_x, label_y,
                  colors, legend_labels, diagonals,
                  x_scale='linear', y_scale='linear',
-                 cosiness=1):
+                 cosiness=1, markers=None):
     """
     Produce scatter plot.
 
@@ -74,21 +75,23 @@ def plot_scatter(args, outputname,
     colors should have length i
     legend_labels should have length i or be None
     """
+    markers = MARKERS if markers is None else markers
     assert len(datas_x) == len(datas_y)
     assert len(datas_x) == len(datas_labels)
     assert len(datas_x) <= len(colors)
+    assert len(datas_x) <= len(markers)
 
     #plt.rcParams.update({'font.size': fontsize})
     fig, ax = plt.subplots()
 
     # plot the x and y data
     max_val = 0
-    for data_x, data_y, col in zip(datas_x, datas_y, colors):
+    for data_x, data_y, col, mark in zip(datas_x, datas_y, colors, markers):
         max_val = max(max_val, np.amax([data_x, data_y]))
         fc_cols = np.array([col for _ in range(len(data_x))])
         fc_cols[data_x == args.timeoutt] = 'none'
         fc_cols[data_y == args.timeoutt] = 'none'
-        ax.scatter(data_x, data_y, facecolors=fc_cols, edgecolors=col)
+        ax.scatter(data_x, data_y, facecolors=fc_cols, edgecolors=col, s=11, marker=mark)
 
     # axis labels, legend, etc.
     ax.set_xlabel(label_x)
@@ -367,7 +370,7 @@ def plot_dd_size_vs_qubits(df : pd.DataFrame, args, ns_names):
                      datas_x, datas_y, datas_labels,
                     '# qubits', 'max nodes',
                     COLORS, categories, None,
-                    y_scale='log')
+                    y_scale='log', cosiness=1.5)
 
 
 def plot_multicore_scatter(df : pd.DataFrame, args, scaling='log'):
@@ -407,7 +410,8 @@ def plot_multicore_scatter(df : pd.DataFrame, args, scaling='log'):
                     datas_x, datas_y, datas_labels,
                     '1 worker time (s)', 'multi-workers time (s)',
                     COLORS, legend_labels, diagonal_lines,
-                    x_scale=scaling, y_scale=scaling)
+                    x_scale=scaling, y_scale=scaling,
+                    cosiness=1.6)
 
 
 def plot_multicore_scatter_sharing(df : pd.DataFrame, args, scaling='log'):
@@ -451,7 +455,8 @@ def plot_multicore_scatter_sharing(df : pd.DataFrame, args, scaling='log'):
                     datas_x, datas_y, datas_labels,
                     '1 worker time (s)', f'{w} workers time (s)',
                     COLORS, categories, diagonals=[1/w],
-                    x_scale=scaling, y_scale=scaling)
+                    x_scale=scaling, y_scale=scaling,
+                    cosiness=1.6)
 
 
 def latex_table_simulation(df : pd.DataFrame, args):
