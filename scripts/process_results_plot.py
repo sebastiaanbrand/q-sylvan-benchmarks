@@ -98,10 +98,10 @@ def plot_scatter(args, outputname,
     if legend_labels is not None:
         ax.legend(legend_labels)
     if x_scale == 'log':
-        ax.set_xticks([10**x for x in range(-4, 4)])
+        #ax.set_xticks([10**x for x in range(-4, 4)])
         ax.xaxis.set_minor_locator(LogLocator(base=10, subs="auto", numticks=10))
     if y_scale == 'log':
-        ax.set_yticks([10**x for x in range(-4, 4)])
+        #ax.set_yticks([10**x for x in range(-4, 4)])
         ax.yaxis.set_minor_locator(LogLocator(base=10, subs="auto", numticks=10))
 
     # plot diagonal line
@@ -370,9 +370,9 @@ def plot_dd_size_vs_qubits(df : pd.DataFrame, args, ns_names):
                     y_scale='log')
 
 
-def plot_relative_speedups(df : pd.DataFrame, args):
+def plot_multicore_scatter(df : pd.DataFrame, args, scaling='log'):
     """
-    For each circuit, plot multicore time / 1 core time.
+    Plot 1 vs [w1, w2, ..] together (colored by workers)
     """
     # Get only q-sylvan data
     data = df.loc[(df['tool'] == 'q-sylvan')]
@@ -391,7 +391,7 @@ def plot_relative_speedups(df : pd.DataFrame, args):
     datas_x = []
     datas_y = []
     datas_labels = []
-    for w in workers:
+    for w in workers[1:]:
         data_w = data.loc[data['workers'] == w]
         joined = pd.merge(data_1, data_w, on='circuit', how='outer', suffixes=('_1','_w'))
         joined[['status_1','status_w']] = joined[['status_1', 'status_w']].fillna('TIMEOUT')
@@ -401,15 +401,57 @@ def plot_relative_speedups(df : pd.DataFrame, args):
         datas_labels.append([f"{n} ({s1},{sw})" for n, s1, sw in\
                        zip(joined['circuit'], joined['status_1'], joined['status_w'])])
     # Pass to plot scatter
-    colors = ['grey', 'royalblue', 'darkorange', 'forestgreen', 'orchid'] # add more if needed
-    legend_labels = [f"1v{int(w)} workers" for w in workers]
+    legend_labels = [f"1v{int(w)} workers" for w in workers[1:]]
     diagonal_lines = [1/x for x in workers[1:]]
-    for scaling in ['linear', 'log']:
-        plot_scatter(args, f'multicore_scatter_{scaling}',
-                     datas_x, datas_y, datas_labels,
-                     '1 worker time (s)', 'w workers time (s)',
-                     colors[:len(workers)], legend_labels, diagonal_lines,
-                     x_scale=scaling, y_scale=scaling)
+    plot_scatter(args, f'multicore{"_".join(str(w) for w in workers[1:])}_scatter_{scaling}',
+                    datas_x, datas_y, datas_labels,
+                    '1 worker time (s)', 'multi-workers time (s)',
+                    COLORS, legend_labels, diagonal_lines,
+                    x_scale=scaling, y_scale=scaling)
+
+
+def plot_multicore_scatter_sharing(df : pd.DataFrame, args, scaling='log'):
+    """
+    Plot 1 vs w separately (colored by amount of sharing)
+    """
+    # Get only q-sylvan data
+    data = df.loc[(df['tool'] == 'q-sylvan')]
+
+    # Get unique numbers of workers
+    workers = sorted(data['workers'].unique())
+    assert workers[0] == 1
+    if len(workers) == 1:
+        print("No concurrent data, skipping plot")
+        return
+
+    # Get single worker data
+    data_1 = data.loc[data['workers'] == 1]
+
+    # For each other number of workers, match with single worker
+    for w in workers[1:]:
+        data_w = data.loc[data['workers'] == w]
+        joined = pd.merge(data_1, data_w, on='circuit', how='outer', suffixes=('_1','_w'))
+        joined[['status_1','status_w']] = joined[['status_1', 'status_w']].fillna('TIMEOUT')
+
+        # Group circuits by category for visualization
+        datas_x = []
+        datas_y = []
+        datas_labels = []
+        categories = sorted(data['category'].unique())
+        if categories[-1].endswith('unknown'):
+            categories = categories[:-1]
+        for cat in categories:
+            cat_data = joined.loc[(joined['category_1'] == cat) | (joined['category_w'] == cat)].reset_index()
+            datas_x.append(cat_data['simulation_time_1'])
+            datas_y.append(cat_data['simulation_time_w'])
+            datas_labels.append(cat_data['circuit'])
+
+        # plot 1 vs w separately (colored by amount of sharing)
+        plot_scatter(args, f'multicore{w}_scatter_{scaling}',
+                    datas_x, datas_y, datas_labels,
+                    '1 worker time (s)', f'{w} workers time (s)',
+                    COLORS, categories, diagonals=[1/w],
+                    x_scale=scaling, y_scale=scaling)
 
 
 def latex_table_simulation(df : pd.DataFrame, args):

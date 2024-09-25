@@ -4,6 +4,7 @@ Code for loading the results of experiments.
 import os
 import re
 import json
+import math
 import pandas as pd
 
 
@@ -136,6 +137,23 @@ def load_meta(exp_dir : str):
     return pd.DataFrame(meta_data)
 
 
+def ketgpt_sharing_category(row : pd.Series):
+    """
+    Compute "no/high/some sharing" category for ketgtp results
+    """
+    row = row.fillna(0)
+    nodes = max(row['final_nodes'], row['max_nodes'])
+    qubits = row['n_qubits']
+    if row['status'] != 'FINISHED':
+        return 4*'\u200b' + 'unknown'
+    elif nodes <= qubits*math.log(qubits):
+        return 3*'\u200b' + 'high sharing'
+    elif nodes >= 2.0**(qubits-2):
+        return 1*'\u200b' + 'no sharing'
+    else:
+        return 2*'\u200b' + 'some sharing'
+
+
 def add_circuit_categories(df : pd.DataFrame):
     """
     Add column to the df in which every circuit labeled with a category.
@@ -152,6 +170,8 @@ def add_circuit_categories(df : pd.DataFrame):
             cat = circuit_types[circ_type][use_cat]
              # zero-width space for ordering the categories in the legends
             df.at[i, 'category'] = '\u200b'*cat_info['order'].index(cat) + cat
+        elif circ_type == 'KetGPT':
+            df.at[i, 'category'] = ketgpt_sharing_category(df.loc[i])
         else:
             df.at[i, 'category'] = circ_type
     return df
