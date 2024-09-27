@@ -2,6 +2,7 @@
 Code for generating plots from experiments.
 """
 import os
+import json
 import itertools
 from pathlib import Path
 import numpy as np
@@ -432,7 +433,9 @@ def plot_multicore_scatter_sharing(df : pd.DataFrame, args, scaling='log'):
     data_1 = data.loc[data['workers'] == 1]
 
     # For each other number of workers, match with single worker
+    summary = {} # also gather produce some summary
     for w in workers[1:]:
+        summary[int(w)] = {}
         data_w = data.loc[data['workers'] == w]
         joined = pd.merge(data_1, data_w, on='circuit', how='outer', suffixes=('_1','_w'))
         joined[['status_1','status_w']] = joined[['status_1', 'status_w']].fillna('TIMEOUT')
@@ -445,10 +448,18 @@ def plot_multicore_scatter_sharing(df : pd.DataFrame, args, scaling='log'):
         if categories[-1].endswith('unknown'):
             categories = categories[:-1]
         for cat in categories:
+            summary[w][cat] = {}
             cat_data = joined.loc[(joined['category_1'] == cat) | (joined['category_w'] == cat)].reset_index()
             datas_x.append(cat_data['simulation_time_1'])
             datas_y.append(cat_data['simulation_time_w'])
             datas_labels.append(cat_data['circuit'])
+            speedups = datas_x[-1] / datas_y[-1]
+            for p in [90, 95, 99, 99.5]:
+                summary[w][cat][p] = np.percentile(speedups, p) 
+
+        # write summary of speedups
+        with open(os.path.join(args.dir, 'speedups_summary.json'), 'w', encoding='utf-8') as f:
+             json.dump(summary, f, indent=2)
 
         # plot 1 vs w separately (colored by amount of sharing)
         plot_scatter(args, f'multicore{w}_scatter_{scaling}',
