@@ -7,7 +7,7 @@ import json
 import argparse
 from datetime import datetime
 from pathlib import Path
-import qiskit.qasm2
+from qiskit import qasm2
 
 
 EXPERIMENTS_DIR = "experiments/"
@@ -97,8 +97,8 @@ def experiments_eqcheck(args):
                     continue
 
                 # get circuits for metadata
-                qc_origin  = qiskit.qasm2.load(origin_path)
-                qc_compare = qiskit.qasm2.load(compare_path)
+                qc_origin  = qasm2.load(origin_path, custom_instructions=qasm2.LEGACY_CUSTOM_INSTRUCTIONS)
+                qc_compare = qasm2.load(compare_path, custom_instructions=qasm2.LEGACY_CUSTOM_INSTRUCTIONS)
                 assert qc_origin.num_qubits == qc_compare.num_qubits
 
                 for w in workers:
