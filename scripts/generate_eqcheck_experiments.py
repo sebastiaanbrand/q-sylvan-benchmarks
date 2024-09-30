@@ -20,6 +20,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('qasm_dir', help="Path to dir with subdirs origin/, opt/ gm/, flip/")
 parser.add_argument('--name', help="Name for experiments dir.")
 parser.add_argument('--eqcheck_alg', choices=['alternating', 'pauli'], default='alternating', help="Which eqcheck alg for q-sylvan to use.")
+parser.add_argument('--tools', nargs='+', default=['q-sylvan','mqt', 'quokka'], help="Which tools to include (q-sylvan, mqt, quokka).")
 parser.add_argument('--norm_strat', choices=['low','max','min','l2'], default='max', help="Norm strat to use for all runs.")
 parser.add_argument('--test_multicore', action='store_true', default=False, help="Run multicore benchmarks.")
 parser.add_argument('--include_shift', action='store_true', default=False, help="Include shift 1e-4 and 1e-7 eqchecks.")
@@ -105,62 +106,65 @@ def experiments_eqcheck(args):
 
                 for w in workers:
                     # quokka-sharp run
-                    exp_counter += 1
-                    json_out = f"{output_dir}/json/{origin_file[:-5]}_quokkasharp_{exp_counter}.json"
-                    log      = f"{output_dir}/logs/{origin_file[:-5]}_quokkasharp_{exp_counter}.log"
-                    meta     = f"{output_dir}/meta/{origin_file[:-5]}_quokkasharp_{exp_counter}.json"
-                    f_all.write(QUOKKA_SHARP.format(origin_path, compare_path, w, log, json_out))
-                    f_quo.write(QUOKKA_SHARP.format(origin_path, compare_path, w, log, json_out))
-                    with open(meta, 'w', encoding='utf-8') as meta_file:
-                        json.dump({ 'circuit_type' : origin_file.split('_')[0],
-                                    'circuit_U' : origin_file[:-5],
-                                    'circuit_V' : os.path.basename(compare_path)[:-5],
-                                    'exp_id' : exp_counter,
-                                    'n_gates_U' : sum(qc_origin.count_ops().values()),
-                                    'n_gates_V' : sum(qc_compare.count_ops().values()),
-                                    'n_qubits' : qc_origin.num_qubits,
-                                    'tool' : 'quokka-sharp',
-                                    'type' : os.path.basename(comp_dir),
-                                    'workers' : w}, meta_file, indent=2)
+                    if 'quokka' in args.tools:
+                        exp_counter += 1
+                        json_out = f"{output_dir}/json/{origin_file[:-5]}_quokkasharp_{exp_counter}.json"
+                        log      = f"{output_dir}/logs/{origin_file[:-5]}_quokkasharp_{exp_counter}.log"
+                        meta     = f"{output_dir}/meta/{origin_file[:-5]}_quokkasharp_{exp_counter}.json"
+                        f_all.write(QUOKKA_SHARP.format(origin_path, compare_path, w, log, json_out))
+                        f_quo.write(QUOKKA_SHARP.format(origin_path, compare_path, w, log, json_out))
+                        with open(meta, 'w', encoding='utf-8') as meta_file:
+                            json.dump({ 'circuit_type' : origin_file.split('_')[0],
+                                        'circuit_U' : origin_file[:-5],
+                                        'circuit_V' : os.path.basename(compare_path)[:-5],
+                                        'exp_id' : exp_counter,
+                                        'n_gates_U' : sum(qc_origin.count_ops().values()),
+                                        'n_gates_V' : sum(qc_compare.count_ops().values()),
+                                        'n_qubits' : qc_origin.num_qubits,
+                                        'tool' : 'quokka-sharp',
+                                        'type' : os.path.basename(comp_dir),
+                                        'workers' : w}, meta_file, indent=2)
 
                     # mqt qcec run
-                    qcec_alg = 'alt'
-                    exp_counter += 1
-                    json_out = f"{output_dir}/json/{origin_file[:-5]}_mqt_{exp_counter}.json"
-                    log      = f"{output_dir}/logs/{origin_file[:-5]}_mqt_{exp_counter}.log"
-                    meta     = f"{output_dir}/meta/{origin_file[:-5]}_mqt_{exp_counter}.json"
-                    f_all.write(MQT_QCEC.format(args.timeout, origin_path, compare_path, qcec_alg, w, log, json_out))
-                    f_mqt.write(MQT_QCEC.format(args.timeout, origin_path, compare_path, qcec_alg, w, log, json_out))
-                    with open(meta, 'w', encoding='utf-8') as meta_file:
-                        json.dump({ 'circuit_type' : origin_file.split('_')[0],
-                                    'circuit_U' : origin_file[:-5],
-                                    'circuit_V' : os.path.basename(compare_path)[:-5],
-                                    'exp_id' : exp_counter,
-                                    'n_gates_U' : sum(qc_origin.count_ops().values()),
-                                    'n_gates_V' : sum(qc_compare.count_ops().values()),
-                                    'n_qubits' : qc_origin.num_qubits,
-                                    'tool' : f'mqt-qcec-{qcec_alg}',
-                                    'type' : os.path.basename(comp_dir),
-                                    'workers' : w}, meta_file, indent=2)
+                    if 'mqt' in args.tools:
+                        qcec_alg = 'alt'
+                        exp_counter += 1
+                        json_out = f"{output_dir}/json/{origin_file[:-5]}_mqt_{exp_counter}.json"
+                        log      = f"{output_dir}/logs/{origin_file[:-5]}_mqt_{exp_counter}.log"
+                        meta     = f"{output_dir}/meta/{origin_file[:-5]}_mqt_{exp_counter}.json"
+                        f_all.write(MQT_QCEC.format(args.timeout, origin_path, compare_path, qcec_alg, w, log, json_out))
+                        f_mqt.write(MQT_QCEC.format(args.timeout, origin_path, compare_path, qcec_alg, w, log, json_out))
+                        with open(meta, 'w', encoding='utf-8') as meta_file:
+                            json.dump({ 'circuit_type' : origin_file.split('_')[0],
+                                        'circuit_U' : origin_file[:-5],
+                                        'circuit_V' : os.path.basename(compare_path)[:-5],
+                                        'exp_id' : exp_counter,
+                                        'n_gates_U' : sum(qc_origin.count_ops().values()),
+                                        'n_gates_V' : sum(qc_compare.count_ops().values()),
+                                        'n_qubits' : qc_origin.num_qubits,
+                                        'tool' : f'mqt-qcec-{qcec_alg}',
+                                        'type' : os.path.basename(comp_dir),
+                                        'workers' : w}, meta_file, indent=2)
 
                     # q-sylvan run
-                    exp_counter += 1
-                    json_out = f"{output_dir}/json/{origin_file[:-5]}_qsylvan_{exp_counter}.json"
-                    log      = f"{output_dir}/logs/{origin_file[:-5]}_qsylvan_{exp_counter}.log"
-                    meta     = f"{output_dir}/meta/{origin_file[:-5]}_qsylvan_{exp_counter}.json"
-                    f_all.write(Q_SYLVAN.format(args.timeout, origin_path, compare_path,  w, cli_args, log, json_out))
-                    f_qsy.write(Q_SYLVAN.format(args.timeout, origin_path, compare_path, w, cli_args, log, json_out))
-                    with open(meta, 'w', encoding='utf-8') as meta_file:
-                        json.dump({ 'circuit_type' : origin_file.split('_')[0],
-                                    'circuit_U' : origin_file[:-5],
-                                    'circuit_V' : os.path.basename(compare_path)[:-5],
-                                    'exp_id' : exp_counter,
-                                    'n_gates_U' : sum(qc_origin.count_ops().values()),
-                                    'n_gates_V' : sum(qc_compare.count_ops().values()),
-                                    'n_qubits' : qc_origin.num_qubits,
-                                    'tool' : 'q-sylvan',
-                                    'type' : os.path.basename(comp_dir),
-                                    'workers' : w}, meta_file, indent=2)
+                    if 'q-sylvan' in args.tools:
+                        exp_counter += 1
+                        json_out = f"{output_dir}/json/{origin_file[:-5]}_qsylvan_{exp_counter}.json"
+                        log      = f"{output_dir}/logs/{origin_file[:-5]}_qsylvan_{exp_counter}.log"
+                        meta     = f"{output_dir}/meta/{origin_file[:-5]}_qsylvan_{exp_counter}.json"
+                        f_all.write(Q_SYLVAN.format(args.timeout, origin_path, compare_path,  w, cli_args, log, json_out))
+                        f_qsy.write(Q_SYLVAN.format(args.timeout, origin_path, compare_path, w, cli_args, log, json_out))
+                        with open(meta, 'w', encoding='utf-8') as meta_file:
+                            json.dump({ 'circuit_type' : origin_file.split('_')[0],
+                                        'circuit_U' : origin_file[:-5],
+                                        'circuit_V' : os.path.basename(compare_path)[:-5],
+                                        'exp_id' : exp_counter,
+                                        'n_gates_U' : sum(qc_origin.count_ops().values()),
+                                        'n_gates_V' : sum(qc_compare.count_ops().values()),
+                                        'n_qubits' : qc_origin.num_qubits,
+                                        'tool' : 'q-sylvan',
+                                        'type' : os.path.basename(comp_dir),
+                                        'workers' : w}, meta_file, indent=2)
 
 
 def main():
