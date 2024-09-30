@@ -19,6 +19,7 @@ MQT_QCEC = "timeout {} python tools/mqt_qcec.py {} {} --alg {} --workers {} 2> {
 parser = argparse.ArgumentParser()
 parser.add_argument('qasm_dir', help="Path to dir with subdirs origin/, opt/ gm/, flip/")
 parser.add_argument('--name', help="Name for experiments dir.")
+parser.add_argument('--eqcheck_alg', choices=['alternating', 'pauli'], default='alternating', help="Which eqcheck alg for q-sylvan to use.")
 parser.add_argument('--norm_strat', choices=['low','max','min','l2'], default='max', help="Norm strat to use for all runs.")
 parser.add_argument('--test_multicore', action='store_true', default=False, help="Run multicore benchmarks.")
 parser.add_argument('--include_shift', action='store_true', default=False, help="Include shift 1e-4 and 1e-7 eqchecks.")
@@ -56,6 +57,7 @@ def experiments_eqcheck(args):
     bash_file_mqt = os.path.join(output_dir, 'run_mqt.sh')
 
     cli_args = ''
+    cli_args += f' --algorithm {args.eqcheck_alg}'
     if args.test_multicore:
         cli_args += ' --count-nodes'
     workers = [1,2,4,8] if args.test_multicore else [1]
