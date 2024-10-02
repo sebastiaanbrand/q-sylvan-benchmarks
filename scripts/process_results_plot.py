@@ -535,7 +535,7 @@ def latex_table_equivalent(df : pd.DataFrame, args):
     # select data
     d1 = df.loc[(df['type'] == 'opt') & (df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
     d2 = df.loc[(df['type'] == 'opt') & (df['tool'] == 'quokka-sharp') & (df['workers'] == 1)]
-    d3 = df.loc[(df['type'] == 'opt') & (df['tool'] == 'mqt-qcec') & (df['workers'] == 1)]
+    d3 = df.loc[(df['type'] == 'opt') & (df['tool'].str.contains('mqt-qcec')) & (df['workers'] == 1)]
 
     # merge d1, d2, d3
     merge_on = ['circuit_U']
@@ -604,7 +604,7 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
     # select data + combine corresponding gm and flip into single rows)
     dfs = []
     for tool in ['q-sylvan', 'quokka-sharp', 'mqt-qcec']:
-        dtool = df.loc[(df['tool'] == tool) & (df['workers'] == 1)]
+        dtool = df.loc[(df['tool'].str.contains(tool)) & (df['workers'] == 1)]
         dtool = dtool[merge_on + meta_data + stats]
         gm   = dtool.loc[(df['type'] == 'gm')].drop('type', axis=1)
         flip = dtool.loc[(df['type'] == 'flip')].drop('type', axis=1)

@@ -15,6 +15,8 @@ def _get_termination_status(log_filepath : str):
     """
     Get the termination status of benchmark based on log.
     """
+    if os.path.getsize(log_filepath) == 0:
+        return "UNKNOWN"
     with open(log_filepath, 'r', encoding='utf-8') as f:
         text = f.read()
         if 'qsylvan' in log_filepath:
@@ -115,7 +117,7 @@ def load_logs(exp_dir : str):
     log_dir = os.path.join(exp_dir, 'logs')
     for filename in sorted(os.listdir(log_dir)):
         filepath = os.path.join(log_dir, filename)
-        if filename.endswith('.log') and os.path.getsize(filepath) > 0:
+        if filename.endswith('.log'):
             row = _get_log_info(filepath, filename)
             if row['status'] != 'FINISHED':
                 new_rows.append(row)
