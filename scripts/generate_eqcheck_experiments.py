@@ -58,6 +58,7 @@ def experiments_eqcheck(args):
     bash_file_mqt = os.path.join(output_dir, 'run_mqt.sh')
 
     cli_args = ''
+    cli_args += f' --norm-strat {args.norm_strat}'
     cli_args += f' --algorithm {args.eqcheck_alg}'
     if args.test_multicore:
         cli_args += ' --count-nodes'
