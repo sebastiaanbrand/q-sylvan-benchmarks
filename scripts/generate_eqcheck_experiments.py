@@ -22,6 +22,8 @@ parser.add_argument('--name', help="Name for experiments dir.")
 parser.add_argument('--eqcheck_alg', choices=['alternating', 'pauli'], default='alternating', help="Which eqcheck alg for q-sylvan to use.")
 parser.add_argument('--tools', nargs='+', default=['q-sylvan','mqt', 'quokka'], help="Which tools to include (q-sylvan, mqt, quokka).")
 parser.add_argument('--norm_strat', choices=['low','max','min','l2'], default='max', help="Norm strat to use for all runs.")
+parser.add_argument('--wgt_tab_size', type=int, default=23, help="log2 of max edge weight table size.")
+parser.add_argument('--node_tab_size', type=int, default=25, help="log2 of max node table size.")
 parser.add_argument('--test_multicore', action='store_true', default=False, help="Run multicore benchmarks.")
 parser.add_argument('--include_shift', action='store_true', default=False, help="Include shift 1e-4 and 1e-7 eqchecks.")
 parser.add_argument('--timeout', action='store', default=600, help='Timeout time per benchmark in seconds')
@@ -60,6 +62,8 @@ def experiments_eqcheck(args):
     cli_args = ''
     cli_args += f' --norm-strat {args.norm_strat}'
     cli_args += f' --algorithm {args.eqcheck_alg}'
+    cli_args += f' --wgt-tab-size {args.wgt_tab_size}'
+    cli_args += f' --node-tab-size {args.node_tab_size}'
     if args.test_multicore:
         cli_args += ' --count-nodes'
     workers = [1,2,4,8] if args.test_multicore else [1]
