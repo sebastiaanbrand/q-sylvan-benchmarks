@@ -11,12 +11,22 @@ import pandas as pd
 CIRCUIT_CATEGORY_FILE = os.path.join(os.path.dirname(__file__), 'circuit_categories.json')
 
 
+def _json_is_empty(log_filepath : str):
+    """
+    Check if the json file corresponding to the log file is empty.
+    """
+    parts = os.path.normpath(log_filepath).split(os.path.sep)
+    json_path = os.path.join(*parts[:-2], 'json', parts[-1].replace('.log','.json'))
+    if os.path.isfile(json_path) and os.path.getsize(json_path) > 0:
+        return True
+
+
 def _get_termination_status(log_filepath : str):
     """
     Get the termination status of benchmark based on log.
     """
     if os.path.getsize(log_filepath) == 0:
-        return "UNKNOWN"
+        return "TIMEOUT" if _json_is_empty(log_filepath) else "FINISHED"
     with open(log_filepath, 'r', encoding='utf-8') as f:
         text = f.read()
         if 'qsylvan' in log_filepath:
@@ -31,19 +41,15 @@ def _get_termination_status(log_filepath : str):
             elif "Assertion" in text and "failed" in text:
                 return "ERROR"
             elif len(text.splitlines()) == 1 and "WARNING" in text:
-                parts = os.path.normpath(log_filepath).split(os.path.sep)
-                json_path = os.path.join(*parts[:-2], 'json', parts[-1].replace('.log','.json'))
-                if os.path.isfile(json_path) and os.path.getsize(json_path) > 0:
-                    return 'FINISHED'
-                else:
-                    return 'TIMEOUT'
+                return "TIMEOUT" if _json_is_empty(log_filepath) else "FINISHED"
             else:
                 print("    Could not get termination status from file:")
                 print("    " + log_filepath)
         elif 'mqt' in log_filepath:
             pass
         elif 'quokkasharp' in log_filepath:
-            pass
+            if 'timeout' in text:
+                return 'TIMEOUT'
     return 'UNKNOWN'
 
 
