@@ -20,6 +20,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('qasm_dir', help="Path to dir with subdirs origin/, opt/ gm/, flip/")
 parser.add_argument('--name', help="Name for experiments dir.")
 parser.add_argument('--eqcheck_alg', choices=['alternating', 'pauli'], default='alternating', help="Which eqcheck alg for q-sylvan to use.")
+parser.add_argument('--qcec_alg', choices=['alt', 'all'], default='all', help="Settings for mqt qcec.")
 parser.add_argument('--tools', nargs='+', default=['q-sylvan','mqt', 'quokka'], help="Which tools to include (q-sylvan, mqt, quokka).")
 parser.add_argument('--norm_strat', choices=['low','max','min','l2'], default='max', help="Norm strat to use for all runs.")
 parser.add_argument('--wgt_tab_size', type=int, default=23, help="log2 of max edge weight table size.")
@@ -132,13 +133,12 @@ def experiments_eqcheck(args):
 
                     # mqt qcec run
                     if 'mqt' in args.tools:
-                        qcec_alg = 'alt'
                         exp_counter += 1
                         json_out = f"{output_dir}/json/{origin_file[:-5]}_mqt_{exp_counter}.json"
                         log      = f"{output_dir}/logs/{origin_file[:-5]}_mqt_{exp_counter}.log"
                         meta     = f"{output_dir}/meta/{origin_file[:-5]}_mqt_{exp_counter}.json"
-                        f_all.write(MQT_QCEC.format(args.timeout, origin_path, compare_path, qcec_alg, w, log, json_out))
-                        f_mqt.write(MQT_QCEC.format(args.timeout, origin_path, compare_path, qcec_alg, w, log, json_out))
+                        f_all.write(MQT_QCEC.format(args.timeout, origin_path, compare_path, args.qcec_alg, w, log, json_out))
+                        f_mqt.write(MQT_QCEC.format(args.timeout, origin_path, compare_path, args.qcec_alg, w, log, json_out))
                         with open(meta, 'w', encoding='utf-8') as meta_file:
                             json.dump({ 'circuit_type' : origin_file.split('_')[0],
                                         'circuit_U' : origin_file[:-5],
@@ -147,7 +147,7 @@ def experiments_eqcheck(args):
                                         'n_gates_U' : sum(qc_origin.count_ops().values()),
                                         'n_gates_V' : sum(qc_compare.count_ops().values()),
                                         'n_qubits' : qc_origin.num_qubits,
-                                        'tool' : f'mqt-qcec-{qcec_alg}',
+                                        'tool' : f'mqt-qcec-{args.qcec_alg}',
                                         'type' : os.path.basename(comp_dir),
                                         'workers' : w}, meta_file, indent=2)
 
