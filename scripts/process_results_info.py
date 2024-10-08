@@ -71,6 +71,8 @@ def _write_statistics_summary(df : pd.DataFrame, file, args):
                                     (joined['time_2'] >= cutoff)) &
                                 ((joined['time_1'] < args.timeoutt) |
                                     (joined['time_2'] < args.timeoutt))]
+            if len(select) == 0:
+                continue
 
             t2_faster = sum(select['time_2'] < select['time_1'])
             percent = round(t2_faster/len(select) * 100, 2)

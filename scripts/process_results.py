@@ -128,8 +128,7 @@ class EqCheckPlotPipeline(PlotPipeline):
     Process results from circuit equivalence checking experiments.
     """
 
-    res_cols = ['exp_id', 'status', 'equivalent', 'counterexample',
-                'min_fidelity', 'wall_time']
+    res_cols = ['exp_id', 'status', 'equivalent', 'wall_time']
 
     def load_data(self):
         """
