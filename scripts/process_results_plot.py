@@ -528,7 +528,7 @@ def latex_table_simulation(df : pd.DataFrame, args):
         f.write(styler.to_latex(column_format='lr||rrr'))
 
 
-def latex_table_equivalent(df : pd.DataFrame, args):
+def latex_table_equivalent(df : pd.DataFrame, args, highlight=True):
     """
     Write LaTeX table like Table 4 in https://arxiv.org/pdf/2403.18813.
     """
@@ -538,6 +538,7 @@ def latex_table_equivalent(df : pd.DataFrame, args):
     d3 = df.loc[(df['type'] == 'opt') & (df['tool'].str.contains('mqt-qcec')) & (df['workers'] == 1)]
 
     # merge d1, d2, d3
+    suffixes = ['_1', '_2', '_3']
     merge_on = ['circuit_U']
     meta_data = ['circuit_type','n_qubits','n_gates_U','n_gates_V']
     stats = ['equivalent','status','wall_time']
@@ -546,9 +547,14 @@ def latex_table_equivalent(df : pd.DataFrame, args):
     d3 = d3[merge_on + stats].rename(columns=dict([(x,f'{x}_3') for x in stats]))
     df = pd.merge(d1, d2, on=merge_on, how='outer')
     df = pd.merge(df, d3, on=merge_on, how='outer')
+    for suff in suffixes:
+        df[f'wall_time{suff}'] = df[f'wall_time{suff}'].fillna(value=args.timeoutt)
+    df['min_time'] = df[[f'wall_time{suff}' for suff in suffixes]].min(axis=1)
+    df['min_tool'] = df[[f'wall_time{suff}' for suff in suffixes]].idxmin(axis=1)
+    df.loc[(df['min_time'] == args.timeoutt), 'min_tool'] = 'all timeout'
 
     # style runtime column
-    for suff in ['_1','_2','_3']:
+    for suff in suffixes:
         df = df.astype({f'wall_time{suff}' : str})
         df.loc[:,f'wall_time{suff}'] = df[f'wall_time{suff}'].apply(lambda x : f'{float(x):.2f}')
         df.loc[(df[f'status{suff}'] == 'TIMEOUT'), f'wall_time{suff}'] = f'> {args.timeoutt}'
@@ -556,6 +562,9 @@ def latex_table_equivalent(df : pd.DataFrame, args):
         df.loc[(df[f'status{suff}'] == 'WEIGHT_TABLE_FULL'), f'wall_time{suff}'] = '-'
         df.loc[(df[f'equivalent{suff}'] == 'not_equivalent'), f'wall_time{suff}'] = '$\\times$'
         df.loc[(df[f'wall_time{suff}'] == 'nan'), f'wall_time{suff}'] = ''
+        if highlight:
+            df.loc[(df['min_tool'] == f'wall_time{suff}'), f'wall_time{suff}'] =\
+                    df[f'wall_time{suff}'].apply(lambda x : f'\\textbf{{{x}}}')
 
     # styling of table
     df = df.sort_values(['circuit_type', 'n_qubits'])
