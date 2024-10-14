@@ -152,7 +152,7 @@ def plot_tool_comparison(df : pd.DataFrame, fid_df : pd.DataFrame, args, w=1, sc
         plot_scatter(args, f'mqt_vs_qsylvan{w}_{scale}',
                     [data_l], [data_r], [data_labels],
                     'MQT-DDSIM time (s)', f'Q-Sylvan ({w_label}) time (s)',
-                    ['royalblue'], None, [],
+                    ['royalblue'], None, [], markers=['o'],
                     x_scale=scale, y_scale=scale,
                     cosiness=1.6)
         return data_l, data_r, data_labels
