@@ -27,6 +27,3 @@ __pycache__/
 # experiment output data
 experiments/
 results/
-
-# benchmark files
-qasm/
