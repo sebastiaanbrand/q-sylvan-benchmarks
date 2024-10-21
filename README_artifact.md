@@ -1,5 +1,18 @@
 # TACAS 2025 Artifact
 
+This directory contains the artifact corresponding to the paper "Q-Sylvan: A Parallel Decision Diagram Package for Quantum Computing", submitted to TACAS 2025. The following is included:
+* Installation and usage instructions (this document).
+* The tool itself (Q-Sylvan), in `tools/q-sylvan/` (also available online at https://github.com/sebastiaanbrand/q-sylvan).
+* The other tools (MQT DDSIM, Quasimodo, MQT QCEC, Quokka-Sharp) we compare against in the paper, in `tools/`.
+* Quantum circuits in the OpenQASM format used for benchmarks, in `qasm/`.
+* Python scripts for setting up and processing benchmarks, in `scripts/`.
+* Dependencies:
+    * Python packages, preinstalled in `.venv/`.
+    * .deb packages, in `dependencies/`.
+* The output from our own benchmark runs, used to make the plots in the paper, in `experiments/paper_data/`.
+
+
+
 ## 1. Installation
 
 1. Install basic build tools. (build-essential and cmake are already installed maybe autoconf as well, **TODO:** check)
@@ -19,8 +32,7 @@ Alternatively, with an internet connection they can be installed using
 $ sudo apt install libgmp-dev libmpfr-dev libmpc-dev zlib1g-dev
 ```
 
-3. ~~Install Python libraries (creating a virtual environment is optional but recommended).~~
-The required Python packages have been preinstalled in the included virtual environment. It can be activated using
+3. The required Python packages have been preinstalled in the included virtual environment. It can be activated using
 ```shell
 $ source .venv/bin/activate
 ```
@@ -32,24 +44,14 @@ $ source .venv/bin/activate
 $ ./compile_all.sh
 ```
 
-5. ~~The benchmark files can be obtained with `./get_qasm.sh`~~.
-The benchmark files are included in the Artifact submission, in the `qasm/` directory.
-
 
 
 ## 2. Running + plotting benchmarks
 
-In the following we specify how each plot can be reproduced.
-
-**TODO:** something about estimated runtimes for full benchmarks
-
-To quickly test the code on a small subset of benchmarks, replace `qasm/` in the following commands with `qasm_testset/`.
-
-**TODO:** make `qasm_testset/`
-
-The data used for the plots in the paper is also included (except for the validation of Figure 5, due to its large size) in `experiments_paper_data/`.
-
-**TODO:** include `experiments_paper_data/`
+In the following we specify how each plot can be reproduced. 
+Because of the large number of benchmarks which were run, the total time for running all benchmarks is ~1 week. 
+To quickly test the code on a subset of small benchmarks, replace `qasm/` in the following commands with `qasm/test_sets/`. These benchmarks are not a random subset of all benchmarks, but are instead intentionally small instances such that the code can be tested within a few minutes.
+Our own output data, used for the plots in the paper, is also included (except for the validation of Figure 5, due to its large size) in `experiments/paper_data/`.
 
 
 
@@ -132,6 +134,18 @@ For parallel benchmarks the node counting is disabled. Instead Fig 6b and Fig 6c
 ### Table 2 + 3 (+ 4,5,6 in appendix)
 For these tables, the code is not set up to automatically run and process both the "alternating" and the "Pauli" algorithms in Q-Sylvan. These were run separately and manually combined in a single table. The separate tables can still be automatically generated.
 ```shell
-TODO
+$ python scripts/generate_eqcheck_experiments.py qasm/equivalence/ --name tabs_eqcheck_alt --eqcheck_alg alternating
+$ bash experiments/tabs_eqcheck_alt/run_all.sh
+$ python scripts/process_results.py experiments/tabs_eqcheck_alt
+
+$ python scripts/generate_eqcheck_experiments.py qasm/equivalence/ --name tabs_eqcheck_pauli --eqcheck_alg pauli
+$ bash experiments/tabs_eqcheck_pauli/run_all.sh
+$ python scripts/process_results.py experiments/tabs_eqcheck_alt
 ```
-**TODO:** add plots location
+The resulting tables can be found at
+* `experiments/tabs_eqcheck_alt/summary.txt` (Tab. 2)
+* `experiments/tabs_eqcheck_pauli/summary.txt` (Tab. 2)
+* `experiments/tabs_eqcheck_alt/tables/eqcheck_equiv_table_full.tex` (Tab. 3+4)
+* `experiments/tabs_eqcheck_pauli/tables/eqcheck_equiv_table_full.tex` (Tab. 3+4)
+* `experiments/tabs_eqcheck_alt/tables/eqcheck_nonequiv_table_full.tex` (Tab. 5+6)
+* `experiments/tabs_eqcheck_pauli/tables/eqcheck_nonequiv_table_full.tex` (Tab. 5+6)
