@@ -1,24 +1,34 @@
-# Q-Sylvan parallel benchmarks
+# Q-Sylvan benchmarks
 
 ## 1. Installation
 
-Basic build tools + specific dependencies.
+1. Install basic build tools.
 ```shell
 $ sudo apt install build-essential cmake autoconf
-$ sudo apt install libgmp-dev libmpfr-dev libmpc-dev zlib
 ```
 
-Python libraries (creating a virtual environment is optional but recommended).
+2. Install dependencies for various tools.
+```shell
+$ sudo apt install libgmp-dev libmpfr-dev libmpc-dev zlib1g-dev
+```
+
+3. Install Python libraries (creating a virtual environment is optional but recommended).
 ```shell
 $ python -m venv .venv
 $ source .venv/bin/activate
 $ pip install -r requirements.txt
 ```
 
-After installing the dependencies above, everything should compile with
-```
+4. After installing the dependencies above, everything can be compiled with
+```shell
 $ ./compile_all.sh
 ```
+
+5. The benchmark files can be obtained with 
+```shell
+$ ./get_qasm.sh
+```
+**TODO:** Host these elsewhere than on Surf (maybe just include in repo?)
 
 
 ## 2. Running + plotting benchmarks
@@ -37,8 +47,3 @@ Generating plots (also runs sanity checks on output):
 ```shell
 $ python scripgs/process_results.py experiments/output_dir_name/
 ```
-
-
-## Benchmark sets
-* [MQT Bench](https://www.cda.cit.tum.de/mqtbench/)
-* [KetGPT](https://www.kaggle.com/datasets/boranapak/ketgpt-data)
