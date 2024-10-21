@@ -43,7 +43,7 @@ def compare_vectors(args):
             mqt_runs[circuit] = filename
 
     # check vectors for all pairs
-    for circuit, qsylvan_filename in qsylvan_runs:
+    for circuit, qsylvan_filename in qsylvan_runs.items():
         if circuit in mqt_runs:
 
             # get filepaths
@@ -101,7 +101,9 @@ def compare_vectors(args):
             f.write("Issues with fidelity:\n")
             f.write(issues_df.to_string())
             f.write("\n\n")
-    return fid_df
+    else:
+        print(f"    Fidelity of all {len(fidelities)} checked vectors ~= 1.000.")
+    return None # output issues above instead of returning 
 
 
 def check_norms(df : pd.DataFrame, args, ns_names):
