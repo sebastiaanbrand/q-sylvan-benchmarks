@@ -20,10 +20,12 @@ This directory contains the artifact corresponding to the paper "Q-Sylvan: A Par
 $ sudo dpkg -i dependencies/deb/libsigsegv2_2.13-1ubuntu3_amd64.deb
 $ sudo dpkg -i dependencies/deb/m4_1.4.18-5ubuntu2_amd64.deb
 $ sudo dpkg -i dependencies/deb/autoconf_2.71-2_all_amd64.deb
+$ sudo dpkg -i dependencies/deb/autotools-dev_20220109.1_amd64.deb
+$ sudo dpkg -i dependencies/deb/automake_1.16.5-1.3_amd64.deb
 ```
 Alternatively, with an internet connection:
 ```shell
-$ sudo apt install autoconf
+$ sudo apt install autoconf automake
 ```
 
 2. Install dependencies for various tools. (On an ARM CPU, replace `amd64` with `arm64` in the follow commands.)
@@ -45,7 +47,7 @@ pip install -r requirements.txt --no-index --find-links=dependencies/pip
 ```
 
 
-4. After installing the dependencies above, everything can be compiled with the command below. This can take 5~10 minutes, since multiple tools need to be build.
+4. After installing the dependencies above, everything can be compiled with the command below. This can take ~25 minutes, since not just q-sylvan is built, but the tools we benchmark against as well.
 ```shell
 $ ./compile_all.sh
 ```
