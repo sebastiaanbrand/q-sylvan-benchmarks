@@ -1,13 +1,13 @@
 [submodule "tools/q-sylvan"]
 	path = tools/q-sylvan
-	url = git@github.com:sebastiaanbrand/q-sylvan.git
+	url = https://github.com/sebastiaanbrand/q-sylvan.git
 [submodule "tools/mqt-ddsim"]
 	path = tools/mqt-ddsim
-	url = git@github.com:cda-tum/mqt-ddsim.git
+	url = https://github.com/cda-tum/mqt-ddsim.git
 [submodule "tools/quokka-sharp/GPMC"]
 	path = tools/quokka-sharp/GPMC
 	url = https://git.trs.css.i.nagoya-u.ac.jp/k-hasimt/GPMC.git
 [submodule "tools/Quasimodo"]
 	path = tools/Quasimodo
-	url = git@github.com:trishullab/Quasimodo.git
+	url = https://github.com/trishullab/Quasimodo.git
 	ignore = dirty
