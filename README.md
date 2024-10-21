@@ -29,12 +29,6 @@ $ pip install -r requirements.txt
 $ ./compile_all.sh
 ```
 
-6. The benchmark files can be obtained with 
-```shell
-$ ./get_qasm.sh
-```
-**TODO:** Host these elsewhere than on Surf (maybe just include in repo?)
-
 
 ## 2. Running + plotting benchmarks
 
