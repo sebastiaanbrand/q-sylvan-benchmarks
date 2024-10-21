@@ -7,15 +7,15 @@ This directory contains the artifact corresponding to the paper "Q-Sylvan: A Par
 * Quantum circuits in the OpenQASM format used for benchmarks, in `qasm/`.
 * Python scripts for setting up and processing benchmarks, in `scripts/`.
 * Dependencies:
-    * Python packages, preinstalled in `.venv/`.
-    * .deb packages, in `dependencies/`.
+    * .deb packages, in `dependencies/deb`.
+    * Python packages, in `dependencies/pip`.
 * The output from our own benchmark runs, used to make the plots in the paper, in `experiments/paper_data/`.
 
 
 
 ## 1. Installation
 
-1. Install basic build tools. Aside from build-essential and cmake (which are included in the TACAS VM), we also need autoconf (and it's dependencies). (On an ARM CPU, replace `amd64` with `arm64` in the follow commands.)
+1. Install basic build tools. Aside from build-essential and cmake (which are included in the TACAS VM), we also need autoconf + automake (and their dependencies). (On an ARM CPU, replace `amd64` with `arm64` in the follow commands.)
 ```shell
 $ sudo dpkg -i dependencies/deb/libsigsegv2_2.13-1ubuntu3_amd64.deb
 $ sudo dpkg -i dependencies/deb/m4_1.4.18-5ubuntu2_amd64.deb
@@ -28,7 +28,7 @@ Alternatively, with an internet connection:
 $ sudo apt install autoconf automake
 ```
 
-2. Install dependencies for various tools. (On an ARM CPU, replace `amd64` with `arm64` in the follow commands.)
+2. Install dependencies of Q-Sylvan and other tools. (On an ARM CPU, replace `amd64` with `arm64` in the follow commands.)
 ```shell
 $ sudo dpkg -i dependencies/deb/libgmpxx4ldbl_6.2.1+dfsg-3ubuntu1_amd64.deb
 $ sudo dpkg -i dependencies/deb/libgmp-dev_6.2.1+dfsg-3ubuntu1_amd64.deb
