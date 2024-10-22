@@ -104,7 +104,7 @@ $ python3 scripts/generate_sim_experiments.py qasm/ketgpt/ --name fig5b
 $ bash experiments/fig5b/run_all.sh
 $ python3 scripts/process_results.py experiments/fig5b/
 ```
-The plots can be found at `experiments/fig5a/mqt_vs_qsylvan1_log.png` (Fig. 5a) and `experiments/fig5b/mqt_vs_qsylvan1_log.png` (Fig. 5b).
+The plots can be found at `experiments/fig5a/plots/png/mqt_vs_qsylvan1_log.png` (Fig. 5a) and `experiments/fig5b/plots/png/mqt_vs_qsylvan1_log.png` (Fig. 5b).
 
 
 
