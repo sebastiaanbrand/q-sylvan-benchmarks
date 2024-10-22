@@ -54,7 +54,9 @@ pip install -r requirements.txt --no-index --find-links=dependencies/pip
 
 ## 2. Compilation
 
-To facilitate quick testing, all tools have been precompiled. To recompile everything, use the command below. This can take ~25 minutes.
+To facilitate quick testing, all tools have been precompiled. 
+
+Since some of the tools use an internet connection in their build process, an internet connection is required for (re)compilation. To recompile everything, use the command below. This can take ~25 minutes.
 ```shell
 $ ./compile_all.sh -r
 ```
