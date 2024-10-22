@@ -110,7 +110,7 @@ The plots can be found at `experiments/fig5a/mqt_vs_qsylvan1_log.png` (Fig. 5a) 
 ### Figure 5 including validation
 As mentioned in the caption of Figure 5, the full state vectors have been checked up to 20 qubits. Note that this generates ~5 GB of log files.
 ```shell
-$ python3 scripts/generate_sim_experiments.py qasm/mqtbench_indep/ --name fig5a_val --min_qubits 10 --max_qubits 50 --log_vector
+$ python3 scripts/generate_sim_experiments.py qasm/mqtbench_indep/ --name fig5a_val --min_qubits 10 --max_qubits 20 --log_vector
 $ bash experiments/fig5a_val/run_all.sh
 $ python3 scripts/process_results.py experiments/fig5a_val/ --compare_vecs
 
