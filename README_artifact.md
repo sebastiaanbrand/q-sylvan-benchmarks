@@ -77,7 +77,7 @@ To test the code on all of the figures and tables below, run
 ```shell
 $ ./test_all_benchmarks.sh
 ```
-or to run run all benchmarks fully, run
+or to run all benchmarks fully, run
 ```shell
 $ ./run_all_benchmarks.sh
 ```
