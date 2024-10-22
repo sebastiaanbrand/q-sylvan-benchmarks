@@ -69,7 +69,7 @@ $ ./compile_all.sh -rq
 
 In the following we specify how each plot can be reproduced. 
 Because of the large number of benchmarks which were run, the total time for running all benchmarks is >1 week. 
-To quickly test the code on a subset of small benchmarks, replace `qasm/` in the following commands with `qasm/test_sets/`. These benchmarks are not a random subset of all benchmarks, but are instead intentionally small instances such that the code can be tested within a few minutes.
+To quickly test the code on a subset of small benchmarks, replace `qasm/` in the following commands with `qasm/test_sets/`, and remove `--min_qubits 10`.
 Our own output data, used for the plots in the paper, is also included (except for the validation of Figure 5, due to its large size) in `experiments/paper_data/`.
 
 ### Everything
