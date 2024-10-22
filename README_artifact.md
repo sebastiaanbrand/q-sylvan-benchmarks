@@ -81,6 +81,7 @@ or to run all benchmarks fully, run
 ```shell
 $ ./run_all_benchmarks.sh
 ```
+The commands above run all of the code below (for either the full dataset or the small test set). The subsections below specify where the relevant figures are located.
 
 
 ### Figure 3c + 4
