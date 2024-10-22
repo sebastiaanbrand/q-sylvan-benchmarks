@@ -13,7 +13,13 @@ This directory contains the artifact corresponding to the paper "Q-Sylvan: A Par
 
 
 
-## 1. Installation
+## 1. Dependencies
+
+0. The following steps (1-3) can be used to install the dependencies. Alternatively, all dependencies can be installed with the single command below. (Replace `amd64` with `arm64` on an ARM CPU.)
+```shell
+$ ./dependencies/install_deps_amd64.sh
+```
+
 
 1. Install basic build tools. Aside from build-essential and cmake (which are included in the TACAS VM), we also need autoconf + automake (and their dependencies). (On an ARM CPU, replace `amd64` with `arm64` in the follow commands.)
 ```shell
@@ -46,21 +52,35 @@ $ sudo apt install libgmp-dev libmpfr-dev libmpc-dev zlib1g-dev
 pip install -r requirements.txt --no-index --find-links=dependencies/pip
 ```
 
+## 2. Compilation
 
-4. After installing the dependencies above, everything can be compiled with the command below. This can take ~25 minutes, since not just q-sylvan is built, but the tools we benchmark against as well.
+To facilitate quick testing, all tools have been precompiled. To recompile everything, use the command below. This can take ~25 minutes.
 ```shell
-$ ./compile_all.sh
+$ ./compile_all.sh -r
+```
+To only recompile Q-Sylvan, use the command below. This should take less than 2 minutes.
+```shell
+$ ./compile_all.sh -rq
 ```
 
 
 
-## 2. Running + plotting benchmarks
+## 3. Running + plotting benchmarks
 
 In the following we specify how each plot can be reproduced. 
-Because of the large number of benchmarks which were run, the total time for running all benchmarks is ~1 week. 
+Because of the large number of benchmarks which were run, the total time for running all benchmarks is >1 week. 
 To quickly test the code on a subset of small benchmarks, replace `qasm/` in the following commands with `qasm/test_sets/`. These benchmarks are not a random subset of all benchmarks, but are instead intentionally small instances such that the code can be tested within a few minutes.
 Our own output data, used for the plots in the paper, is also included (except for the validation of Figure 5, due to its large size) in `experiments/paper_data/`.
 
+### Everything
+To test the code on all of the figures and tables below, run
+```shell
+$ ./test_all_benchmarks.sh
+```
+or to run run all benchmarks fully, run
+```shell
+$ ./run_all_benchmarks.sh
+```
 
 
 ### Figure 3c + 4
@@ -87,7 +107,7 @@ The plots can be found at `experiments/fig5a/mqt_vs_qsylvan1_log.png` (Fig. 5a) 
 
 
 
-###  Figure 5 including validation
+### Figure 5 including validation
 As mentioned in the caption of Figure 5, the full state vectors have been checked up to 20 qubits. Note that this generates ~5 GB of log files.
 ```shell
 $ python3 scripts/generate_sim_experiments.py qasm/mqtbench_indep/ --name fig5a_val --min_qubits 10 --max_qubits 50 --log_vector
