@@ -112,11 +112,11 @@ As mentioned in the caption of Figure 5, the full state vectors have been checke
 ```shell
 $ python3 scripts/generate_sim_experiments.py qasm/mqtbench_indep/ --name fig5a_val --min_qubits 10 --max_qubits 50 --log_vector
 $ bash experiments/fig5a_val/run_all.sh
-$ python3 scripts/process_results.py experiments/fig5a_val/ --compare_vectors
+$ python3 scripts/process_results.py experiments/fig5a_val/ --compare_vecs
 
 $ python3 scripts/generate_sim_experiments.py qasm/ketgpt/ --name fig5b_val
 $ bash experiments/fig5b_val/run_all.sh
-$ python3 scripts/process_results.py experiments/fig5b_val/ --compare_vectors
+$ python3 scripts/process_results.py experiments/fig5b_val/ --compare_vecs
 ```
 If both tools agree on the state vectors, the following is written to the terminal: `Fidelity of all # checked vectors ~= 1.000.` If there are issues with the state vectors they are written to `issues.txt` in the `fig5a`/`fig5b` directory.
 
