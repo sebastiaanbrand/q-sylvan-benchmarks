@@ -19,15 +19,15 @@ MQT_QCEC = "timeout {} python tools/mqt_qcec.py {} {} --alg {} --workers {} 2> {
 parser = argparse.ArgumentParser()
 parser.add_argument('qasm_dir', help="Path to dir with subdirs origin/, opt/ gm/, flip/")
 parser.add_argument('--name', help="Name for experiments dir.")
-parser.add_argument('--eqcheck_alg', choices=['alternating', 'pauli'], default='alternating', help="Which eqcheck alg for q-sylvan to use.")
-parser.add_argument('--qcec_alg', choices=['alt', 'all'], default='all', help="Settings for mqt qcec.")
+parser.add_argument('--eqcheck_algs', choices=['alternating','pauli'], default=['alternating','pauli'], help="Which eqcheck alg for q-sylvan to use.")
+parser.add_argument('--qcec_alg', choices=['alt','all'], default='all', help="Settings for mqt qcec.")
 parser.add_argument('--tools', nargs='+', default=['q-sylvan','mqt', 'quokka'], help="Which tools to include (q-sylvan, mqt, quokka).")
 parser.add_argument('--norm_strat', choices=['low','max','min','l2'], default='max', help="Norm strat to use for all runs.")
 parser.add_argument('--wgt_tab_size', type=int, default=23, help="log2 of max edge weight table size.")
 parser.add_argument('--node_tab_size', type=int, default=25, help="log2 of max node table size.")
-parser.add_argument('--test_multicore', action='store_true', default=False, help="Run multicore benchmarks.")
+parser.add_argument('--workers', nargs='+', default=[1], type=int, help="Run multicore benchmarks for given number of workers.")
 parser.add_argument('--include_shift', action='store_true', default=False, help="Include shift 1e-4 and 1e-7 eqchecks.")
-parser.add_argument('--timeout', action='store', default=600, help='Timeout time per benchmark in seconds')
+parser.add_argument('--timeout', action='store', default=300, help='Timeout time per benchmark in seconds')
 
 
 def atoi(text : str):
@@ -62,12 +62,8 @@ def experiments_eqcheck(args):
 
     cli_args = ''
     cli_args += f' --norm-strat {args.norm_strat}'
-    cli_args += f' --algorithm {args.eqcheck_alg}'
     cli_args += f' --wgt-tab-size {args.wgt_tab_size}'
     cli_args += f' --node-tab-size {args.node_tab_size}'
-    if args.test_multicore:
-        cli_args += ' --count-nodes'
-    workers = [1,2,4,8] if args.test_multicore else [1]
 
     print(f"Writing to {output_dir}")
     origin_dir = os.path.join(args.qasm_dir, 'origin')
@@ -110,7 +106,7 @@ def experiments_eqcheck(args):
                 qc_compare = qasm2.load(compare_path, custom_instructions=qasm2.LEGACY_CUSTOM_INSTRUCTIONS)
                 assert qc_origin.num_qubits == qc_compare.num_qubits
 
-                for w in workers:
+                for w in args.workers:
                     # quokka-sharp run
                     if 'quokka' in args.tools:
                         exp_counter += 1
@@ -153,23 +149,25 @@ def experiments_eqcheck(args):
 
                     # q-sylvan run
                     if 'q-sylvan' in args.tools:
-                        exp_counter += 1
-                        json_out = f"{output_dir}/json/{origin_file[:-5]}_qsylvan_{exp_counter}.json"
-                        log      = f"{output_dir}/logs/{origin_file[:-5]}_qsylvan_{exp_counter}.log"
-                        meta     = f"{output_dir}/meta/{origin_file[:-5]}_qsylvan_{exp_counter}.json"
-                        f_all.write(Q_SYLVAN.format(args.timeout, origin_path, compare_path,  w, cli_args, log, json_out))
-                        f_qsy.write(Q_SYLVAN.format(args.timeout, origin_path, compare_path, w, cli_args, log, json_out))
-                        with open(meta, 'w', encoding='utf-8') as meta_file:
-                            json.dump({ 'circuit_type' : origin_file.split('_')[0],
-                                        'circuit_U' : origin_file[:-5],
-                                        'circuit_V' : os.path.basename(compare_path)[:-5],
-                                        'exp_id' : exp_counter,
-                                        'n_gates_U' : sum(qc_origin.count_ops().values()),
-                                        'n_gates_V' : sum(qc_compare.count_ops().values()),
-                                        'n_qubits' : qc_origin.num_qubits,
-                                        'tool' : 'q-sylvan',
-                                        'type' : os.path.basename(comp_dir),
-                                        'workers' : w}, meta_file, indent=2)
+                        for alg in args.eqcheck_algs:
+                            exp_counter += 1
+                            json_out = f"{output_dir}/json/{origin_file[:-5]}_qsylvan_{exp_counter}.json"
+                            log      = f"{output_dir}/logs/{origin_file[:-5]}_qsylvan_{exp_counter}.log"
+                            meta     = f"{output_dir}/meta/{origin_file[:-5]}_qsylvan_{exp_counter}.json"
+                            _cli_args = cli_args + f' --algorithm {alg}'
+                            f_all.write(Q_SYLVAN.format(args.timeout, origin_path, compare_path,  w, _cli_args, log, json_out))
+                            f_qsy.write(Q_SYLVAN.format(args.timeout, origin_path, compare_path, w, _cli_args, log, json_out))
+                            with open(meta, 'w', encoding='utf-8') as meta_file:
+                                json.dump({ 'circuit_type' : origin_file.split('_')[0],
+                                            'circuit_U' : origin_file[:-5],
+                                            'circuit_V' : os.path.basename(compare_path)[:-5],
+                                            'exp_id' : exp_counter,
+                                            'n_gates_U' : sum(qc_origin.count_ops().values()),
+                                            'n_gates_V' : sum(qc_compare.count_ops().values()),
+                                            'n_qubits' : qc_origin.num_qubits,
+                                            'tool' : 'q-sylvan',
+                                            'type' : os.path.basename(comp_dir),
+                                            'workers' : w}, meta_file, indent=2)
 
 
 def main():
