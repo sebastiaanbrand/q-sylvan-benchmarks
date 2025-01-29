@@ -14,7 +14,7 @@ $ sudo apt install build-essential cmake autoconf
 
 3. Install dependencies for various tools.
 ```shell
-$ sudo apt install libgmp-dev libmpfr-dev libmpc-dev zlib1g-dev
+$ sudo apt install libgmp-dev libmpfr-dev libmpc-dev zlib1g-dev libboost-all-dev
 ```
 
 4. Install Python libraries (creating a virtual environment is optional but recommended).
