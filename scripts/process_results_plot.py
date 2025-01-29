@@ -18,7 +18,7 @@ EQTAB_SELECTION = ['graphstate', 'grover-noancilla', 'qaoa', 'qnn', 'qft',
                    'qpe-inexact', 'vqe', 'wstate']
 NEQTAB_SELECTION = ['grover-noancilla', 'qaoa', 'qft', 'qnn', 'qpe-inexact',
                     'vqe', 'wstate']
-
+ORDER = ['q-sylvan-alternating','q-sylvan-pauli','quokka-sharp','mqt-qcec-all']
 
 def plots_dir(args):
     """
@@ -532,21 +532,32 @@ def latex_table_equivalent(df : pd.DataFrame, args, highlight=True):
     """
     Write LaTeX table like Table 4 in https://arxiv.org/pdf/2403.18813.
     """
-    # select data
-    d1 = df.loc[(df['type'] == 'opt') & (df['tool'] == 'q-sylvan') & (df['workers'] == 1)]
-    d2 = df.loc[(df['type'] == 'opt') & (df['tool'] == 'quokka-sharp') & (df['workers'] == 1)]
-    d3 = df.loc[(df['type'] == 'opt') & (df['tool'].str.contains('mqt-qcec')) & (df['workers'] == 1)]
-
-    # merge d1, d2, d3
-    suffixes = ['_1', '_2', '_3']
     merge_on = ['circuit_U']
     meta_data = ['circuit_type','n_qubits','n_gates_U','n_gates_V']
     stats = ['equivalent','status','wall_time']
-    d1 = d1[merge_on + meta_data + stats].rename(columns=dict([(x,f'{x}_1') for x in stats]))
-    d2 = d2[merge_on + stats].rename(columns=dict([(x,f'{x}_2') for x in stats]))
-    d3 = d3[merge_on + stats].rename(columns=dict([(x,f'{x}_3') for x in stats]))
-    df = pd.merge(d1, d2, on=merge_on, how='outer')
-    df = pd.merge(df, d3, on=merge_on, how='outer')
+    tools = sorted(df['tool'].unique(), key=lambda x: ORDER.index(x))
+
+    # select data (grouped by tool)
+    dfs = []
+    for i, tool in enumerate(tools):
+        dtool = df.loc[(df['type'] == 'opt') & (df['tool'] == tool) & (df['workers'] == 1)]
+        if (i == 0):
+            dtool = dtool[merge_on + meta_data + stats].rename(columns=dict([(x,f'{x}_{i}') for x in stats]))
+        else:
+            dtool = dtool[merge_on + stats].rename(columns=dict([(x,f'{x}_{i}') for x in stats]))
+        dfs.append(dtool)
+
+    # merge results for tools into one table
+    if len(dfs) == 1:
+        merged = dfs[0]
+    elif len(dfs) >= 2:
+        merged = pd.merge(dfs[0], dfs[1], on=merge_on, how='outer')
+        for i in range(2, len(dfs)):
+            merged = pd.merge(merged, dfs[i], on=merge_on, how='outer')
+    df = merged
+    suffixes = [f"_{i}" for i in range(len(tools))]
+
+    # add fastest tool column
     for suff in suffixes:
         df[f'wall_time{suff}'] = df[f'wall_time{suff}'].fillna(value=args.timeoutt)
     df['min_time'] = df[[f'wall_time{suff}' for suff in suffixes]].min(axis=1)
@@ -568,12 +579,13 @@ def latex_table_equivalent(df : pd.DataFrame, args, highlight=True):
 
     # styling of table
     df = df.sort_values(['circuit_type', 'n_qubits'])
-    df = df[meta_data + ['wall_time_1', 'wall_time_2', 'wall_time_3']]
-    df = df.rename(columns={'circuit_type' : 'Algorithm', 'n_qubits' : '$n$',
-                            'n_gates_U' : '$|G|$', 'n_gates_V' : '$|G\'|$',
-                            'wall_time_1' : 'Q-Sylvan', 
-                            'wall_time_2': 'Quokka-Sharp',
-                            'wall_time_3': 'MQT QCEC'})
+    df = df[meta_data + [f'wall_time{suff}' for suff in suffixes]]
+    
+    name_map = {'circuit_type' : 'Algorithm', 'n_qubits' : '$n$',
+                'n_gates_U' : '$|G|$', 'n_gates_V' : '$|G\'|$'}
+    for i in range(len(tools)):
+        name_map[f'wall_time_{i}'] = tools[i]
+    df = df.rename(columns=name_map)
     styler = df.style
     styler.hide(axis='index')
     styler.set_table_styles([
@@ -581,7 +593,7 @@ def latex_table_equivalent(df : pd.DataFrame, args, highlight=True):
         {'selector': 'midrule', 'props': ':hline;'},
         {'selector': 'bottomrule', 'props': ':hline;'},
     ], overwrite=True)
-    column_format = 'l||rrr||rrr'
+    column_format = 'l||rrr||'+'r'*len(tools)
 
     # write full table
     output_file = os.path.join(tables_dir(args), 'eqcheck_equiv_table_full.tex')
