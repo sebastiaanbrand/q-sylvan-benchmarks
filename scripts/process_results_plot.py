@@ -621,11 +621,12 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
     merge_on = ['circuit_U']
     meta_data = ['circuit_type','n_qubits','n_gates_U','n_gates_V','type']
     stats = ['equivalent','status','wall_time']
+    tools = sorted(df['tool'].unique(), key=lambda x: ORDER.index(x))
 
     # select data + combine corresponding gm and flip into single rows)
     dfs = []
-    for tool in ['q-sylvan', 'quokka-sharp', 'mqt-qcec']:
-        dtool = df.loc[(df['tool'].str.contains(tool)) & (df['workers'] == 1)]
+    for tool in tools:
+        dtool = df.loc[(df['tool'] == tool) & (df['workers'] == 1)]
         dtool = dtool[merge_on + meta_data + stats]
         gm   = dtool.loc[(df['type'] == 'gm')].drop('type', axis=1)
         flip = dtool.loc[(df['type'] == 'flip')].drop('type', axis=1)
@@ -638,17 +639,25 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
     stats = [y for x in stats for y in (f'{x}_gm',f'{x}_flip')] # oh python
     meta_data.remove('type')
 
-    # merge d1, d2, d3
-    d1, d2, d3 = dfs[0], dfs[1], dfs[2]
-    d1 = d1[merge_on + meta_data + stats].rename(columns=dict([(x,f'{x}_1') for x in stats]))
-    d2 = d2[merge_on + stats].rename(columns=dict([(x,f'{x}_2') for x in stats]))
-    d3 = d3[merge_on + stats].rename(columns=dict([(x,f'{x}_3') for x in stats]))
-    df = pd.merge(d1, d2, on=merge_on, how='outer')
-    df = pd.merge(df, d3, on=merge_on, how='outer')
+    # update columns so that they don't conflict when merging
+    dfs[0] = dfs[0][merge_on + meta_data + stats].rename(columns=dict([(x,f'{x}_0') for x in stats]))
+    for i in range(1, len(dfs)):
+        dfs[i] = dfs[i][merge_on + stats].rename(columns=dict([(x,f'{x}_{i}') for x in stats]))
+    suffixes = [f"_{i}" for i in range(len(tools))]
+
+    # merge results for tools into one table
+    if len(dfs) == 1:
+        merged = dfs[0][merge_on + meta_data + stats]
+    elif len(dfs) > 2:
+        d0 = dfs[0]
+        merged = pd.merge(dfs[0], dfs[1], on=merge_on, how='outer')
+        for i in range(2, len(dfs)):
+            merged = pd.merge(merged, dfs[i], on=merge_on, how='outer')
+    df = merged
 
     # style runtime columns
     for suff_type in ['_gm', '_flip']:
-        for suff_tool in ['_1', '_2', '_3']:
+        for suff_tool in suffixes:
             suff = suff_type + suff_tool
             df = df.astype({f'wall_time{suff}' : str})
             df.loc[:,f'wall_time{suff}'] = df[f'wall_time{suff}'].apply(lambda x : f'{float(x):.2f}')
@@ -660,17 +669,15 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
 
     # styling of table
     df = df.sort_values(['circuit_type', 'n_qubits'])
-    df = df[['circuit_type', 'n_qubits', 'n_gates_U', 'n_gates_V',
-            'wall_time_gm_1', 'wall_time_gm_2', 'wall_time_gm_3',
-            'wall_time_flip_1', 'wall_time_flip_2', 'wall_time_flip_3']]
-    df = df.rename(columns={'circuit_type' : 'Algorithm', 'n_qubits' : '$n$',
-                            'n_gates_U' : '$|G|$', 'n_gates_V' : '$|G\'|$',
-                            'wall_time_gm_1' : 'Q-Sylvan GM', 
-                            'wall_time_flip_1' : 'Q-Sylvan flip',
-                            'wall_time_gm_2' : 'Quokka-Sharp GM',
-                            'wall_time_flip_2': 'Quokka-Sharp flip',
-                            'wall_time_gm_3' : 'MQT QCEC GM',
-                            'wall_time_flip_3' : 'MQT QCEC flip'})
+    df = df[['circuit_type', 'n_qubits', 'n_gates_U', 'n_gates_V'] +
+            [f'wall_time_gm{suff}' for suff in suffixes] +
+            [f'wall_time_flip{suff}' for suff in suffixes]]
+    name_map = {'circuit_type' : 'Algorithm', 'n_qubits' : '$n$',
+                'n_gates_U' : '$|G|$', 'n_gates_V' : '$|G\'|$'}
+    for i in range(len(tools)):
+        name_map[f'wall_time_gm_{i}'] = tools[i] + " (gm)"
+        name_map[f'wall_time_flip_{i}'] = tools[i] + " (flip)"
+    df = df.rename(columns=name_map)
     styler = df.style
     styler.hide(axis='index')
     styler.set_table_styles([
@@ -678,7 +685,7 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
         {'selector': 'midrule', 'props': ':hline;'},
         {'selector': 'bottomrule', 'props': ':hline;'},
     ], overwrite=True)
-    column_format = 'l||rrr||rrr||rrr'
+    column_format = 'l||rrr||'+'r'*len(tools)+'||'+'r'*len(tools)
 
     # write full table
     output_file = os.path.join(tables_dir(args), 'eqcheck_nonequiv_table_full.tex')
