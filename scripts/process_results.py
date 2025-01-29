@@ -142,7 +142,7 @@ class EqCheckPlotPipeline(PlotPipeline):
         self.df = pd.merge(self.df, results, on='exp_id', how='left')
         logs_df = pr_load.load_logs(self.args.dir)[['exp_id', 'status']]
         logs_df.set_index('exp_id', inplace=True)
-        self.df.update(logs_df)
+        self.df.update(logs_df, overwrite=False)
         self.df.loc[~(self.df['wall_time'].isna()), 'status'] = 'FINISHED'
         self.df['status'] = self.df['status'].fillna('TIMEOUT')
         self.df.loc[(self.df['equivalent'] == 0), 'equivalent'] = 'not_equivalent'

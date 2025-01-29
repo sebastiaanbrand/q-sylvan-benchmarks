@@ -165,7 +165,7 @@ def experiments_eqcheck(args):
                                             'n_gates_U' : sum(qc_origin.count_ops().values()),
                                             'n_gates_V' : sum(qc_compare.count_ops().values()),
                                             'n_qubits' : qc_origin.num_qubits,
-                                            'tool' : 'q-sylvan',
+                                            'tool' : f'q-sylvan-{alg}',
                                             'type' : os.path.basename(comp_dir),
                                             'workers' : w}, meta_file, indent=2)
 

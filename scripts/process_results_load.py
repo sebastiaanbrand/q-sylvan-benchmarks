@@ -17,8 +17,9 @@ def _json_is_empty(log_filepath : str):
     """
     parts = os.path.normpath(log_filepath).split(os.path.sep)
     json_path = os.path.join(*parts[:-2], 'json', parts[-1].replace('.log','.json'))
-    if os.path.isfile(json_path) and os.path.getsize(json_path) > 0:
+    if os.path.isfile(json_path) and os.path.getsize(json_path) == 0:
         return True
+    return False
 
 
 def _get_termination_status(log_filepath : str):
