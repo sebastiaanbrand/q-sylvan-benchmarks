@@ -18,7 +18,7 @@ NS_NAMES = { 0 : 'low', 1 : 'max', 2 : 'min', 3 : 'L2'}
 parser = argparse.ArgumentParser()
 parser.add_argument('dir', help="Experiments directory (the one which is a date+time).")
 parser.add_argument('--compare_vecs', action='store_true', default=False, help="Sanity check by comparing full state vectors (if present).")
-parser.add_argument('--timeoutt', default=600, help="Timeout time, used for plotting instanced which didn't finish.")
+parser.add_argument('--timeoutt', default=600, type=int, help="Timeout time, used for plotting instanced which didn't finish.")
 
 
 class PlotPipeline:
