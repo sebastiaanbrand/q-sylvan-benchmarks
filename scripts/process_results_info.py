@@ -3,8 +3,10 @@ Code for writing some summary information from experiments.
 """
 import os
 import re
+import json
 from itertools import combinations
 import pandas as pd
+import numpy as np
 
 
 def atoi(text : str):
@@ -113,3 +115,54 @@ def write_statistics_summary_eqcheck(df : pd.DataFrame, args):
         f.write("------------------------\n")
         d2 = df.loc[df['type'] != 'opt']
         _write_statistics_summary(d2, f, args)
+
+
+def _add_to_eqcheck_speedup_summary(df : pd.DataFrame, args):
+    """
+    For a single tool, and either opt or gm+flip circuits, add speedups ot summary.
+    """
+    merge_on = ['circuit_V']
+    stats = ['workers','equivalent','status','wall_time']
+
+    # Get unique numbers of workers
+    workers = sorted(df['workers'].unique())
+    assert workers[0] == 1
+    if len(workers) == 1:
+        return
+
+    # Get single worker data
+    data_1 = df.loc[df['workers'] == 1]
+    
+    # For each other number of workers, match with single worker
+    summary = {}
+    for w in workers[1:]:
+        summary[int(w)] = {}
+        data_w = df.loc[df['workers'] == w][merge_on + stats]
+        joined = pd.merge(data_1, data_w, on=merge_on, how='inner', suffixes=('_1','_w'))
+        # remove timeouts
+        joined = joined.loc[joined['wall_time_1'].notnull() & joined['wall_time_w'].notnull()]
+        # add speedups to summary
+        speedups = joined['wall_time_1'] / joined['wall_time_w']
+        for p in [90, 95, 99, 99.5]:
+            summary[w][p] = np.percentile(speedups, p)
+        summary[w]['total_time_reduction_factor'] = sum(joined['wall_time_1']) / sum(joined['wall_time_w'])
+    
+    return summary
+
+
+def write_eqcheck_speedup_summary(df : pd.DataFrame, args):
+    """
+    For all tools, write speedup summary
+    (separated between equiv (opt) and non-equiv (gm+flip))
+    """
+    summary = {}
+    for tool in df['tool'].unique():
+        summary[tool] = {}
+        equiv = df.loc[(df['tool'] == tool) & (df['type'] == 'opt')]
+        noneq = df.loc[(df['tool'] == tool) & ((df['type'] == 'gm') | (df['type'] == 'flip'))]
+        summary[tool]['equiv'] = _add_to_eqcheck_speedup_summary(equiv, args)
+        summary[tool]['non-equiv'] = _add_to_eqcheck_speedup_summary(noneq, args)
+    
+    # write summary of speedups
+    with open(os.path.join(args.dir, 'speedups_summary.json'), 'w', encoding='utf-8') as f:
+            json.dump(summary, f, indent=2)
