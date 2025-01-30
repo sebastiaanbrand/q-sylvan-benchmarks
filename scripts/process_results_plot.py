@@ -615,7 +615,7 @@ def latex_table_equivalent(df : pd.DataFrame, args, highlight=True):
         f.write(styler.to_latex(column_format=column_format))
 
 
-def latex_table_non_equivalent(df : pd.DataFrame, args):
+def latex_table_non_equivalent(df : pd.DataFrame, args, highlight=True):
     """
     Write LaTeX table like Table 5 in https://arxiv.org/pdf/2403.18813.
     """
@@ -656,6 +656,15 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
             merged = pd.merge(merged, dfs[i], on=merge_on, how='outer')
     df = merged
 
+    # add fastest tool column
+    for suff_type in ['_gm', '_flip']:
+        for suff_tool in suffixes:
+            suff = suff_type + suff_tool
+            df[f'wall_time{suff}'] = df[f'wall_time{suff}'].fillna(value=args.timeoutt)
+        df[f'min_time{suff_type}'] = df[[f'wall_time{suff_type}{_s}' for _s in suffixes]].min(axis=1)
+        df[f'min_tool{suff_type}'] = df[[f'wall_time{suff_type}{_s}' for _s in suffixes]].idxmin(axis=1)
+        df.loc[(df[f'min_time{suff_type}'] == args.timeoutt), f'min_tool{suff_type}'] = 'all timeout'
+
     # style runtime columns
     for suff_type in ['_gm', '_flip']:
         for suff_tool in suffixes:
@@ -667,6 +676,9 @@ def latex_table_non_equivalent(df : pd.DataFrame, args):
             df.loc[(df[f'status{suff}'] == 'WEIGHT_TABLE_FULL'), f'wall_time{suff}'] = '-'
             df.loc[(df[f'equivalent{suff}'] == 'equivalent'), f'wall_time{suff}'] = '$\\times$'
             df.loc[(df[f'wall_time{suff}'] == 'nan'), f'wall_time{suff}'] = ''
+            if highlight:
+                df.loc[(df[f'min_tool{suff_type}'] == f'wall_time{suff}'), f'wall_time{suff}'] =\
+                    df[f'wall_time{suff}'].apply(lambda x : f'\\textbf{{{x}}}')
 
     # styling of table
     df = df.sort_values(['circuit_type', 'n_qubits'])
