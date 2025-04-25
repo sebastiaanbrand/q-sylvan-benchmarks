@@ -14,3 +14,4 @@
 [submodule "tools/SliQEC"]
 	path = tools/SliQEC
 	url = git@github.com:NTU-ALComLab/SliQEC.git
+	ignore = dirty
