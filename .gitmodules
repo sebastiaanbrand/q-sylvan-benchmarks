@@ -15,3 +15,7 @@
 	path = tools/SliQEC
 	url = https://github.com/NTU-ALComLab/SliQEC.git
 	ignore = dirty
+[submodule "tools/SliQSim"]
+	path = tools/SliQSim
+	url = https://github.com/NTU-ALComLab/SliQSim.git
+	ignore = dirty

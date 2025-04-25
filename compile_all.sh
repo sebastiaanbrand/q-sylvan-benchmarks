@@ -4,6 +4,7 @@ compile_mqt=true
 compile_quokka=true
 compile_quasimodo=true
 compile_sliqec=true
+compile_sliqsim=true
 
 while getopts "rqm" opt; do
   case $opt in
@@ -14,12 +15,14 @@ while getopts "rqm" opt; do
        compile_quokka=false;
        compile_quasimodo=false;
        compile_sliqec=false;
+       compile_sliqsim=false;
     ;;
     m) compile_qsylvan=false;
        compile_mqt=true;
        compile_quokka=false;
        compile_quasimodo=false;
        compile_sliqec=false;
+       compile_sliqsim=false;
     ;;
     \?) echo "Invalid option -$OPTARG" >&1; exit 1;
     ;;
@@ -66,6 +69,15 @@ fi
 #  cd ../..
 #fi
 
+# compile SliQSim
+#if $compile_sliqec; then
+#  cd tools/SliQSim
+#  cd cudd
+#  ./configure --enable-dddmp --enable-obj --enable-shared --enable-static
+#  cd ..
+#  make
+#  cd ../..
+#fi
 
 if $compile_quasimodo; then
   # get Quasimodo dependencies

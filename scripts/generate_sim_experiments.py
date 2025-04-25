@@ -12,6 +12,7 @@ EXPERIMENTS_DIR = "experiments/"
 
 QSY_QASM = "timeout {} ./tools/q-sylvan/build/qasm/run_qasm_on_qmdd {} --workers {} {} --json {} &> {}\n"
 MQT_QASM = "timeout {} ./tools/mqt-ddsim/build/apps/mqt-ddsim-simple --simulate_file {} --shots 1 --ps --pm {} 2> {} 1> {}\n"
+SLI_QASM = "timeout {} ./tools/SliQSim/SliQSim --sim_qasm {} --type 0 --shots 1 2> {} 1> {}\n"
 QUA_QASM = "cd tools/Quasimodo/python_pkg; "\
            "timeout {} python quasimodo_qasm.py ../../../{} 2> ../../../{} 1> ../../../{}; "\
            "cd ../../..\n"
@@ -202,6 +203,23 @@ def experiments_sim_qasm(args):
                                                 'tool' : 'q-sylvan',
                                                 'norm_strat' : s.split()[-1],
                                                 'workers' : w}, meta_file, indent=2)
+            
+            # SliQSim
+            if 'sliqsim' in args.tools:
+                exp_counter += 1
+                json_output = f"{output_dir}/json/{filename[:-5]}_sliqsim_{exp_counter}.json"
+                log         = f"{output_dir}/logs/{filename[:-5]}_sliqsim_{exp_counter}.log"
+                meta        = f"{output_dir}/meta/{filename[:-5]}_sliqsim_{exp_counter}.json"
+                f_all.write(SLI_QASM.format(args.timeout, filepath, log, json_output))
+                f_mqt.write(SLI_QASM.format(args.timeout, filepath, log, json_output))
+                with open(meta, 'w', encoding='utf-8') as meta_file:
+                    json.dump({ 'circuit_type' : filename.split('_')[0],
+                                'circuit' : filename[:-5],
+                                'exp_id' : exp_counter,
+                                'n_qubits' : get_num_qubits(filename),
+                                'tool' : 'sliqsim',
+                                'norm_strat' : 'l2',
+                                'workers' : 1}, meta_file, indent=2)
 
 
 def main():
