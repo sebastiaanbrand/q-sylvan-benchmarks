@@ -11,3 +11,6 @@
 	path = tools/Quasimodo
 	url = https://github.com/trishullab/Quasimodo.git
 	ignore = dirty
+[submodule "tools/SliQEC"]
+	path = tools/SliQEC
+	url = git@github.com:NTU-ALComLab/SliQEC.git

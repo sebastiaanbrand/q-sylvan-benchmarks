@@ -3,6 +3,7 @@ compile_qsylvan=true
 compile_mqt=true
 compile_quokka=true
 compile_quasimodo=true
+compile_sliqec=true
 
 while getopts "rqm" opt; do
   case $opt in
@@ -12,11 +13,13 @@ while getopts "rqm" opt; do
        compile_mqt=false;
        compile_quokka=false;
        compile_quasimodo=false;
+       compile_sliqec=false;
     ;;
     m) compile_qsylvan=false;
        compile_mqt=true;
        compile_quokka=false;
        compile_quasimodo=false;
+       compile_sliqec=false;
     ;;
     \?) echo "Invalid option -$OPTARG" >&1; exit 1;
     ;;
@@ -50,6 +53,19 @@ if $compile_quokka; then
   ./build.sh r
   cd ../../..
 fi
+
+# compile SliQEC
+# compile manually for now, doesn't work with gcc-10, works with gcc-13.
+#if $compile_sliqec; then
+#  cd tools/SliQEC
+#  cd cudd
+#  chmod u+x ./configure
+#  ./configure --enable-dddmp --enable-obj --enable-shared --enable-static
+#  cd ..
+#  make
+#  cd ../..
+#fi
+
 
 if $compile_quasimodo; then
   # get Quasimodo dependencies
