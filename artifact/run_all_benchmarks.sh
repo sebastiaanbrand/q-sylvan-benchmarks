@@ -50,12 +50,8 @@ python3 scripts/process_results.py experiments/tab2/
 
 # Table 1 + 3,4,5,6 in appendix
 printf "\n\nTable 1 + 3 + 4 + 5 + 6\n"
-python3 scripts/generate_eqcheck_experiments.py qasm/equivalence/ --name tabs_eqcheck_alt --eqcheck_alg alternating
-bash experiments/tabs_eqcheck_alt/run_all.sh
-python3 scripts/process_results.py experiments/tabs_eqcheck_alt
-
-python3 scripts/generate_eqcheck_experiments.py qasm/equivalence/ --name tabs_eqcheck_pauli --eqcheck_alg pauli
-bash experiments/tabs_eqcheck_pauli/run_all.sh
-python3 scripts/process_results.py experiments/tabs_eqcheck_pauli
+python3 scripts/generate_eqcheck_experiments.py qasm/equivalence/ --name tabs_eqcheck
+bash experiments/tabs_eqcheck/run_all.sh
+python3 scripts/process_results.py experiments/tabs_eqcheck
 
 

@@ -120,7 +120,7 @@ def load_logs(exp_dir : str):
     """
     Add information from logs to dataframe.
     """
-    new_rows = [ {'exp_id' : 0} ]
+    new_rows = [ {'exp_id' : 0, 'status' : 'N/A'} ]
     log_dir = os.path.join(exp_dir, 'logs')
     for filename in sorted(os.listdir(log_dir)):
         filepath = os.path.join(log_dir, filename)
