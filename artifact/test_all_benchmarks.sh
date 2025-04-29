@@ -21,7 +21,7 @@ python3 scripts/process_results.py experiments/fig5b/
 
 # Figure 2 including validation
 printf "\n\nFigure 2 + validation\n"
-python3 scripts/generate_sim_experiments.py qasm/test_sets/mqtbench_indep/ --name fig2a_val --max_qubits 20 --log_vector
+python3 scripts/generate_sim_experiments.py qasm/test_sets/mqtbench_indep/ --name fig2a_val --max_qubits 10 --log_vector
 bash experiments/fig2a_val/run_all.sh
 python3 scripts/process_results.py experiments/fig2a_val/ --compare_vecs
 
