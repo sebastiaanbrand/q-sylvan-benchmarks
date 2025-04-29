@@ -25,7 +25,7 @@ python3 scripts/generate_sim_experiments.py qasm/test_sets/mqtbench_indep/ --nam
 bash experiments/fig2a_val/run_all.sh
 python3 scripts/process_results.py experiments/fig2a_val/ --compare_vecs
 
-python3 scripts/generate_sim_experiments.py qasm/test_sets/ketgpt/ --name fig2b_val --log_vector
+python3 scripts/generate_sim_experiments.py qasm/test_sets/ketgpt/ --name fig2b_val --max_qubits 10 --log_vector
 bash experiments/fig2b_val/run_all.sh
 python3 scripts/process_results.py experiments/fig2b_val/ --compare_vecs
 
