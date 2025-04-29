@@ -8,6 +8,11 @@
 
 ## Requirements
 
+Special hardware requirements:
+
+- To replicate the 64 core parallel results (Fig. 3) a machine with 64 cores is required.
+- At least 16 GB of RAM is required for most benchmarks.
+
 The following software is required for running this artifact:
 
 - [Docker](https://docs.docker.com/get-docker/)
@@ -211,7 +216,7 @@ The following sections are intended for the full review phase.
 
 ---
 
-# Available Bagde
+# Available Badge
 
 The artifact was uploaded to Zenodo and is available at http://doi.org/10.5281/zenodo.15303902.
 
@@ -315,7 +320,7 @@ The figures can be found in:
 
 - The artifact contains all files to build the docker image from scratch as
   follows. In the base directory of the artifact execute the following command
-  to generate the `q-sylvan-atva25-artifact-img` Docker image.
+  to generate the `q-sylvan-atva25-artifact-img` Docker image. This will take 5~10 minutes.
 
   ```
   $ docker build -t q-sylvan-atva25-artifact-img .
