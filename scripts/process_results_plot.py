@@ -456,7 +456,7 @@ def plot_multicore_scatter_sharing(df : pd.DataFrame, args, scaling='log'):
             speedups = datas_x[-1] / datas_y[-1]
             for p in [90, 95, 99, 99.5]:
                 summary[w][cat][p] = np.percentile(speedups, p)
-            summary[w]['total_time_reduction_factor'] = sum(joined['wall_time_1']) / sum(joined['wall_time_w'])
+            summary[w]['total_time_reduction_factor'] = sum(joined['simulation_time_1']) / sum(joined['simulation_time_w'])
 
         # write summary of speedups
         with open(os.path.join(args.dir, 'speedups_summary.json'), 'w', encoding='utf-8') as f:
