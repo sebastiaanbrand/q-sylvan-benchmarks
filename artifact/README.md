@@ -2,21 +2,22 @@
 
 **Sebastiaan Brand and Alfons Laarman** - Leiden University
 
+
+
 # Quickstart
 
 ## Requirements
 
 The following software is required for running this artifact:
 
-- [docker](https://docs.docker.com/get-docker/)
+- [Docker](https://docs.docker.com/get-docker/)
 
 In the following we use `#` to indicate commands that are run inside the Docker container, and `$` to indicate commands that are run in the host shell.
 
 ## Setup Steps
 - Install Docker as described at https://docs.docker.com/get-docker/.
 
-- Download the artifact `atva24-artifact.zip `
-  from https://zenodo.org/record/`<record>`
+- Download the artifact `q-sylvan-atva25-artifact.zip` from http://doi.org/10.5281/zenodo.15303902
 
 - Unzip the artifact:
 
@@ -24,27 +25,45 @@ In the following we use `#` to indicate commands that are run inside the Docker 
   current working directory, including the compressed docker image
   `atva24-artifact-docker-image.tar.gz`.
   ```
-  unzip atva24-artifact.zip
+  $ unzip q-sylvan-atva25-artifact.zip
+  $ cd q-sylvan-atva25-artifact
   ```
 
-- Import the docker image from `atva24-artifact-docker-image.tar.gz`:
+- Import the Docker image from `atva24-artifact-docker-image.tar.gz`:
 
-  sha256sum: `6bcf9be32cdee5d866e1ac405744f195a91a963001f627580cf530e44b79cc26`
+  sha256sum: `<todo>`
   ```
-  docker load --input atva24-artifact-docker-image.tar.gz
+  $ docker load < q-sylvan-atva25-artifact-img.tar
   ```
-  This will import the docker image named `<image-name>`. This will take ~X
-  minutes.
+  This will import the docker image named `q-sylvan-atva25-artifact-img`. This will take ~1
+  minute.
 
-- Start a docker container:
+- Start a Docker container from the image:
   ```
-  docker run -it <image-name>
+  $ docker run --name q-sylvan-atva25-artifact -it q-sylvan-atva25-artifact-img
   ```
 
-  **Note** This will spin up a new docker container in which the following
-  steps should be executed.
+- The container can be exited with
+  ```
+  # exit
+  ```
+
+- The container can be re-entered with
+  ```
+  $ docker start q-sylvan-atva25-artifact
+  $ docker exec -it q-sylvan-atva25-artifact bash
+  ```
+  **Note** This will spin up a Docker container in which the following steps should be executed.
+
+
+
 
 ## Smoke Test Steps
+
+The container should start in the `/artifact/q-sylvan-benchmarks/` directory. If not, the directory can be entered with
+```
+# cd /artifact/q-sylvan-benchmarks/
+``` 
 
 A small subset of benchmarks can be run with
 ```
@@ -194,8 +213,7 @@ The following sections are intended for the full review phase.
 
 # Available Bagde
 
-The artifact was uploaded to Zenodo and is available at
-https://zenodo.org/record/`<record>` (DOI: `xx.xxxx/zenodo.xxxxxxx`).
+The artifact was uploaded to Zenodo and is available at http://doi.org/10.5281/zenodo.15303902.
 
 # Functional Badge
 
@@ -208,24 +226,14 @@ shown in the paper.
 **Comment** Example directory structure of the artifact. List all files in the
 artifact and add a description for each one.
 
-  - `Dockerfile`: The docker file to build the artifact image
+  - `Dockerfile`: The Docker file to build the artifact image
   - `LICENSE`: Artifact license
-  - `Readme.md`: This file
+  - `README.md`: This file
   - `paper.pdf`: An updated version of the submitted paper
-  - Directory `dataset`
-    - `dataset.tar.xz`: Archive containing all input files used for the
-      evaluation
-  - `<atva24-artifact-docker-image>.tar.gz`: The docker image to replicate the
-    evaluation.
-  - `logs/logs.tar.xz`: Archive containing all log files of the original
-    evaluation runs from the paper.
-  - `run-experiments.py`: Script to run evaluation
-  - `tools/tools.tar.xz`: Archive containing all tools used in the evaluation
-    evaluation. When unpacked it has the following structure:
-    - `tool1`: Explain what tool1 is
-    - ...
-
-  - ...
+  - `<todo>.tar.gz`: The Docker image to replicate the
+    evaluation, which includes:
+    - The repository https://github.com/sebastiaanbrand/q-sylvan-benchmarks
+    - All prerequisites pre-installed.
 
 ## Steps to Replicate the Experimental Results
 
@@ -240,61 +248,66 @@ evaluation**.
 ### 1. Start the Docker Container
 
 **Note**
-Make sure to follow the setup steps to import the docker image before
-continuing with this step.
+Make sure to follow the setup steps to import the Docker image and create a container before
+continuing with this step (see "Quickstart").
 
 ```
-docker run -it <image-name>
+$ docker start q-sylvan-atva25-artifact
+$ docker exec -it q-sylvan-atva25-artifact bash
 ```
+
 
 ### 2. Execute Evaluation Runs
 
-**Comment** List steps to replicate the evaluation runs in the paper.
+The container should start in the `/artifact/q-sylvan-benchmarks/` directory. If not, the directory can be entered with
+```
+# cd /artifact/q-sylvan-benchmarks/
+``` 
+
+The full benchmarks can be run with
+```
+# source .venv/bin/activate
+# bash artifact/run_all_benchmarks.sh
+```
+This both runs the benchmarks and generates the plots.
+Because the paper evaluates multiple tools over a large set of benchmarks, the total wall time of these benchmarks is 1~2 weeks.
 
 
 ### 3. Extract Numbers presented in the Paper
 
-**Note**
-To extract all benchmark results you can use 
+To extract all benchmark results and plots you can use 
 ```
 $ docker cp qs-artifact:/artifact/q-sylvan-benchmarks/experiments/ .
 ```
 
-#### 3.1 Extract Numbers for Figure 1
+The figures can be found in:
+- Fig. 1c:
+  - The values in the table in Fig. 1c are displayed in the terminal.
+- Fig. 2: The plots can be found in
+  - `experiments/fig5a/plots/png/mqt_vs_qsylvan1_log.png` (Fig. 2a)
+  - `experiments/fig5b/plots/png/mqt_vs_qsylvan1_log.png` (Fig. 2b)
+- Fig. 2 validation up to 20 qubits:
+  - If both tools agree on the state vectors, the following is written to the terminal: `Fidelity of all # checked vectors ~= 1.000.` If there are issues with the state vectors they are written to `issues.txt` in the `fig2a/fig2b` directory.
+- Fig. 3: The table data + plots can be found in
+  - `experiments/fig3_left/speedups_summary.json` (table data Fig. 3a)
+  - `experiments/fig3_right/speedups_summary.json` (table data Fig. 3a)
+  - `experiments/fig2a/qubits_vs_nodes_qsylvan_max.png` (Fig 3b (re-uses data from Fig.2))
+  - `experiments/fig2b/qubits_vs_nodes_qsylvan_max.png` (Fig 3c (re-uses data from Fig.2))
+  - `experiments/fig3_left/multicore8_scatter_log.png` (Fig. 3d)
+  - `experiments/fig3_right/multicore8_scatter_log.png` (Fig. 3e)
+  - `experiments/fig3_left/multicore64_scatter_log.png` (Fig. 3f)
+  - `experiments/fig3_right/multicore64_scatter_log.png` (Fig. 3g)
+- Table 1
+  - `experiments/tabs_eqcheck/summary.txt`
+- Table 2 (Appendix)
+  - `experiments/tab1/tables/simulation_time.tex`
+- Table 3 + 4 (Appendix)
+  - `experiments/tabs_eqcheck/tables/eqcheck_equiv_table_full.tex`
+- Table 5 + 6 (Appendix)
+  - `experiments/tabs_eqcheck/tables/eqcheck_nonequiv_table_full.tex`
 
-```
-<command to generate Fig. 1>
-```
-
-**Output**
-<details>
-  <summary>Click to expand</summary>
-
-```
-Results for Figure 1.
-```
-</details>
-
-#### 3.2 Generate Table 2
-
-```
-<command to generate Table 2>
-```
-
-**Output**
-<details>
-  <summary>Click to expand</summary>
-
-```
-Table 2.
-```
-</details>
 
 # Reusable Badge
-
-**Comment** This section should describe how to build the Docker image as well
-as how to use the tool outside of the evaluation environment. If the tool has
-a website and documentation it is also useful to include this in this section.
 
 ## Building the Docker Image
 
@@ -302,10 +315,11 @@ a website and documentation it is also useful to include this in this section.
 
 - The artifact contains all files to build the docker image from scratch as
   follows. In the base directory of the artifact execute the following command
-  to generate the `atva24-artifact` Docker image.
+  to generate the `q-sylvan-atva25-artifact-img` Docker image.
 
   ```
-  docker build -t atva2024-artifact .
+  $ docker build -t q-sylvan-atva25-artifact-img .
+  $ docker image save q-sylvan-atva25-artifact-img:latest > q-sylvan-atva25-artifact-img.tar
   ```
 
 - Use docker image as described in the "Functional Badge" section.
@@ -315,23 +329,4 @@ a website and documentation it is also useful to include this in this section.
 
 ## Using our Tool without a Docker Environment
 
-### Quickstart
-
-#### Requirements
-**Comment**: List requirements of the tool.
-
-
-1. Instructions for downloading the tool
-   ```
-   ...
-   ```
-
-2. Instructions for setting up/building the tool
-   ```
-   ...
-   ```
-
-3. Instructions for running the tool on an example.
-   ```
-   ...
-   ```
+Instructions on how to use the tool without using the provided Docker image can be found in the README on the Q-Sylvan repository page at https://github.com/sebastiaanbrand/q-sylvan.
