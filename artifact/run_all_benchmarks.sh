@@ -44,7 +44,7 @@ python3 scripts/process_results.py experiments/fig3_right/
 # Table 1
 printf "\n\nTable 1\n"
 python3 scripts/generate_eqcheck_experiments.py qasm/equivalence/ --name tab1 --workers 1 8
-ash experiments/tab1/run_all.sh
+bash experiments/tab1/run_all.sh
 python3 scripts/process_results.py experiments/tab1
 
 
