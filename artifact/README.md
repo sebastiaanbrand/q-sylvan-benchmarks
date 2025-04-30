@@ -17,7 +17,7 @@ The following software is required for running this artifact:
 
 - [Docker](https://docs.docker.com/get-docker/)
 
-In the following we use `#` to indicate commands that are run inside the Docker container, and `$` to indicate commands that are run in the host shell.
+In the following instructions we use `#` to indicate commands that are run inside the Docker container, and `$` to indicate commands that are run in the host shell.
 
 ## Setup Steps
 - Install Docker as described at https://docs.docker.com/get-docker/.
@@ -318,7 +318,7 @@ The figures can be found in:
 
 - Install Docker as described at https://docs.docker.com/get-docker/.
 
-- The artifact contains all files to build the docker image from scratch as
+- The artifact contains all files to build the Ddocker image from scratch as
   follows. In the base directory of the artifact execute the following command
   to generate the `q-sylvan-atva25-artifact-img` Docker image. This will take 5~10 minutes.
 
@@ -327,7 +327,7 @@ The figures can be found in:
   $ docker image save q-sylvan-atva25-artifact-img:latest > q-sylvan-atva25-artifact-img.tar
   ```
 
-- Use docker image as described in the "Functional Badge" section.
+- Use `q-sylvan-atva25-artifact-img.tar` as described in the "Functional Badge" section.
 
 **Note**: The provided `Dockerfile` lists all dependencies required to set up
           the artifact without a Docker environment.
