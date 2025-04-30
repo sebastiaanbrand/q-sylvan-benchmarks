@@ -3,6 +3,7 @@
 **Sebastiaan Brand and Alfons Laarman** - Leiden University
 
 
+This artifact has been tested on Ubuntu 24.04 and Windows 11 using WSL.
 
 # Quickstart
 
@@ -16,6 +17,9 @@ Special hardware requirements:
 The following software is required for running this artifact:
 
 - [Docker](https://docs.docker.com/get-docker/)
+
+**Note:** The precompiled Docker image might yield `Illegal instruction` errors. If this happens, please build the Docker image locally from the `Dockerfile`, using the instructions under "Building the Docker Image" at the bottom of this document.
+(Such errors are due to CPU specific instructions introduced during the compilation process, and are difficult to avoid since they occur in some of the tools we evaluate against.)
 
 In the following instructions we use `#` to indicate commands that are run inside the Docker container, and `$` to indicate commands that are run in the host shell.
 
@@ -75,7 +79,7 @@ A small subset of benchmarks can be run with
 # source .venv/bin/activate
 # bash artifact/test_all_benchmarks.sh
 ```
-
+This should take no more than 5 minutes.
 
 **Output of Smoke Test Execution**
 <details>
@@ -282,28 +286,29 @@ Because the paper evaluates multiple tools over a large set of benchmarks, the t
 
 To extract all benchmark results and plots you can use 
 ```
-$ docker cp qs-artifact:/artifact/q-sylvan-benchmarks/experiments/ .
+$ docker cp q-sylvan-atva25-artifact:/artifact/q-sylvan-benchmarks/experiments/ .
 ```
 
 The figures can be found in:
 - Fig. 1c:
   - The values in the table in Fig. 1c are displayed in the terminal.
 - Fig. 2: The plots can be found in
-  - `experiments/fig5a/plots/png/mqt_vs_qsylvan1_log.png` (Fig. 2a)
-  - `experiments/fig5b/plots/png/mqt_vs_qsylvan1_log.png` (Fig. 2b)
+  - `experiments/fig2a/plots/png/mqt_vs_qsylvan1_log.png` (Fig. 2a)
+  - `experiments/fig2b/plots/png/mqt_vs_qsylvan1_log.png` (Fig. 2b)
 - Fig. 2 validation up to 20 qubits:
   - If both tools agree on the state vectors, the following is written to the terminal: `Fidelity of all # checked vectors ~= 1.000.` If there are issues with the state vectors they are written to `issues.txt` in the `fig2a/fig2b` directory.
 - Fig. 3: The table data + plots can be found in
   - `experiments/fig3_left/speedups_summary.json` (table data Fig. 3a)
   - `experiments/fig3_right/speedups_summary.json` (table data Fig. 3a)
-  - `experiments/fig2a/qubits_vs_nodes_qsylvan_max.png` (Fig 3b (re-uses data from Fig.2))
-  - `experiments/fig2b/qubits_vs_nodes_qsylvan_max.png` (Fig 3c (re-uses data from Fig.2))
-  - `experiments/fig3_left/multicore8_scatter_log.png` (Fig. 3d)
-  - `experiments/fig3_right/multicore8_scatter_log.png` (Fig. 3e)
-  - `experiments/fig3_left/multicore64_scatter_log.png` (Fig. 3f)
-  - `experiments/fig3_right/multicore64_scatter_log.png` (Fig. 3g)
+  - `experiments/fig2a/plots/png/qubits_vs_nodes_qsylvan_max.png` (Fig 3b (re-uses data from Fig.2))
+  - `experiments/fig2b/plots/png/qubits_vs_nodes_qsylvan_max.png` (Fig 3c (re-uses data from Fig.2))
+  - `experiments/fig3_left/plots/png/multicore8_scatter_log.png` (Fig. 3d)
+  - `experiments/fig3_right/plots/png/multicore8_scatter_log.png` (Fig. 3e)
+  - `experiments/fig3_left/plots/png/multicore64_scatter_log.png` (Fig. 3f)
+  - `experiments/fig3_right/plots/png/multicore64_scatter_log.png` (Fig. 3g)
 - Table 1
-  - `experiments/tabs_eqcheck/summary.txt`
+  - `experiments/tab1/summary.txt`
+  - `experiments/tab1/speedups_summary.json`
 - Table 2 (Appendix)
   - `experiments/tab1/tables/simulation_time.tex`
 - Table 3 + 4 (Appendix)
@@ -318,9 +323,9 @@ The figures can be found in:
 
 - Install Docker as described at https://docs.docker.com/get-docker/.
 
-- The artifact contains all files to build the Ddocker image from scratch as
-  follows. In the base directory of the artifact execute the following command
-  to generate the `q-sylvan-atva25-artifact-img` Docker image. This will take 5~10 minutes.
+- To build the Docker image from scratch, in the base directory of the artifact, execute 
+  the following command to generate the `q-sylvan-atva25-artifact-img` Docker image. 
+  This will take ~10 minutes.
 
   ```
   $ docker build -t q-sylvan-atva25-artifact-img .
