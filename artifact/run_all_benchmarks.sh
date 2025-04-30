@@ -14,9 +14,9 @@ python3 scripts/generate_sim_experiments.py qasm/mqtbench_indep/ --name fig2a --
 bash experiments/fig2a/run_all.sh
 python3 scripts/process_results.py experiments/fig2a/
 
-python3 scripts/generate_sim_experiments.py qasm/ketgpt/ --name fig5b
-bash experiments/fig5b/run_all.sh
-python3 scripts/process_results.py experiments/fig5b/
+python3 scripts/generate_sim_experiments.py qasm/ketgpt/ --name fig2b
+bash experiments/fig2b/run_all.sh
+python3 scripts/process_results.py experiments/fig2b/
 
 
 # Figure 2 including validation
