@@ -4,6 +4,8 @@ FROM ubuntu:24.04
 RUN apt-get update && apt-get install -y \
   git \
   build-essential \
+  gcc-10 \
+  g++-10 \
   cmake \
   autoconf \
   python3 \
@@ -16,10 +18,12 @@ RUN apt-get update && apt-get install -y \
   zlib1g-dev \
   libboost-all-dev
 
-# The artifact will be under /artifact
-WORKDIR /artifact
+# Use GCC 10 as default
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 999 && \
+  update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 999
 
 # Clone repository
+WORKDIR /artifact
 RUN git clone --recurse-submodules https://github.com/sebastiaanbrand/q-sylvan-benchmarks.git
 WORKDIR /artifact/q-sylvan-benchmarks
 
