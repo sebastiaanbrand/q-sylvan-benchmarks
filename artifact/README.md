@@ -235,7 +235,7 @@ artifact and add a description for each one.
   - `LICENSE`: Artifact license
   - `README.md`: This file
   - `paper.pdf`: An updated version of the submitted paper
-  - `<todo>.tar.gz`: The Docker image to replicate the
+  - `q-sylvan-atva25-artifact-img.tar`: The Docker image to replicate the
     evaluation, which includes:
     - The repository https://github.com/sebastiaanbrand/q-sylvan-benchmarks
     - All prerequisites pre-installed.
