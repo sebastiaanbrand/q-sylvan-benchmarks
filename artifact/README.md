@@ -36,7 +36,7 @@ In the following instructions we use `#` to indicate commands that are run insid
 
 - Import the Docker image from `atva24-artifact-docker-image.tar.gz`:
 
-  sha256sum: `<todo>`
+  sha256sum: `5ffcb3392477f7dcd2ddffeecb86acb21ddf0feaa5d65a83d466712d9571008d`
   ```
   $ docker load < q-sylvan-atva25-artifact-img.tar
   ```
