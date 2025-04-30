@@ -28,13 +28,13 @@ In the following instructions we use `#` to indicate commands that are run insid
 
   **Note:** This will unzip the artifact directory structure and files into the
   current working directory, including the compressed docker image
-  `atva24-artifact-docker-image.tar.gz`.
+  `q-sylvan-atva25-artifact-img.tar`.
   ```
   $ unzip q-sylvan-atva25-artifact.zip
   $ cd q-sylvan-atva25-artifact
   ```
 
-- Import the Docker image from `atva24-artifact-docker-image.tar.gz`:
+- Import the Docker image from `q-sylvan-atva25-artifact-img.tar`:
 
   sha256sum: `5ffcb3392477f7dcd2ddffeecb86acb21ddf0feaa5d65a83d466712d9571008d`
   ```
