@@ -40,6 +40,12 @@ python3 scripts/generate_sim_experiments.py qasm/test_sets/ketgpt/ --name fig3_r
 bash experiments/fig3_right/run_qsylvan.sh
 python3 scripts/process_results.py experiments/fig3_right/
 
+# Table 1
+printf "\n\nTable 1\n"
+python3 scripts/generate_eqcheck_experiments.py qasm/test_sets/equivalence/ --name tab1 --workers 1 8
+ash experiments/tab1/run_all.sh
+python3 scripts/process_results.py experiments/tab1
+
 
 # Table 2 (appendix)
 printf "\n\nTable 2 (appendix)\n"
@@ -49,7 +55,7 @@ python3 scripts/process_results.py experiments/tab2/
 
 
 # Table 1 + 3,4,5,6 in appendix
-printf "\n\nTable 1 + 3 + 4 + 5 + 6\n"
+printf "\n\nTable 3 + 4 + 5 + 6\n"
 python3 scripts/generate_eqcheck_experiments.py qasm/test_sets/equivalence/ --name tabs_eqcheck
 bash experiments/tabs_eqcheck/run_all.sh
 python3 scripts/process_results.py experiments/tabs_eqcheck
