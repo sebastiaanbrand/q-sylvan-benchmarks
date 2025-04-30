@@ -40,7 +40,7 @@ In the following instructions we use `#` to indicate commands that are run insid
 
 - Import the Docker image from `q-sylvan-atva25-artifact-img.tar`:
 
-  sha256sum: `5ffcb3392477f7dcd2ddffeecb86acb21ddf0feaa5d65a83d466712d9571008d`
+  sha256sum: `771b9dd454fd9156c822fd4579a820652bfd3fcd56008626d2ea97151520699e`
   ```
   $ docker load < q-sylvan-atva25-artifact-img.tar
   ```
@@ -79,7 +79,7 @@ A small subset of benchmarks can be run with
 # source .venv/bin/activate
 # bash artifact/test_all_benchmarks.sh
 ```
-This should take no more than 5 minutes.
+This will take ~5 minutes.
 
 **Output of Smoke Test Execution**
 <details>
@@ -120,17 +120,17 @@ No inv caching data, skipping plot
 No reorder data, skipping plot
 Writing tables to experiments/fig2a/tables
 No Quasimodo data, skipping table.
-Writing to experiments/fig5b
-Loading data from experiments/fig5b/
+Writing to experiments/fig2b
+Loading data from experiments/fig2b/
 Checking norms... all OK
-Writing instances with termination issues to experiments/fig5b/issues.txt
-Writing plots to experiments/fig5b/plots
+Writing instances with termination issues to experiments/fig2b/issues.txt
+Writing plots to experiments/fig2b/plots
 No concurrent data, skipping plot
 No concurrent data, skipping plot
 No norm strat data, skipping plot
 No inv caching data, skipping plot
 No reorder data, skipping plot
-Writing tables to experiments/fig5b/tables
+Writing tables to experiments/fig2b/tables
 No Quasimodo data, skipping table.
 
 
@@ -192,6 +192,14 @@ Writing tables to experiments/fig3_right/tables
 No Quasimodo data, skipping table.
 
 
+Table 1
+Writing to experiments/tab1
+Loading data from experiments/tab1
+Checking circuit equivalence results... all OK
+Writing instances with termination issues to experiments/tab1/issues.txt
+Writing tables to experiments/tab1/tables
+
+
 Table 2 (appendix)
 Writing to experiments/tab2
 Loading data from experiments/tab2/
@@ -206,7 +214,7 @@ No reorder data, skipping plot
 Writing tables to experiments/tab2/tables
 
 
-Table 1 + 3 + 4 + 5 + 6
+Table 3 + 4 + 5 + 6
 Writing to experiments/tabs_eqcheck
 Loading data from experiments/tabs_eqcheck
 Checking circuit equivalence results... all OK
@@ -286,6 +294,7 @@ Because the paper evaluates multiple tools over a large set of benchmarks, the t
 
 To extract all benchmark results and plots you can use 
 ```
+# exit
 $ docker cp q-sylvan-atva25-artifact:/artifact/q-sylvan-benchmarks/experiments/ .
 ```
 
@@ -310,7 +319,7 @@ The figures can be found in:
   - `experiments/tab1/summary.txt`
   - `experiments/tab1/speedups_summary.json`
 - Table 2 (Appendix)
-  - `experiments/tab1/tables/simulation_time.tex`
+  - `experiments/tab2/tables/simulation_time.tex`
 - Table 3 + 4 (Appendix)
   - `experiments/tabs_eqcheck/tables/eqcheck_equiv_table_full.tex`
 - Table 5 + 6 (Appendix)
