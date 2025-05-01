@@ -348,4 +348,4 @@ The figures can be found in:
 
 ## Using our Tool without a Docker Environment
 
-Instructions on how to use the tool without using the provided Docker image can be found in the README on the Q-Sylvan repository page at https://github.com/sebastiaanbrand/q-sylvan.
+Instructions on how to use the tool without using the provided Docker image can be found in the README on the Q-Sylvan repository page at https://github.com/System-Verification-Lab/q-sylvan.
