@@ -85,7 +85,7 @@ if $compile_quasimodo; then
     mkdir -p tools/_deps/
     cd tools/_deps/
     if [ ! -f boost_1_81_0.tar.gz ]; then
-      wget https://boostorg.jfrog.io/artifactory/main/release/1.81.0/source/boost_1_81_0.tar.gz
+      wget https://archives.boost.io/release/1.81.0/source/boost_1_81_0.tar.gz
     fi
     tar -xf boost_1_81_0.tar.gz
     cd ../..
